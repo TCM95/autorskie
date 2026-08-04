@@ -6,9 +6,9 @@
         "description": "Ułatwia wysyłanie farmy z poziomu placu."
     },
     {
-        "id": "skrypt_mapa",
-        "name": "Narzędzia Mapy",
-        "url": "https://raw.githubusercontent.com/USER/REPO/main/mapa.js",
-        "description": "Zaznacza na mapie graczy z Twojego plemienia."
+        "id": "wybijak_monet",
+        "name": "Monety",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
+        "description": " przeglad kombinowany aktywuje automatyczne klepanie monet uruchamiamy w grupie w ktorej chcemy wlaczyc tryb wybijania monet"
     }
 ]
