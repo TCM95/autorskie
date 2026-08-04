@@ -35,4 +35,10 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek."
     }
+    {
+        "id": "poparcie",
+        "name": "pop.",
+        "url": "https://github.com/TCM95/autorskie/raw/refs/heads/main/skrypty/pop",
+        "description": "liczy pop. w wioskach po przeczytaniu raportu."
+    }
 ]
