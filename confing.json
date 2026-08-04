@@ -1,14 +1,38 @@
 [
     {
         "id": "ciemny_motyw",
-        "name": "Ciemmy motyw",
+        "name": "ciemny motyw",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
         "description": "Ułatwia wysyłanie farmy z poziomu placu."
     },
     {
         "id": "wybijak_monet",
-        "name": "Monety",
+        "name": "monety",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
-        "description": " przeglad kombinowany aktywuje automatyczne klepanie monet uruchamiamy w grupie w ktorej chcemy wlaczyc tryb wybijania monet"
+        "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet."
+    },
+    {
+        "id": "etykiety",
+        "name": "etykiety",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta",
+        "description": "Etykiety z filtrami."
+    },
+    {
+        "id": "tager_przychodzace",
+        "name": "tager P.",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
+        "description": "Ataki przychodzące."
+    },
+    {
+        "id": "tager_wychodzace",
+        "name": "tager W.",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
+        "description": "Ataki wychodzące + filtry do raportów."
+    },
+    {
+        "id": "edytor_nazw",
+        "name": "edytor nazw",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
+        "description": "Zmiana nazw wiosek."
     }
 ]
