@@ -19,13 +19,13 @@
     },
     {
         "id": "tager_przychodzace",
-        "name": "tager P.",
+        "name": "tager przychodzące",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące."
     },
     {
         "id": "tager_wychodzace",
-        "name": "tager W.",
+        "name": "tager wychodzące",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
         "description": "Ataki wychodzące + filtry do raportów."
     },
@@ -34,11 +34,5 @@
         "name": "edytor nazw",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek."
-    },
-    {
-        "id": "poparcie",
-        "name": "pop.",
-        "url": "https://github.com/TCM95/autorskie/raw/refs/heads/main/skrypty/pop",
-        "description": "liczy pop. w wioskach po przeczytaniu raportu."
-    },
+    }
 ]
