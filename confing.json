@@ -34,5 +34,27 @@
         "name": "edytor nazw",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek."
-    }
+    },
+    {
+    "name": "Pop.",
+    "description": "Liczy wzrosty poparcia najpierw trzeba przejrzeć raporty",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/pop.js"
+  },
+  {
+    "name": "Profil. Pokonani",
+    "description": "Pokazuje ranking pokonanych profilu",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js"
+  },
+  {
+    "name": "Komendy",
+    "description": "Udostępnianie komend",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js"
+  },
+  {
+    "name": "Ranking",
+    "description": "Ranking zbieractwo/farma",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js"
+  }
 ]
+
+
