@@ -1,9 +1,8 @@
-
 [
     {
         "id": "ciemny_motyw",
         "name": "Ciemmy motyw",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js?token=GHSAT0AAAAAAEEXAKRTK6LF3BCZJE5M56TI2TR3UPQ",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
         "description": "Ułatwia wysyłanie farmy z poziomu placu."
     },
     {
