@@ -1,1 +1,15 @@
 
+[
+    {
+        "id": "ciemny_motyw",
+        "name": "Ciemmy motyw",
+        "url": "https://raw.githubusercontent.com/USER/REPO/main/farma.js",
+        "description": "Ułatwia wysyłanie farmy z poziomu placu."
+    },
+    {
+        "id": "skrypt_mapa",
+        "name": "Narzędzia Mapy",
+        "url": "https://raw.githubusercontent.com/USER/REPO/main/mapa.js",
+        "description": "Zaznacza na mapie graczy z Twojego plemienia."
+    }
+]
