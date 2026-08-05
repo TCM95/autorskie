@@ -1,367 +1,116 @@
-// ==UserScript==
-// @name         Menedżer TCM
-// @namespace    https://viayoo.com/
-// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i ścisłą weryfikacją ekranów.
-// @author       TCM
-// @match        https://*.plemiona.pl/game.php*
-// @grant        none
-// ==UserScript==
-
-(function() {
-    'use strict';
-
-    const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
-    const CSS_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/style.css';
-    const STORAGE_KEY = 'tw_scripts_state';
-    const DARK_THEME_KEY = 'tw_dark_theme';
-    
-    const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety"];
-    let currentCategory = "Ogólne";
-
-    function getScriptsState() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : {};
+[
+    {
+        "id": "ciemny_motyw",
+        "name": "ciemny motyw",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
+        "description": "Ułatwia wysyłanie farmy z poziomu placu."
+    },
+    {
+        "id": "wybijak_monet",
+        "name": "monety",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
+        "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet."
+    },
+    {
+        "id": "etykiety",
+        "name": "etykiety",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
+        "description": "Etykiety z filtrami."
+    },
+    {
+        "id": "tager_przychodzace",
+        "name": "tager przychodzące",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
+        "description": "Ataki przychodzące."
+    },
+    {
+        "id": "tager_wychodzace",
+        "name": "tager wychodzące",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
+        "description": "Ataki wychodzące."
+    },
+    {
+        "id": "filtry_tag",
+        "name": "Filtry do tagera",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/filtry_tag.js",
+        "description": "Filtry podpięte pod tagera wychodzące."
+    },
+    {
+        "id": "edytor_nazw",
+        "name": "edytor nazw",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
+        "description": "Zmiana nazw wiosek."
+    },
+    {
+        "id": "poparcie",
+        "name": "Pop.",
+        "description": "Liczy wzrosty poparcia najpierw trzeba przejrzeć raporty",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/pop.js"
+    },
+    {
+        "id": "pokonani",
+        "name": "Profil. Pokonani",
+        "description": "Pokazuje ranking pokonanych profilu",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js"
+    },
+    {
+        "id": "komendy",
+        "name": "Komendy",
+        "description": "Udostępnianie komend",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js"
+    },
+    {
+        "id": "rank",
+        "name": "Ranking",
+        "description": "Ranking zbieractwo/farma",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js"
+    },
+    {
+        "id": "farma",
+        "name": "FARMA",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
+        "description": "Automatyczne wspomaganie farmienia."
+    },
+    {
+        "id": "szablony_wojsk",
+        "name": "Szablony wojsk",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
+        "description": "Zarządzanie szablonami wojsk."
+    },
+    {
+        "id": "mapa_kordy",
+        "name": "Kordy z mapy",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
+        "description": "Kopiowanie współrzędnych z mapy."
+    },
+    {
+        "id": "atak_wsparcie",
+        "name": "Atak/wsparcie",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
+        "description": "Szybkie przełączanie między atakiem i wsparciem."
+    },
+    {
+        "id": "szablony_budowy",
+        "name": "Szablony budowy (MK)",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
+        "description": "Zarządzanie szablonami budowy."
+    },
+    {
+        "id": "klin_cofka",
+        "name": "Klin z cofki",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
+        "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować."
+    },
+    {
+        "id": "zbierak_mass",
+        "name": "Zbierak mass",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
+        "description": "Masowe wysyłanie na zbieractwo."
+    },
+    {
+        "id": "podswietlanie_wioski",
+        "name": "Podświetlenie wioski (Ataki)",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
+        "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków."
     }
-
-    function saveScriptState(id, isActive) {
-        const state = getScriptsState();
-        state[id] = isActive;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    async function loadExternalCSS() {
-        try {
-            const response = await fetch(`${CSS_URL}?t=${Date.now()}`);
-            if (response.ok) {
-                const cssText = await response.text();
-                const style = document.createElement('style');
-                style.type = 'text/css';
-                style.innerHTML = cssText;
-                document.head.appendChild(style);
-            }
-        } catch (error) {
-            console.error("TCM Menedżer: Błąd pobierania pliku style.css", error);
-        }
-    }
-
-    async function toggleDarkTheme(darkScriptUrl, enable) {
-        let themeElement = document.getElementById('tcm-dark-theme-script');
-        if (enable) {
-            localStorage.setItem(DARK_THEME_KEY, '1');
-            if (!themeElement && darkScriptUrl) {
-                try {
-                    const fetchUrl = darkScriptUrl.includes('?') ? `${darkScriptUrl}&t=${Date.now()}` : `${darkScriptUrl}?t=${Date.now()}`;
-                    const response = await fetch(fetchUrl);
-                    if (response.ok) {
-                        const code = await response.text();
-                        themeElement = document.createElement('script');
-                        themeElement.id = 'tcm-dark-theme-script';
-                        themeElement.type = 'text/javascript';
-                        themeElement.textContent = code;
-                        document.head.appendChild(themeElement);
-                    }
-                } catch (e) {
-                    console.error("Błąd ładowania ciemnego motywu:", e);
-                }
-            }
-        } else {
-            localStorage.setItem(DARK_THEME_KEY, '0');
-            if (themeElement) themeElement.remove();
-            location.reload();
-        }
-    }
-
-    function renderScripts(scriptsArray, container) {
-        container.innerHTML = '';
-        const state = getScriptsState();
-        
-        const filtered = scriptsArray.filter(s => {
-            if (s.id === 'ciemny_motyw') return false;
-            const cat = s.category || "Ogólne";
-            return cat === currentCategory;
-        });
-
-        if (filtered.length === 0) {
-            const msg = document.createElement('div');
-            msg.className = 'tw-empty-msg';
-            msg.innerText = 'Brak skryptów w tej zakładce.';
-            container.appendChild(msg);
-            return;
-        }
-
-        filtered.forEach(script => {
-            const isActive = state[script.id] === true;
-            
-            const item = document.createElement('div');
-            item.className = 'tw-script-item';
-
-            const gameBtn = document.createElement('div');
-            gameBtn.className = 'tw-game-btn';
-
-            const statusIcon = document.createElement('span');
-            statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
-            
-            const nameLabel = document.createElement('span');
-            nameLabel.className = 'tw-script-name';
-            nameLabel.innerText = script.name;
-
-            gameBtn.appendChild(statusIcon);
-            gameBtn.appendChild(nameLabel);
-
-            gameBtn.addEventListener('click', () => {
-                const newState = !state[script.id];
-                state[script.id] = newState;
-                saveScriptState(script.id, newState);
-                statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
-            });
-
-            const infoIcon = document.createElement('span');
-            infoIcon.className = 'tw-info-icon';
-            infoIcon.innerText = 'ⓘ';
-
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tw-tooltip';
-            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak opisu.'}`;
-
-            infoIcon.appendChild(tooltip);
-            item.appendChild(gameBtn);
-            item.appendChild(infoIcon);
-            container.appendChild(item);
-        });
-    }
-
-    function buildPanel(scriptsArray) {
-        const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
-
-        const opener = document.createElement('div');
-        opener.id = 'tw-panel-opener';
-        opener.innerText = '🏰'; 
-        document.body.appendChild(opener);
-
-        const panel = document.createElement('div');
-        panel.id = 'tw-script-panel';
-        panel.style.display = 'none';
-
-        const header = document.createElement('div');
-        header.id = 'tw-script-panel-header';
-        
-        const titleSpan = document.createElement('span');
-        titleSpan.innerText = 'Menedżer TCM';
-        
-        const controls = document.createElement('div');
-        controls.style.display = 'flex';
-        controls.style.alignItems = 'center';
-        controls.style.gap = '3px';
-
-        const themeBtn = document.createElement('span');
-        themeBtn.className = 'tw-header-btn';
-        let isDark = localStorage.getItem(DARK_THEME_KEY) === '1';
-        themeBtn.innerText = isDark ? '🌙' : '☀️';
-
-        themeBtn.onclick = async () => {
-            isDark = !isDark;
-            themeBtn.innerText = isDark ? '🌙' : '☀️';
-            if (darkThemeConfig) {
-                await toggleDarkTheme(darkThemeConfig.url, isDark);
-            }
-        };
-
-        const pinBtn = document.createElement('span');
-        pinBtn.className = 'tw-header-btn';
-        let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-        pinBtn.innerText = isPinned ? '📍' : '📌';
-        pinBtn.onclick = () => {
-            isPinned = !isPinned;
-            localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
-            pinBtn.innerText = isPinned ? '📍' : '📌';
-            if (isPinned) {
-                localStorage.setItem('tw_panel_top', panel.style.top || '45px');
-                localStorage.setItem('tw_panel_left', panel.style.left || '10px');
-            }
-        };
-
-        const closeBtn = document.createElement('span');
-        closeBtn.className = 'tw-header-btn';
-        closeBtn.innerText = '✕';
-        closeBtn.style.color = '#804000';
-        closeBtn.onclick = () => panel.style.display = 'none';
-        
-        controls.appendChild(themeBtn);
-        controls.appendChild(pinBtn);
-        controls.appendChild(closeBtn);
-        
-        header.appendChild(titleSpan);
-        header.appendChild(controls);
-        panel.appendChild(header);
-
-        const panelBody = document.createElement('div');
-        panelBody.id = 'tw-panel-body';
-
-        const sidebar = document.createElement('div');
-        sidebar.id = 'tw-sidebar';
-
-        const contentArea = document.createElement('div');
-        contentArea.id = 'tw-content-area';
-
-        CATEGORIES.forEach(cat => {
-            const tab = document.createElement('div');
-            tab.className = 'tw-tab' + (cat === currentCategory ? ' active' : '');
-            tab.innerText = cat;
-            
-            tab.onclick = () => {
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentCategory = cat;
-                renderScripts(scriptsArray, contentArea);
-            };
-            sidebar.appendChild(tab);
-        });
-
-        panelBody.appendChild(sidebar);
-        panelBody.appendChild(contentArea);
-        panel.appendChild(panelBody);
-
-        opener.onclick = () => {
-            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'flex' : 'none';
-        };
-
-        if (isPinned) {
-            const t = localStorage.getItem('tw_panel_top');
-            const l = localStorage.getItem('tw_panel_left');
-            if (t && l) {
-                panel.style.top = t;
-                panel.style.left = l;
-            }
-        }
-
-        document.body.appendChild(panel);
-        makeDraggable(panel, header);
-
-        renderScripts(scriptsArray, contentArea);
-
-        if (isDark && darkThemeConfig) {
-            toggleDarkTheme(darkThemeConfig.url, true);
-        }
-    }
-
-    async function loadActiveScripts(scriptsArray) {
-        if (!scriptsArray || !Array.isArray(scriptsArray)) return;
-        const state = getScriptsState();
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentScreen = urlParams.get('screen') || 'overview'; 
-
-        for (const script of scriptsArray) {
-            if (script.id === 'ciemny_motyw') continue;
-
-            if (state[script.id]) {
-                
-                if (!script.screens || !Array.isArray(script.screens)) {
-                    console.warn(`TCM Menedżer: Skrypt "${script.name}" pominięty. Brak parametru 'screens' w confing.json.`);
-                    continue; 
-                }
-
-                if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
-                    continue; 
-                }
-
-                try {
-                    const scriptUrl = script.url.includes('?') ? `${script.url}&t=${Date.now()}` : `${script.url}?t=${Date.now()}`;
-                    const response = await fetch(scriptUrl);
-                    if (response.ok) {
-                        const code = await response.text();
-                        const scriptEl = document.createElement('script');
-                        scriptEl.type = 'text/javascript';
-                        scriptEl.textContent = code;
-                        document.head.appendChild(scriptEl);
-                    }
-                } catch (error) {
-                    console.error(`TCM Menedżer: Błąd ładowania ${script.name}`, error);
-                }
-            }
-        }
-    }
-
-    function makeDraggable(element, handle) {
-        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-        
-        handle.onmousedown = dragStart;
-        handle.ontouchstart = dragStart;
-
-        function dragStart(e) {
-            if (localStorage.getItem('tw_panel_pinned') === '1') return;
-            if (e.target.className === 'tw-header-btn') return;
-            
-            e = e || window.event;
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            if (e.type === 'touchstart') {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-            
-            pos3 = clientX;
-            pos4 = clientY;
-            
-            document.onmouseup = dragEnd;
-            document.onmousemove = dragMove;
-            document.ontouchend = dragEnd;
-            document.ontouchmove = dragMove;
-        }
-
-        function dragMove(e) {
-            e = e || window.event;
-            let clientX = e.clientX;
-            let clientY = e.clientY;
-            if (e.type === 'touchmove') {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
-            
-            pos1 = pos3 - clientX;
-            pos2 = pos4 - clientY;
-            pos3 = clientX;
-            pos4 = clientY;
-            
-            element.style.top = (element.offsetTop - pos2) + "px";
-            element.style.left = (element.offsetLeft - pos1) + "px";
-        }
-
-        function dragEnd() {
-            document.onmouseup = null;
-            document.onmousemove = null;
-            document.ontouchend = null;
-            document.ontouchmove = null;
-        }
-    }
-
-    async function initManager() {
-        await loadExternalCSS(); 
-        let fetchedScripts = [];
-
-        if (CONFIG_URL && CONFIG_URL.startsWith('http')) {
-            try {
-                const fetchUrl = CONFIG_URL.includes('?') ? `${CONFIG_URL}&t=${Date.now()}` : `${CONFIG_URL}?t=${Date.now()}`;
-                const response = await fetch(fetchUrl);
-                if(response.ok) {
-                    fetchedScripts = await response.json();
-                    
-                    if (!Array.isArray(fetchedScripts)) {
-                        if (fetchedScripts && Array.isArray(fetchedScripts.scripts)) {
-                            fetchedScripts = fetchedScripts.scripts;
-                        } else {
-                            fetchedScripts = [];
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("TCM Menedżer: Błąd parsowania JSON.", error);
-            }
-        }
-        
-        buildPanel(fetchedScripts);
-        await loadActiveScripts(fetchedScripts);
-    }
-
-    initManager();
-})();
+]
