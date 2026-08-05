@@ -1,10 +1,13 @@
 (function() {
     'use strict';
 
-    const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json';
-
+    const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
+    
+    // Lista zakładek
+    const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety"];
+    let currentCategory = "Ogólne";
 
     function getScriptsState() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -42,7 +45,8 @@
                 position: fixed;
                 top: 45px;
                 left: 10px;
-                width: 210px;
+                width: 90vw;
+                max-width: 480px;
                 background-color: #e3d5b3;
                 border: 2px solid #804000;
                 border-radius: 3px;
@@ -50,10 +54,12 @@
                 font-family: Verdana, Arial, sans-serif;
                 font-size: 11px;
                 box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+                display: flex;
+                flex-direction: column;
             }
             #tw-script-panel-header {
                 background-color: #c1a264;
-                border-bottom: 1px solid #804000;
+                border-bottom: 2px solid #804000;
                 padding: 4px 6px;
                 font-weight: bold;
                 text-align: center;
@@ -65,39 +71,76 @@
                 align-items: center;
                 font-size: 11px;
             }
+            #tw-panel-body {
+                display: flex;
+                flex-direction: row;
+                height: 250px; /* Stała wysokość dla scrolla na telefonach */
+            }
+            #tw-sidebar {
+                width: 90px;
+                background-color: #f4e4bc;
+                border-right: 2px solid #804000;
+                overflow-y: auto;
+                flex-shrink: 0;
+            }
+            .tw-tab {
+                padding: 8px 5px;
+                border-bottom: 1px solid #c1a264;
+                cursor: pointer;
+                font-weight: bold;
+                color: #593108;
+                text-align: center;
+                transition: background 0.1s;
+                font-size: 10px;
+            }
+            .tw-tab:hover {
+                background-color: #e3d5b3;
+            }
+            .tw-tab.active {
+                background-color: #c1a264;
+                color: #2b1d0c;
+                border-right: 2px solid #c1a264;
+                margin-right: -2px; /* nachodzi na ramkę */
+            }
+            #tw-content-area {
+                flex-grow: 1;
+                padding: 8px;
+                display: flex;
+                flex-wrap: wrap;
+                align-content: flex-start;
+                gap: 6px;
+                overflow-y: auto;
+                background-color: #e3d5b3;
+            }
             .tw-script-item {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 4px 6px;
-                border-bottom: 1px dotted #804000;
-                gap: 5px;
+                width: calc(50% - 3px);
+                min-width: 130px;
+                background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
+                border: 1px solid #7d510f;
+                border-radius: 3px;
+                padding: 2px;
+                box-sizing: border-box;
             }
             .tw-game-btn {
                 flex-grow: 1;
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
-                background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
-                border: 1px solid #7d510f;
-                border-radius: 3px;
-                padding: 4px 6px;
+                padding: 4px;
                 cursor: pointer;
                 user-select: none;
-                box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
-                transition: background 0.1s;
-                text-decoration: none;
                 color: #2b1d0c;
-            }
-            .tw-game-btn:active {
-                background: linear-gradient(to bottom, #c1a473 0%, #f4e4bc 100%);
+                overflow: hidden;
             }
             .tw-status-icon {
                 display: inline-block;
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
-                margin-right: 6px;
+                margin-right: 4px;
                 box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
                 flex-shrink: 0;
             }
@@ -106,7 +149,7 @@
             
             .tw-script-name {
                 font-weight: bold;
-                font-size: 11px;
+                font-size: 10px;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
@@ -114,22 +157,24 @@
 
             .tw-info-icon {
                 position: relative;
-                font-size: 13px;
+                font-size: 11px;
                 color: #593108;
                 cursor: pointer;
                 padding: 2px 4px;
                 font-weight: bold;
                 background: #f4e4bc;
-                border: 1px solid #7d510f;
-                border-radius: 3px;
+                border-left: 1px solid #7d510f;
                 line-height: 1;
+                height: 100%;
+                display: flex;
+                align-items: center;
             }
             .tw-tooltip {
                 display: none;
                 position: absolute;
                 bottom: 125%;
                 right: 0;
-                width: 150px;
+                width: 140px;
                 background-color: #f4e4bc;
                 border: 1px solid #804000;
                 padding: 5px;
@@ -138,10 +183,11 @@
                 z-index: 100001;
                 color: #000;
                 text-align: left;
-                font-size: 10px;
+                font-size: 9px;
                 font-weight: normal;
                 line-height: 1.2;
                 pointer-events: none;
+                white-space: normal;
             }
             .tw-info-icon:hover .tw-tooltip,
             .tw-info-icon:active .tw-tooltip {
@@ -154,12 +200,12 @@
                 padding: 0 2px;
                 user-select: none;
             }
-            #tw-loading-msg {
-                padding: 8px;
+            .tw-empty-msg {
+                width: 100%;
                 text-align: center;
+                padding: 15px;
                 font-style: italic;
-                color: #593108;
-                font-size: 10px;
+                color: #804000;
             }
         `;
         const style = document.createElement('style');
@@ -194,10 +240,70 @@
         }
     }
 
-    function buildPanel(scriptsArray) {
+    function renderScripts(scriptsArray, container) {
+        container.innerHTML = '';
         const state = getScriptsState();
+        
+        // Filtrowanie po kategorii. Jeśli skrypt nie ma zdefiniowanej kategorii, trafia do "Ogólne"
+        const filtered = scriptsArray.filter(s => {
+            if (s.id === 'ciemny_motyw') return false;
+            const cat = s.category || "Ogólne";
+            return cat === currentCategory;
+        });
+
+        if (filtered.length === 0) {
+            const msg = document.createElement('div');
+            msg.className = 'tw-empty-msg';
+            msg.innerText = 'Brak skryptów w tej zakładce.';
+            container.appendChild(msg);
+            return;
+        }
+
+        filtered.forEach(script => {
+            const isActive = state[script.id] === true;
+            
+            const item = document.createElement('div');
+            item.className = 'tw-script-item';
+
+            const gameBtn = document.createElement('div');
+            gameBtn.className = 'tw-game-btn';
+
+            const statusIcon = document.createElement('span');
+            statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
+            
+            const nameLabel = document.createElement('span');
+            nameLabel.className = 'tw-script-name';
+            nameLabel.innerText = script.name;
+
+            gameBtn.appendChild(statusIcon);
+            gameBtn.appendChild(nameLabel);
+
+            // ZMIANA: Usunięto location.reload(). Skrypt włącza się w tle.
+            gameBtn.addEventListener('click', () => {
+                const newState = !state[script.id];
+                state[script.id] = newState;
+                saveScriptState(script.id, newState);
+                statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
+            });
+
+            const infoIcon = document.createElement('span');
+            infoIcon.className = 'tw-info-icon';
+            infoIcon.innerText = 'ⓘ';
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tw-tooltip';
+            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak opisu.'}`;
+
+            infoIcon.appendChild(tooltip);
+
+            item.appendChild(gameBtn);
+            item.appendChild(infoIcon);
+            container.appendChild(item);
+        });
+    }
+
+    function buildPanel(scriptsArray) {
         const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
-        const filteredScripts = scriptsArray.filter(s => s.id !== 'ciemny_motyw');
 
         const opener = document.createElement('div');
         opener.id = 'tw-panel-opener';
@@ -206,6 +312,7 @@
 
         const panel = document.createElement('div');
         panel.id = 'tw-script-panel';
+        panel.style.display = 'none';
 
         const header = document.createElement('div');
         header.id = 'tw-script-panel-header';
@@ -259,8 +366,36 @@
         header.appendChild(controls);
         panel.appendChild(header);
 
+        // BUDOWA CIAŁA (ZAKŁADKI + OBSZAR ROBOCZY)
+        const panelBody = document.createElement('div');
+        panelBody.id = 'tw-panel-body';
+
+        const sidebar = document.createElement('div');
+        sidebar.id = 'tw-sidebar';
+
+        const contentArea = document.createElement('div');
+        contentArea.id = 'tw-content-area';
+
+        CATEGORIES.forEach(cat => {
+            const tab = document.createElement('div');
+            tab.className = 'tw-tab' + (cat === currentCategory ? ' active' : '');
+            tab.innerText = cat;
+            
+            tab.onclick = () => {
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCategory = cat;
+                renderScripts(scriptsArray, contentArea);
+            };
+            sidebar.appendChild(tab);
+        });
+
+        panelBody.appendChild(sidebar);
+        panelBody.appendChild(contentArea);
+        panel.appendChild(panelBody);
+
         opener.onclick = () => {
-            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
+            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'flex' : 'none';
         };
 
         if (isPinned) {
@@ -272,58 +407,11 @@
             }
         }
 
-        if (!filteredScripts || filteredScripts.length === 0) {
-            const errorMsg = document.createElement('div');
-            errorMsg.id = 'tw-loading-msg';
-            errorMsg.innerText = 'Brak skryptów.';
-            panel.appendChild(errorMsg);
-        } else {
-            filteredScripts.forEach(script => {
-                const isActive = state[script.id] === true;
-                
-                const item = document.createElement('div');
-                item.className = 'tw-script-item';
-
-                const gameBtn = document.createElement('div');
-                gameBtn.className = 'tw-game-btn';
-
-                const statusIcon = document.createElement('span');
-                statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
-                
-                const nameLabel = document.createElement('span');
-                nameLabel.className = 'tw-script-name';
-                nameLabel.innerText = script.name;
-
-                gameBtn.appendChild(statusIcon);
-                gameBtn.appendChild(nameLabel);
-
-                gameBtn.addEventListener('click', () => {
-                    const newState = !state[script.id];
-                    state[script.id] = newState;
-                    saveScriptState(script.id, newState);
-                    
-                    statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
-                    if(newState) location.reload();
-                });
-
-                const infoIcon = document.createElement('span');
-                infoIcon.className = 'tw-info-icon';
-                infoIcon.innerText = 'ⓘ';
-
-                const tooltip = document.createElement('div');
-                tooltip.className = 'tw-tooltip';
-                tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak opisu.'}`;
-
-                infoIcon.appendChild(tooltip);
-
-                item.appendChild(gameBtn);
-                item.appendChild(infoIcon);
-                panel.appendChild(item);
-            });
-        }
-
         document.body.appendChild(panel);
         makeDraggable(panel, header);
+
+        // Wyrenderowanie pierwszej domyślnej zakładki (Ogólne)
+        renderScripts(scriptsArray, contentArea);
 
         if (isDark && darkThemeConfig) {
             toggleDarkTheme(darkThemeConfig.url, true);
