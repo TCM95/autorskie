@@ -17,7 +17,7 @@
     const DARK_THEME_KEY = 'tw_dark_theme';
     
     // Lista zakładek menu
-    const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety"];
+    const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety", "Budowa"];
     let currentCategory = "Ogólne";
 
     function getScriptsState() {
