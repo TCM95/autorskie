@@ -27,7 +27,13 @@
         "id": "tager_wychodzace",
         "name": "tager wychodzące",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
-        "description": "Ataki wychodzące + filtry do raportów."
+        "description": "Ataki wychodzące."
+    },
+    {
+        "id": "filtry_tag",
+        "name": "Filtry do tagera",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/filtry_tag.js",
+        "description": "Filtry podpięte pod tagera wychodzące."
     },
     {
         "id": "edytor_nazw",
@@ -60,33 +66,51 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js"
     },
     {
-    "id": "farma",
-    "name": "FARMA",
-    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
-    "description": "Automatyczne wspomaganie farmienia."
-},
-{
-    "id": "szablony_wojsk",
-    "name": "Szablony wojsk",
-    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
-    "description": "Zarządzanie szablonami wojsk."
-},
-{
-    "id": "mapa_kordy",
-    "name": "Kordy z mapy",
-    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
-    "description": "Kopiowanie współrzędnych z mapy."
-},
-{
-    "id": "atak_wsparcie",
-    "name": "Atak/wsparcie",
-    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
-    "description": "Szybkie przełączanie między atakiem i wsparciem."
-},
-{
-    "id": "szablony_budowy",
-    "name": "Szablony budowy (MK)",
-    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
-    "description": "Zarządzanie szablonami budowy."
-}
+        "id": "farma",
+        "name": "FARMA",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
+        "description": "Automatyczne wspomaganie farmienia."
+    },
+    {
+        "id": "szablony_wojsk",
+        "name": "Szablony wojsk",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
+        "description": "Zarządzanie szablonami wojsk."
+    },
+    {
+        "id": "mapa_kordy",
+        "name": "Kordy z mapy",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
+        "description": "Kopiowanie współrzędnych z mapy."
+    },
+    {
+        "id": "atak_wsparcie",
+        "name": "Atak/wsparcie",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
+        "description": "Szybkie przełączanie między atakiem i wsparciem."
+    },
+    {
+        "id": "szablony_budowy",
+        "name": "Szablony budowy (MK)",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
+        "description": "Zarządzanie szablonami budowy."
+    },
+    {
+        "id": "klin_cofka",
+        "name": "Klin z cofki",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
+        "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować."
+    },
+    {
+        "id": "zbierak_mass",
+        "name": "Zbierak mass",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
+        "description": "Masowe wysyłanie na zbieractwo."
+    },
+    {
+        "id": "podswietlanie_wioski",
+        "name": "Podświetlenie wioski (Ataki)",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
+        "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków."
+    }
 ]
