@@ -1,5 +1,5 @@
 (function() {
-    'use strict';
+    'use stript';
 
     // Poprawione linki do repozytorium "autorskie"
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
