@@ -58,5 +58,35 @@
         "name": "Ranking",
         "description": "Ranking zbieractwo/farma",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js"
-    }
+    },
+    {
+    "id": "farma",
+    "name": "FARMA",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
+    "description": "Automatyczne wspomaganie farmienia."
+},
+{
+    "id": "szablony_wojsk",
+    "name": "Szablony wojsk",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
+    "description": "Zarządzanie szablonami wojsk."
+},
+{
+    "id": "mapa_kordy",
+    "name": "Kordy z mapy",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
+    "description": "Kopiowanie współrzędnych z mapy."
+},
+{
+    "id": "atak_wsparcie",
+    "name": "Atak/wsparcie",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
+    "description": "Szybkie przełączanie między atakiem i wsparciem."
+},
+{
+    "id": "szablony_budowy",
+    "name": "Szablony budowy (MK)",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
+    "description": "Zarządzanie szablonami budowy."
+}
 ]
