@@ -1,12 +1,3 @@
-// ==UserScript==
-// @name         Menedżer TCM
-// @namespace    https://viayoo.com/
-// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i ścisłą weryfikacją ekranów.
-// @author       TCM
-// @match        https://*.plemiona.pl/game.php*
-// @grant        none
-// ==UserScript==
-
 (function() {
     'use strict';
 
