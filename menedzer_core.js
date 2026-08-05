@@ -1,11 +1,22 @@
+// ==UserScript==
+// @name         Menedżer TCM
+// @namespace    https://viayoo.com/
+// @version      1.1.0
+// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i weryfikacją ekranów.
+// @author       TCM
+// @match        https://*.plemiona.pl/game.php*
+// @grant        none
+// ==UserScript==
+
 (function() {
     'use strict';
 
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
+    const CSS_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/style.css';
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
-    // Lista zakładek
+    // Lista zakładek menu
     const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety"];
     let currentCategory = "Ogólne";
 
@@ -20,197 +31,20 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    function injectStyles() {
-        const css = `
-            #tw-panel-opener {
-                position: fixed;
-                top: 5px;
-                left: 5px;
-                width: 30px;
-                height: 30px;
-                z-index: 100000;
-                background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
-                border: 2px solid #804000;
-                border-radius: 4px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 16px;
-                cursor: pointer;
-                box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-                color: #593108;
+    // Pobieranie zewnętrznego pliku CSS z GitHuba
+    async function loadExternalCSS() {
+        try {
+            const response = await fetch(`${CSS_URL}?t=${Date.now()}`);
+            if (response.ok) {
+                const cssText = await response.text();
+                const style = document.createElement('style');
+                style.type = 'text/css';
+                style.innerHTML = cssText;
+                document.head.appendChild(style);
             }
-            #tw-script-panel {
-                display: none;
-                position: fixed;
-                top: 45px;
-                left: 10px;
-                width: 90vw;
-                max-width: 480px;
-                background-color: #e3d5b3;
-                border: 2px solid #804000;
-                border-radius: 3px;
-                z-index: 99999;
-                font-family: Verdana, Arial, sans-serif;
-                font-size: 11px;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-                display: flex;
-                flex-direction: column;
-            }
-            #tw-script-panel-header {
-                background-color: #c1a264;
-                border-bottom: 2px solid #804000;
-                padding: 4px 6px;
-                font-weight: bold;
-                text-align: center;
-                cursor: move;
-                color: #593108;
-                touch-action: none;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 11px;
-            }
-            #tw-panel-body {
-                display: flex;
-                flex-direction: row;
-                height: 250px; /* Stała wysokość dla scrolla na telefonach */
-            }
-            #tw-sidebar {
-                width: 90px;
-                background-color: #f4e4bc;
-                border-right: 2px solid #804000;
-                overflow-y: auto;
-                flex-shrink: 0;
-            }
-            .tw-tab {
-                padding: 8px 5px;
-                border-bottom: 1px solid #c1a264;
-                cursor: pointer;
-                font-weight: bold;
-                color: #593108;
-                text-align: center;
-                transition: background 0.1s;
-                font-size: 10px;
-            }
-            .tw-tab:hover {
-                background-color: #e3d5b3;
-            }
-            .tw-tab.active {
-                background-color: #c1a264;
-                color: #2b1d0c;
-                border-right: 2px solid #c1a264;
-                margin-right: -2px; /* nachodzi na ramkę */
-            }
-            #tw-content-area {
-                flex-grow: 1;
-                padding: 8px;
-                display: flex;
-                flex-wrap: wrap;
-                align-content: flex-start;
-                gap: 6px;
-                overflow-y: auto;
-                background-color: #e3d5b3;
-            }
-            .tw-script-item {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                width: calc(50% - 3px);
-                min-width: 130px;
-                background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
-                border: 1px solid #7d510f;
-                border-radius: 3px;
-                padding: 2px;
-                box-sizing: border-box;
-            }
-            .tw-game-btn {
-                flex-grow: 1;
-                display: flex;
-                align-items: center;
-                justify-content: flex-start;
-                padding: 4px;
-                cursor: pointer;
-                user-select: none;
-                color: #2b1d0c;
-                overflow: hidden;
-            }
-            .tw-status-icon {
-                display: inline-block;
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                margin-right: 4px;
-                box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
-                flex-shrink: 0;
-            }
-            .tw-status-on { background-color: #4caf50; border: 1px solid #2e7d32; }
-            .tw-status-off { background-color: #f44336; border: 1px solid #c62828; }
-            
-            .tw-script-name {
-                font-weight: bold;
-                font-size: 10px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .tw-info-icon {
-                position: relative;
-                font-size: 11px;
-                color: #593108;
-                cursor: pointer;
-                padding: 2px 4px;
-                font-weight: bold;
-                background: #f4e4bc;
-                border-left: 1px solid #7d510f;
-                line-height: 1;
-                height: 100%;
-                display: flex;
-                align-items: center;
-            }
-            .tw-tooltip {
-                display: none;
-                position: absolute;
-                bottom: 125%;
-                right: 0;
-                width: 140px;
-                background-color: #f4e4bc;
-                border: 1px solid #804000;
-                padding: 5px;
-                border-radius: 3px;
-                box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-                z-index: 100001;
-                color: #000;
-                text-align: left;
-                font-size: 9px;
-                font-weight: normal;
-                line-height: 1.2;
-                pointer-events: none;
-                white-space: normal;
-            }
-            .tw-info-icon:hover .tw-tooltip,
-            .tw-info-icon:active .tw-tooltip {
-                display: block;
-            }
-
-            .tw-header-btn {
-                cursor: pointer;
-                font-size: 12px;
-                padding: 0 2px;
-                user-select: none;
-            }
-            .tw-empty-msg {
-                width: 100%;
-                text-align: center;
-                padding: 15px;
-                font-style: italic;
-                color: #804000;
-            }
-        `;
-        const style = document.createElement('style');
-        style.innerHTML = css;
-        document.head.appendChild(style);
+        } catch (error) {
+            console.error("TCM Menedżer: Błąd pobierania pliku style.css", error);
+        }
     }
 
     async function toggleDarkTheme(darkScriptUrl, enable) {
@@ -244,7 +78,7 @@
         container.innerHTML = '';
         const state = getScriptsState();
         
-        // Filtrowanie po kategorii. Jeśli skrypt nie ma zdefiniowanej kategorii, trafia do "Ogólne"
+        // Przypisanie skryptów do zakładek (domyślnie "Ogólne")
         const filtered = scriptsArray.filter(s => {
             if (s.id === 'ciemny_motyw') return false;
             const cat = s.category || "Ogólne";
@@ -278,7 +112,7 @@
             gameBtn.appendChild(statusIcon);
             gameBtn.appendChild(nameLabel);
 
-            // ZMIANA: Usunięto location.reload(). Skrypt włącza się w tle.
+            // Zmiana stanu w tle – brak przeładowywania strony
             gameBtn.addEventListener('click', () => {
                 const newState = !state[script.id];
                 state[script.id] = newState;
@@ -366,7 +200,6 @@
         header.appendChild(controls);
         panel.appendChild(header);
 
-        // BUDOWA CIAŁA (ZAKŁADKI + OBSZAR ROBOCZY)
         const panelBody = document.createElement('div');
         panelBody.id = 'tw-panel-body';
 
@@ -410,7 +243,6 @@
         document.body.appendChild(panel);
         makeDraggable(panel, header);
 
-        // Wyrenderowanie pierwszej domyślnej zakładki (Ogólne)
         renderScripts(scriptsArray, contentArea);
 
         if (isDark && darkThemeConfig) {
@@ -418,14 +250,25 @@
         }
     }
 
+    // Ładowanie skryptów zweryfikowanych pod kątem aktualnej podstrony (screen)
     async function loadActiveScripts(scriptsArray) {
         if (!scriptsArray) return;
         const state = getScriptsState();
         
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentScreen = urlParams.get('screen');
+
         for (const script of scriptsArray) {
             if (script.id === 'ciemny_motyw') continue;
 
             if (state[script.id]) {
+                // Weryfikacja docelowej podstrony gry
+                if (script.screens && Array.isArray(script.screens) && script.screens.length > 0) {
+                    if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
+                        continue;
+                    }
+                }
+
                 try {
                     const scriptUrl = script.url.includes('?') ? `${script.url}&t=${Date.now()}` : `${script.url}?t=${Date.now()}`;
                     const response = await fetch(scriptUrl);
@@ -497,7 +340,7 @@
     }
 
     async function initManager() {
-        injectStyles();
+        await loadExternalCSS(); 
         let fetchedScripts = [];
 
         if (CONFIG_URL && CONFIG_URL.startsWith('http')) {
