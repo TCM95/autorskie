@@ -2,6 +2,7 @@
     'use strict';
 
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json';
+
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
 
