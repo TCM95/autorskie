@@ -1,13 +1,20 @@
-(function() {
-    'use stript';
+// ==UserScript==
+// @name         Menedżer TCM
+// @namespace    https://viayoo.com/
+// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i ścisłą weryfikacją ekranów.
+// @author       TCM
+// @match        https://*.plemiona.pl/game.php*
+// @grant        none
+// ==UserScript==
 
-    // Poprawione linki do repozytorium "autorskie"
+(function() {
+    'use strict';
+
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
     const CSS_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/style.css';
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
-    // Lista zakładek menu
     const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety"];
     let currentCategory = "Ogólne";
 
@@ -238,7 +245,7 @@
     }
 
     async function loadActiveScripts(scriptsArray) {
-        if (!scriptsArray) return;
+        if (!scriptsArray || !Array.isArray(scriptsArray)) return;
         const state = getScriptsState();
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -249,13 +256,11 @@
 
             if (state[script.id]) {
                 
-                // Rygorystyczna blokada: Wymuszenie parametru 'screens'
                 if (!script.screens || !Array.isArray(script.screens)) {
                     console.warn(`TCM Menedżer: Skrypt "${script.name}" pominięty. Brak parametru 'screens' w confing.json.`);
                     continue; 
                 }
 
-                // Weryfikacja ekranu
                 if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
                     continue; 
                 }
@@ -340,9 +345,17 @@
                 const response = await fetch(fetchUrl);
                 if(response.ok) {
                     fetchedScripts = await response.json();
+                    
+                    if (!Array.isArray(fetchedScripts)) {
+                        if (fetchedScripts && Array.isArray(fetchedScripts.scripts)) {
+                            fetchedScripts = fetchedScripts.scripts;
+                        } else {
+                            fetchedScripts = [];
+                        }
+                    }
                 }
             } catch (error) {
-                console.error("TCM Menedżer: Błąd pobierania JSON.", error);
+                console.error("TCM Menedżer: Błąd parsowania JSON.", error);
             }
         }
         
