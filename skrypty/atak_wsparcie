@@ -1,0 +1,117 @@
+// ==UserScript==
+// @name        Atak/wsparcie
+// @version      1.0.0
+// @description  Zintegrowany system wysyłki z podglądem pingu na żywo
+// @namespace    https://viayoo.com/
+// @author       FunnyPocketBook + Mój Panie Edition + Gemini
+// @include      https://*/game.php?*&screen=place&try=confirm
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    let inputMs, input, delay, arrRequest, attRequest;
+    let delayTime = parseInt(localStorage.delayTime) || 0;
+
+    // --- SEKCJA PINGU (LOGIKA) ---
+    function checkPing() {
+        const start = Date.now();
+        fetch('/game.php?screen=overview', { method: 'HEAD', cache: 'no-store' })
+            .then(() => {
+                const diff = Date.now() - start;
+                const pingDisplay = document.getElementById("live-ping-val");
+                if (pingDisplay) {
+                    pingDisplay.innerText = diff + "ms";
+                    // Kolorowanie pingu dla szybkiej oceny
+                    pingDisplay.style.color = diff < 150 ? "#00ff00" : (diff < 250 ? "#ffff00" : "#ff4444");
+                }
+            }).catch(() => {});
+    }
+    setInterval(checkPing, 2000);
+
+    // --- INTERFEJS (HTML) ---
+    const buttonsHtml = `
+        <div id="tw-pro-tools" style="background: rgba(0,0,0,0.1); padding: 10px; border: 1px solid #804000; margin-top: 10px; border-radius: 5px;">
+            <div style="margin-bottom: 10px; font-weight: bold;">
+                AKTUALNY PING: <span id="live-ping-val" style="color: #00ff00;">sprawdzam...</span>
+            </div>
+            <table style="width: 100%;">
+                <tr>
+                    <td>Offset (Ping kor.):</td>
+                    <td>
+                        <input id="delayInput" value="${delayTime}" style="width:50px">
+                        <a id="delayButton" class="btn">Zapisz</a>
+                    </td>
+                </tr>
+                <tr><td>Cel wejścia:</td><td id="showArrTime">-</td></tr>
+                <tr><td>Cel wysyłki:</td><td id="showSendTime">-</td></tr>
+            </table>
+            <div style="margin-top: 10px;">
+                <a id="arrTime" class="btn" style="cursor:pointer; margin-right: 5px;">Ustaw dotarcie</a>
+                <a id="sendTime" class="btn" style="cursor:pointer;">Ustaw wysyłkę</a>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("troop_confirm_submit").insertAdjacentHTML("afterend", buttonsHtml);
+
+    // --- LOGIKA CZASU ---
+    function toMs(t) {
+        const [h, m, s] = t.split(":").map(Number);
+        return ((h * 3600) + (m * 60) + s) * 1000;
+    }
+
+    function setArrivalTime() {
+        const targetMs = toMs(input);
+        function check() {
+            let arrivalText = document.querySelector(".relative_time").textContent;
+            let nowMs = toMs(arrivalText.slice(-8));
+            if (nowMs >= targetMs) {
+                cancelAnimationFrame(arrRequest);
+                setTimeout(() => document.getElementById("troop_confirm_submit").click(), delay);
+            } else { arrRequest = requestAnimationFrame(check); }
+        }
+        arrRequest = requestAnimationFrame(check);
+    }
+
+    function setSendTime() {
+        const targetMs = toMs(input);
+        function check() {
+            const now = Timing.getCurrentServerTime();
+            const date = new Date(now);
+            const nowMs = (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) * 1000;
+            if (nowMs >= targetMs) {
+                cancelAnimationFrame(attRequest);
+                setTimeout(() => document.getElementById("troop_confirm_submit").click(), delay);
+            } else { attRequest = requestAnimationFrame(check); }
+        }
+        attRequest = requestAnimationFrame(check);
+    }
+
+    // --- OBSŁUGA PRZYCISKÓW ---
+    document.getElementById("arrTime").onclick = function () {
+        cancelAnimationFrame(attRequest);
+        input = prompt("Godzina (HH:MM:SS)", document.querySelector(".relative_time").textContent.slice(-8));
+        inputMs = parseInt(prompt("Milisekundy (0–999)", "000"));
+        delay = delayTime + inputMs;
+        document.getElementById("showArrTime").innerText = input + ":" + inputMs.toString().padStart(3, "0");
+        setArrivalTime();
+    };
+
+    document.getElementById("sendTime").onclick = function () {
+        cancelAnimationFrame(arrRequest);
+        input = prompt("Godzina (HH:MM:SS)", document.getElementById("serverTime").textContent);
+        inputMs = parseInt(prompt("Milisekundy (0–999)", "000"));
+        delay = delayTime + inputMs;
+        document.getElementById("showSendTime").innerText = input + ":" + inputMs.toString().padStart(3, "0");
+        setSendTime();
+    };
+
+    document.getElementById("delayButton").onclick = function () {
+        delayTime = parseInt(document.getElementById("delayInput").value) || 0;
+        localStorage.delayTime = JSON.stringify(delayTime);
+        alert("Zapisano Offset: " + delayTime);
+    };
+
+})();
