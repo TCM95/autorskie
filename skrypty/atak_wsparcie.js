@@ -3,7 +3,7 @@
 // @version      1.0.0
 // @description  Zintegrowany system wysyłki z podglądem pingu na żywo
 // @namespace    https://viayoo.com/
-// @author       FunnyPocketBook + Mój Panie Edition + Gemini
+// @author       tcm
 // @include      https://*/game.php?*&screen=place&try=confirm
 // @grant        none
 // ==/UserScript==
