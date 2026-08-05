@@ -1,8 +1,7 @@
 // ==UserScript==
 // @name         Menedżer TCM
 // @namespace    https://viayoo.com/
-// @version      1.1.0
-// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i weryfikacją ekranów.
+// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i ścisłą weryfikacją ekranów.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php*
 // @grant        none
@@ -11,6 +10,7 @@
 (function() {
     'use strict';
 
+    // Poprawione linki do repozytorium "autorskie"
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
     const CSS_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/style.css';
     const STORAGE_KEY = 'tw_scripts_state';
@@ -31,7 +31,6 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    // Pobieranie zewnętrznego pliku CSS z GitHuba
     async function loadExternalCSS() {
         try {
             const response = await fetch(`${CSS_URL}?t=${Date.now()}`);
@@ -78,7 +77,6 @@
         container.innerHTML = '';
         const state = getScriptsState();
         
-        // Przypisanie skryptów do zakładek (domyślnie "Ogólne")
         const filtered = scriptsArray.filter(s => {
             if (s.id === 'ciemny_motyw') return false;
             const cat = s.category || "Ogólne";
@@ -112,7 +110,6 @@
             gameBtn.appendChild(statusIcon);
             gameBtn.appendChild(nameLabel);
 
-            // Zmiana stanu w tle – brak przeładowywania strony
             gameBtn.addEventListener('click', () => {
                 const newState = !state[script.id];
                 state[script.id] = newState;
@@ -129,7 +126,6 @@
             tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak opisu.'}`;
 
             infoIcon.appendChild(tooltip);
-
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
             container.appendChild(item);
@@ -141,7 +137,7 @@
 
         const opener = document.createElement('div');
         opener.id = 'tw-panel-opener';
-        opener.innerText = '⚙️';
+        opener.innerText = '🏰'; 
         document.body.appendChild(opener);
 
         const panel = document.createElement('div');
@@ -250,23 +246,27 @@
         }
     }
 
-    // Ładowanie skryptów zweryfikowanych pod kątem aktualnej podstrony (screen)
     async function loadActiveScripts(scriptsArray) {
         if (!scriptsArray) return;
         const state = getScriptsState();
         
         const urlParams = new URLSearchParams(window.location.search);
-        const currentScreen = urlParams.get('screen');
+        const currentScreen = urlParams.get('screen') || 'overview'; 
 
         for (const script of scriptsArray) {
             if (script.id === 'ciemny_motyw') continue;
 
             if (state[script.id]) {
-                // Weryfikacja docelowej podstrony gry
-                if (script.screens && Array.isArray(script.screens) && script.screens.length > 0) {
-                    if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
-                        continue;
-                    }
+                
+                // Rygorystyczna blokada: Wymuszenie parametru 'screens'
+                if (!script.screens || !Array.isArray(script.screens)) {
+                    console.warn(`TCM Menedżer: Skrypt "${script.name}" pominięty. Brak parametru 'screens' w confing.json.`);
+                    continue; 
+                }
+
+                // Weryfikacja ekranu
+                if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
+                    continue; 
                 }
 
                 try {
