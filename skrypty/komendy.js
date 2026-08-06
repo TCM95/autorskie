@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         udostepnianie komend - Shinko Theme
+// @name         udostepnianie komend
 // @author       TCM
 // @namespace    https://viayoo.com/
 // @match        *://*.plemiona.pl/game.php*screen=settings*mode=command_sharing*
@@ -13,11 +13,10 @@
     const win = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
     const storageRada = 'TCM_Lista_Rada';
 
-    // Wstrzyknięcie dedykowanych stylów Shinko
     const style = document.createElement('style');
     style.textContent = `
-        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; overflow: hidden !important; }
-        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 8px 10px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: move; user-select: none; }
+        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; overflow: hidden !important; touch-action: none; }
+        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 8px 10px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; user-select: none; }
         .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 6px 12px; }
         .tcm-shinko-btn:hover { background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
         .tcm-shinko-input { background-color: #202225 !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; padding: 6px !important; box-sizing: border-box; }
@@ -43,7 +42,9 @@
         if ($('#tcm_ui_overlay').length) return;
 
         const savedRada = localStorage.getItem(storageRada) || "";
-        let savedPos = JSON.parse(localStorage.getItem('TCM_ShareUI_Pos'));
+        
+        let savedPos = null;
+        try { savedPos = JSON.parse(localStorage.getItem('TCM_ShareUI_Pos')); } catch(e) { localStorage.removeItem('TCM_ShareUI_Pos'); }
 
         let initialTop = savedPos ? savedPos.top : '10%';
         let initialLeft = savedPos ? savedPos.left : '5%';
@@ -54,15 +55,15 @@
                 <div id="tcm-drag-handle" class="tcm-shinko-header">
                     <span>Udostępnianie Komend</span>
                     <div>
-                        <span id="tcm-pin-btn" style="cursor:pointer; opacity:${savedPos ? '1' : '0.4'}; font-size:14px; margin-right:10px;" title="Przypnij pozycję">📌</span>
+                        <span id="tcm-pin-btn" style="cursor:pointer; font-size:14px; margin-right:10px;" title="Przypnij pozycję">📌</span>
                         <span id="tcm-close-btn" style="cursor:pointer; color:#ff4444; font-size:14px; font-weight:bold;" title="Zamknij">✖</span>
                     </div>
                 </div>
 
                 <div style="padding:15px; overflow-y:auto; max-height:85vh;">
                     <div class="tcm-shinko-inner">
-                        <label style="font-weight:bold; display:block; margin-bottom:5px; color:#ffffdf;">GRACZE (Tymczasowi):</label>
-                        <textarea id="tcm_input_gracze" class="tcm-shinko-input" style="width:100%; height:60px; margin-bottom:10px; resize:vertical;"></textarea>
+                        <label style="font-weight:bold; display:block; margin-bottom:5px; color:#ffffdf;">GRACZE (Tymczasowi lub Kod ze Skryptu):</label>
+                        <textarea id="tcm_input_gracze" class="tcm-shinko-input" style="width:100%; height:60px; margin-bottom:10px; resize:vertical;" placeholder="Wklej nicki lub cały skrypt z listą..."></textarea>
                         <div style="display:flex; gap:10px;">
                             <button id="tcm_btn_add" class="tcm-shinko-btn" style="flex:1; background: linear-gradient(#2ea043 0%, #238636 100%) !important;">DODAJ</button>
                             <button id="tcm_btn_replace" class="tcm-shinko-btn" style="flex:1; background: linear-gradient(#da3633 0%, #b62324 100%) !important;">PODMIEŃ</button>
@@ -84,7 +85,7 @@
         `;
 
         $('body').append(uiHtml);
-        setupDraggableAndPin($('#tcm_ui_overlay')[0]);
+        setupDraggableAndPin($('#tcm_ui_overlay')[0], !!savedPos);
 
         $('#tcm_btn_save_rada').on('click', () => {
             localStorage.setItem(storageRada, $('#tcm_input_rada').val());
@@ -97,13 +98,31 @@
         $('#tcm-close-btn').on('click', () => $('#tcm_ui_overlay').remove());
     }
 
-    function setupDraggableAndPin(ui) {
+    function setupDraggableAndPin(ui, initialPinState) {
         const handle = document.getElementById('tcm-drag-handle');
         const pinBtn = document.getElementById('tcm-pin-btn');
+        
+        let isPinned = initialPinState;
         let isDragging = false, startX, startY, initialX, initialY;
+
+        const updatePinVisuals = () => {
+            if (isPinned) {
+                pinBtn.style.opacity = '1';
+                pinBtn.style.textShadow = '0 0 5px #2ecc71';
+                handle.style.cursor = 'default';
+            } else {
+                pinBtn.style.opacity = '0.4';
+                pinBtn.style.textShadow = 'none';
+                handle.style.cursor = 'move';
+            }
+        };
+        
+        updatePinVisuals();
 
         const startDrag = (e) => {
             if(e.target === pinBtn || e.target.id === 'tcm-close-btn') return;
+            if(isPinned) return; 
+            
             isDragging = true;
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -114,8 +133,8 @@
         };
 
         const onDrag = (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
+            if (!isDragging || isPinned) return;
+            e.preventDefault(); 
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
             let dx = clientX - startX;
@@ -135,14 +154,14 @@
         document.addEventListener('touchend', stopDrag);
 
         pinBtn.addEventListener('click', () => {
-            let saved = localStorage.getItem('TCM_ShareUI_Pos');
-            if (saved) {
+            if (isPinned) {
                 localStorage.removeItem('TCM_ShareUI_Pos');
-                pinBtn.style.opacity = '0.4';
+                isPinned = false;
             } else {
                 localStorage.setItem('TCM_ShareUI_Pos', JSON.stringify({top: ui.style.top, left: ui.style.left}));
-                pinBtn.style.opacity = '1';
+                isPinned = true;
             }
+            updatePinVisuals();
         });
     }
 
@@ -150,8 +169,22 @@
         const $ = win.jQuery;
 
         const clean = (str) => {
-            let cleanedStr = str.replace(/[\[\]"']/g, ''); 
-            return cleanedStr.split(/[,;\n]/).map(n => n.trim()).filter(n => n !== "");
+            let content = str;
+            // Szukamy tekstu zawartego pomiędzy grawisami, np. z innej konfiguracji JS
+            const codeMatch = str.match(/`([^`]+)`/);
+            if (codeMatch) {
+                content = codeMatch[1];
+            }
+
+            // Dzielimy po enterach, przecinkach, średnikach oraz po " x " 
+            return content.split(/[,;\n]|(?:\s+x\s+)/i)
+                .map(n => n.replace(/[\[\]"']/g, '').trim())
+                .filter(n => {
+                    if (n === "") return false;
+                    // Odfiltrowujemy śmieci składniowe na wypadek braku grawisów
+                    if (n.match(/^(javascript:|var\s|let\s|const\s|if\s*\(|else|\$|\/\/|UI\.InfoMessage|\})/i)) return false;
+                    return true;
+                });
         };
 
         const radaList = clean($('#tcm_input_rada').val());
@@ -159,7 +192,7 @@
         const totalList = [...new Set([...radaList, ...graczeList])];
 
         if (totalList.length === 0 && !shouldReplace) {
-            win.UI.InfoMessage("Listy są puste!", 3000, "error");
+            win.UI.InfoMessage("Wprowadź prawidłowe nicki!", 3000, "error");
             return;
         }
 
