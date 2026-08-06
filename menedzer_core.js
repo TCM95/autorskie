@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Menedżer TCM
 // @namespace    https://viayoo.com/
-// @description  Menedżer skryptów z naprawionym układem 3-kolumnowym i poprawnym ładowaniem adresów URL
+// @description  Menedżer skryptów z inteligentną siatką i poprawionymi dymkami
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php*
 // @grant        none
@@ -15,7 +15,7 @@
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
-    const CATEGORIES = ["Ogólne", "Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Surowce", "Mapa"];
+    const CATEGORIES = ["Ogólne", "Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Surowce", "Mapa", "Zarządzanie", "Etykiety", "Statystyki", "Wojsko", "Budowa"];
     let currentCategory = null; 
 
     function getScriptsState() {
@@ -43,7 +43,6 @@
             console.error("TCM Menedżer: Błąd pobierania pliku style.css", error);
         }
 
-        // Łatka CSS - Poprawa siatki (3 kolumny), dymków z boku na kliknięcie i wyrównania wysokości
         const customFix = document.createElement('style');
         customFix.type = 'text/css';
         customFix.innerHTML = `
@@ -59,7 +58,7 @@
             }
             #tw-panel-body { 
                 display: flex; 
-                align-items: stretch; /* Równa wysokość słupka i sekcji skryptów */
+                align-items: flex-start; /* Zwarte kategorie, brak pustego pola na dole */
                 position: relative;
             }
             #tw-sidebar { 
@@ -67,15 +66,14 @@
                 flex-direction: column; 
                 min-width: 130px; 
                 border-right: 1px solid #7d510f;
+                background: #e3d5b3;
             }
             #tw-content-area { 
                 display: none; 
-                /* SIATKA - Dokładnie 3 kolumny */
-                grid-template-columns: repeat(3, 1fr);
                 gap: 8px;
                 padding: 8px;
-                align-content: start; /* Skrypty uciekają do góry, nie rozłażą się na dole */
-                min-width: 450px; /* Przestrzeń na 3 kolumny */
+                align-content: start; 
+                background: #e3d5b3;
                 overflow: visible !important; 
                 z-index: 100 !important; 
                 position: relative;
@@ -86,24 +84,26 @@
                 display: flex;
                 align-items: center;
                 gap: 5px;
+                background: #f4e4bc; /* Lepsza widoczność poszczególnych skryptów */
+                padding: 2px 4px;
+                border: 1px solid #804000;
+                border-radius: 4px;
             }
             .tw-info-icon { 
                 cursor: pointer;
                 font-weight: bold;
                 color: #005500;
                 position: relative;
+                padding: 0 4px;
             }
-            /* DYMEK (otwierany z prawej, domyślnie ukryty, 100% tła) */
             .tw-tooltip { 
-                display: none; /* Sterowane przez JS */
+                display: none; 
                 position: absolute;
-                left: 100%; /* Prawa strona ikony */
                 top: 0;
-                margin-left: 8px;
                 z-index: 999999 !important; 
                 white-space: normal; 
                 width: 200px; 
-                background: #f4e4bc !important; /* Sztywne tło, brak przezroczystości */
+                background: #f4e4bc !important; 
                 opacity: 1 !important;
                 border: 1px solid #7d510f;
                 padding: 8px;
@@ -155,13 +155,19 @@
         filtered.sort((a, b) => a.name.localeCompare(b.name));
 
         if (filtered.length === 0) {
+            container.style.display = 'block';
             const msg = document.createElement('div');
             msg.className = 'tw-empty-msg';
             msg.innerText = 'Brak skryptów.';
-            msg.style.gridColumn = 'span 3';
             container.appendChild(msg);
             return;
         }
+
+        // Inteligentne wymiarowanie siatki (1, 2 lub 3 kolumny)
+        const columns = Math.min(filtered.length, 3);
+        container.style.display = 'grid';
+        container.style.gridTemplateColumns = `repeat(${columns}, 150px)`;
+        container.style.width = 'max-content';
 
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
@@ -172,6 +178,8 @@
             const gameBtn = document.createElement('div');
             gameBtn.className = 'tw-game-btn';
             gameBtn.style.flex = '1';
+            gameBtn.style.display = 'flex';
+            gameBtn.style.alignItems = 'center';
 
             const statusIcon = document.createElement('span');
             statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
@@ -179,6 +187,7 @@
             const nameLabel = document.createElement('span');
             nameLabel.className = 'tw-script-name';
             nameLabel.innerText = script.name;
+            nameLabel.style.marginLeft = '4px';
 
             gameBtn.appendChild(statusIcon);
             gameBtn.appendChild(nameLabel);
@@ -190,7 +199,6 @@
                 statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
             });
 
-            // Ikonka i dymek info (Na kliknięcie)
             const infoIcon = document.createElement('span');
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'ⓘ';
@@ -198,19 +206,30 @@
             const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
             const tooltip = document.createElement('div');
             tooltip.className = 'tw-tooltip';
-            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak.'}<br><br><strong>Wymagany URL (screens):</strong> ${screensInfo}`;
+            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak.'}<br><br><strong>Strony:</strong> ${screensInfo}`;
 
             infoIcon.appendChild(tooltip);
             
             infoIcon.addEventListener('click', (e) => {
-                e.stopPropagation(); // Zatrzymuje zdarzenie, żeby poniższy nasłuchiwacz go od razu nie zamknął
+                e.stopPropagation(); 
                 const isCurrentlyVisible = tooltip.style.display === 'block';
                 
-                // Ukryj wszystkie inne dymki
                 document.querySelectorAll('.tw-tooltip').forEach(t => t.style.display = 'none');
                 
                 if (!isCurrentlyVisible) {
                     tooltip.style.display = 'block';
+                    
+                    // Inteligentne ustawianie dymku, żeby nie ucinało na telefonie
+                    const rect = infoIcon.getBoundingClientRect();
+                    if (rect.right + 210 > window.innerWidth) {
+                        tooltip.style.right = '100%'; // Otwiera się w lewo
+                        tooltip.style.left = 'auto';
+                        tooltip.style.marginRight = '8px';
+                    } else {
+                        tooltip.style.left = '100%'; // Otwiera się w prawo
+                        tooltip.style.right = 'auto';
+                        tooltip.style.marginLeft = '8px';
+                    }
                 }
             });
 
@@ -225,7 +244,6 @@
 
         const opener = document.createElement('div');
         opener.id = 'tw-panel-opener';
-        
         const currentOrigin = window.location.origin;
         opener.innerHTML = `<img src="${currentOrigin}/favicon.ico" style="width: 24px; height: 24px; pointer-events: none;" alt="Favicon">`;
         opener.style.display = 'flex';
@@ -241,7 +259,7 @@
         header.id = 'tw-script-panel-header';
         
         const titleSpan = document.createElement('span');
-        titleSpan.innerText = 'MENU';
+        titleSpan.innerText = 'MENU TCM';
         
         const controls = document.createElement('div');
         controls.style.display = 'flex';
@@ -300,7 +318,10 @@
         const contentArea = document.createElement('div');
         contentArea.id = 'tw-content-area';
 
-        CATEGORIES.forEach(cat => {
+        // Odfiltrowanie kategorii, które w ogóle istnieją w configu
+        const availableCategories = [...new Set(scriptsArray.filter(s => s.id !== 'ciemny_motyw').map(s => s.category || "Ogólne"))];
+
+        availableCategories.forEach(cat => {
             const tab = document.createElement('div');
             tab.className = 'tw-tab';
             tab.innerText = cat;
@@ -314,7 +335,6 @@
                     document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
                     currentCategory = cat;
-                    contentArea.style.display = 'grid'; // Uruchamia siatkę na 3 kolumny po otwarciu
                     renderScripts(scriptsArray, contentArea);
                 }
             };
@@ -345,7 +365,6 @@
             toggleDarkTheme(darkThemeConfig.url, true);
         }
 
-        // Zamykanie dymków po kliknięciu gdziekolwiek w dokumencie
         document.addEventListener('click', () => {
             document.querySelectorAll('.tw-tooltip').forEach(t => t.style.display = 'none');
         });
@@ -354,8 +373,6 @@
     async function loadActiveScripts(scriptsArray) {
         if (!scriptsArray || !Array.isArray(scriptsArray)) return;
         const state = getScriptsState();
-        
-        // NOWA LOGIKA: Sprawdzamy cały adres URL, a nie tylko parametr "screen"
         const currentUrl = window.location.href;
 
         for (const script of scriptsArray) {
@@ -368,7 +385,6 @@
                 if (script.screens.includes('*')) {
                     shouldRun = true;
                 } else {
-                    // Sprawdza, czy w adresie URL jest obecny podany fragment (np. "mode=incomings" albo "info_player")
                     for (const screenPart of script.screens) {
                         if (currentUrl.includes(screenPart)) {
                             shouldRun = true;
