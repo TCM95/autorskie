@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         udostepnianie komend
+// @name         udostepnianie komend - Shinko Theme
 // @author       TCM
 // @namespace    https://viayoo.com/
 // @match        *://*.plemiona.pl/game.php*screen=settings*mode=command_sharing*
@@ -13,6 +13,18 @@
     const win = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
     const storageRada = 'TCM_Lista_Rada';
 
+    // Wstrzyknięcie dedykowanych stylów Shinko
+    const style = document.createElement('style');
+    style.textContent = `
+        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; overflow: hidden !important; }
+        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 8px 10px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: move; user-select: none; }
+        .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 6px 12px; }
+        .tcm-shinko-btn:hover { background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
+        .tcm-shinko-input { background-color: #202225 !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; padding: 6px !important; box-sizing: border-box; }
+        .tcm-shinko-inner { background-color: #2f3136; border: 1px solid #3e4147; padding: 10px; border-radius: 3px; margin-bottom: 10px; }
+    `;
+    document.head.appendChild(style);
+
     function init() {
         const $ = win.jQuery;
         if (!$) return;
@@ -20,7 +32,7 @@
         const targetTable = $('table.vis').has('input[name="share[]"]').first();
         if (!targetTable.length || $('#tcm_trigger_btn').length) return;
 
-        const triggerBtn = `<div style="margin: 10px 0;"><button id="tcm_trigger_btn" class="btn" style="padding: 10px 20px; font-weight: bold;">UDOSTĘPNIJ KOMENDY</button></div>`;
+        const triggerBtn = `<div style="margin: 10px 0;"><button id="tcm_trigger_btn" class="tcm-shinko-btn" style="padding: 10px 20px;">UDOSTĘPNIJ KOMENDY</button></div>`;
         targetTable.before(triggerBtn);
 
         $('#tcm_trigger_btn').on('click', (e) => { e.preventDefault(); showMainUI(); });
@@ -37,35 +49,34 @@
         let initialLeft = savedPos ? savedPos.left : '5%';
 
         const uiHtml = `
-            <div id="tcm_ui_overlay" style="position:fixed; top:${initialTop}; left:${initialLeft}; width:90%; max-width:400px; background:#e3d5b3; border:2px solid #7d510f; z-index:30000; border-radius:5px; box-shadow: 0 0 20px rgba(0,0,0,0.8); box-sizing:border-box; overflow:hidden;">
+            <div id="tcm_ui_overlay" class="tcm-shinko-panel" style="position:fixed; top:${initialTop}; left:${initialLeft}; width:90%; max-width:400px; z-index:30000; box-sizing:border-box;">
                 
-                <!-- Pasek górny (Drag & Drop) -->
-                <div id="tcm-drag-handle" style="background:#c1a264; padding:8px 10px; font-weight:bold; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #7d510f; cursor:move; user-select:none;">
+                <div id="tcm-drag-handle" class="tcm-shinko-header">
                     <span>Udostępnianie Komend</span>
                     <div>
                         <span id="tcm-pin-btn" style="cursor:pointer; opacity:${savedPos ? '1' : '0.4'}; font-size:14px; margin-right:10px;" title="Przypnij pozycję">📌</span>
-                        <span id="tcm-close-btn" style="cursor:pointer; color:#8b0000; font-size:14px; font-weight:bold;" title="Zamknij">✖</span>
+                        <span id="tcm-close-btn" style="cursor:pointer; color:#ff4444; font-size:14px; font-weight:bold;" title="Zamknij">✖</span>
                     </div>
                 </div>
 
                 <div style="padding:15px; overflow-y:auto; max-height:85vh;">
-                    <div style="margin-bottom:10px; padding:10px; border:1px solid #7d510f; background:#f4e4bc;">
-                        <label style="font-weight:bold; display:block; margin-bottom:5px;">GRACZE (Tymczasowi):</label>
-                        <textarea id="tcm_input_gracze" style="width:100%; height:60px; margin-bottom:10px;"></textarea>
+                    <div class="tcm-shinko-inner">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px; color:#ffffdf;">GRACZE (Tymczasowi):</label>
+                        <textarea id="tcm_input_gracze" class="tcm-shinko-input" style="width:100%; height:60px; margin-bottom:10px; resize:vertical;"></textarea>
                         <div style="display:flex; gap:10px;">
-                            <button id="tcm_btn_add" class="btn" style="flex:1; background:#218838 !important; color:white !important;">DODAJ</button>
-                            <button id="tcm_btn_replace" class="btn" style="flex:1; background:#c82333 !important; color:white !important;">PODMIEŃ</button>
+                            <button id="tcm_btn_add" class="tcm-shinko-btn" style="flex:1; background: linear-gradient(#2ea043 0%, #238636 100%) !important;">DODAJ</button>
+                            <button id="tcm_btn_replace" class="tcm-shinko-btn" style="flex:1; background: linear-gradient(#da3633 0%, #b62324 100%) !important;">PODMIEŃ</button>
                         </div>
                     </div>
 
-                    <div style="margin-bottom:10px; padding:10px; border:1px solid #7d510f; background:#f4e4bc;">
-                        <label style="font-weight:bold; display:block; margin-bottom:5px;">RADA (Na stałe):</label>
-                        <textarea id="tcm_input_rada" style="width:100%; height:60px; margin-bottom:10px;">${savedRada}</textarea>
-                        <button id="tcm_btn_save_rada" class="btn" style="width:100%; font-weight:bold;">ZAPISZ RADĘ I UDOSTĘPNIJ</button>
+                    <div class="tcm-shinko-inner">
+                        <label style="font-weight:bold; display:block; margin-bottom:5px; color:#ffffdf;">RADA (Na stałe):</label>
+                        <textarea id="tcm_input_rada" class="tcm-shinko-input" style="width:100%; height:60px; margin-bottom:10px; resize:vertical;">${savedRada}</textarea>
+                        <button id="tcm_btn_save_rada" class="tcm-shinko-btn" style="width:100%;">ZAPISZ RADĘ I UDOSTĘPNIJ</button>
                     </div>
 
-                    <div id="tcm_missing_section" style="display:none; margin-bottom:10px; padding:10px; border:2px solid #c82333; background:#ffdada;">
-                        <label style="font-weight:bold; color:#c82333; display:block; margin-bottom:5px;">BRAKUJĄCE ZAPROSZENIA:</label>
+                    <div id="tcm_missing_section" style="display:none; margin-bottom:10px; padding:10px; border:1px solid #da3633; background:#3c2020; border-radius:3px;">
+                        <label style="font-weight:bold; color:#ff7b72; display:block; margin-bottom:5px;">BRAKUJĄCE ZAPROSZENIA:</label>
                         <div id="tcm_missing_list" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
                     </div>
                 </div>
@@ -138,7 +149,6 @@
     function processSharing(shouldReplace) {
         const $ = win.jQuery;
 
-        // Ulepszony parser - ignoruje cudzysłowy i nawiasy ułatwiając wklejanie formy ze skryptów
         const clean = (str) => {
             let cleanedStr = str.replace(/[\[\]"']/g, ''); 
             return cleanedStr.split(/[,;\n]/).map(n => n.trim()).filter(n => n !== "");
@@ -167,7 +177,7 @@
             const index = totalListLower.indexOf(nickInTableLower);
             if (index !== -1) {
                 $(this).find('input[name="share[]"]').prop('checked', true);
-                $(this).css('background', '#00ff4d');
+                $(this).css('background', '#1b3a2b');
                 foundInTable.push(totalList[index]);
                 markedCount++;
             }
@@ -189,7 +199,7 @@
         const listContainer = $('#tcm_missing_list').empty();
 
         missing.forEach(nick => {
-            const btn = $(`<button class="btn" style="font-size:10px; background:#c82333 !important; color:white !important; cursor:pointer; padding:5px 10px;">Dodaj ${nick}</button>`);
+            const btn = $(`<button class="tcm-shinko-btn" style="font-size:10px; background: linear-gradient(#da3633 0%, #b62324 100%) !important; padding:5px 10px;">Dodaj ${nick}</button>`);
             btn.on('click', function() { sendInvite(nick, $(this)); });
             listContainer.append(btn);
         });
