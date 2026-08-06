@@ -5,12 +5,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     let currentCategory = null;
 
     const opener = document.createElement('div');
-    opener.id = 'tw-panel-opener'; // Wykorzystuje id z Twojego pliku CSS
+    opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none;">`;
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
+    // Domyślnie ukryty poprzez inline style override (nie gryzie się z flex po otwarciu)
+    panel.style.display = 'none'; 
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
@@ -110,7 +112,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'ⓘ';
             
-            // Integracja dymka z Twoim CSS
             const tooltip = document.createElement('div');
             tooltip.className = 'tw-tooltip';
             const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
@@ -132,7 +133,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             if (currentCategory === cat) {
                 currentCategory = null;
                 tab.classList.remove('active');
-                renderScripts(); // Wyczyści kontener
+                contentArea.innerHTML = '';
             } else {
                 document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
@@ -147,7 +148,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panelBody.appendChild(contentArea);
     panel.appendChild(panelBody);
 
-    opener.onclick = () => { panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'flex' : 'none'; };
+    // Poprawne przełączanie widoczności z zachowaniem flexa z CSS
+    opener.onclick = () => { 
+        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none'; 
+    };
 
     if (isPinned) {
         const t = localStorage.getItem('tw_panel_top');
