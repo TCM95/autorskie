@@ -1,250 +1,177 @@
-/* --- STYLE GŁÓWNEGO PANELU TCM --- */
-
+/* Przycisk otwierający w lewym górnym rogu */
 #tw-panel-opener {
     position: fixed !important;
     top: 5px !important;
     left: 5px !important;
-    width: 30px !important;
-    height: 30px !important;
-    z-index: 100000 !important;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
-    border: 2px solid #804000 !important;
+    z-index: 999999 !important;
+    background: #2b2b2b !important;
+    border: 1px solid #7d5e3c !important;
     border-radius: 4px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 16px !important;
+    padding: 4px !important;
     cursor: pointer !important;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
-    color: #593108 !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
 }
 
+/* Główny kontener - Pionowy Słupek */
 #tw-script-panel {
-    display: none; /* Domyślnie ukryty */
     position: fixed !important;
-    top: 45px !important;
+    top: 40px !important;
     left: 10px !important;
-    width: 90vw !important;
-    max-width: 480px !important;
-    background-color: #e3d5b3 !important;
-    border: 2px solid #804000 !important;
-    border-radius: 3px !important;
-    z-index: 99999 !important;
-    font-family: Verdana, Arial, sans-serif !important;
+    z-index: 999998 !important;
+    background: #f4e4bc !important;
+    border: 2px solid #7d5e3c !important;
+    border-radius: 6px !important;
+    width: 140px !important; /* Szerokość pojedynczego słupka */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6) !important;
+    font-family: Verdana, Arial, Helvetica, sans-serif !important;
     font-size: 11px !important;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.5) !important;
+    color: #333 !important;
+    display: none;
     flex-direction: column !important;
 }
 
-/* KLASA OTWOTORZONEGO PANELU */
-#tw-script-panel.open {
-    display: flex !important;
-}
-
+/* Nagłówek słupka */
 #tw-script-panel-header {
-    background-color: #c1a264 !important;
-    border-bottom: 2px solid #804000 !important;
-    padding: 4px 6px !important;
+    background: linear-gradient(to bottom, #7d5e3c 0%, #5a4128 100%) !important;
+    color: #fff !important;
+    padding: 6px 8px !important;
     font-weight: bold !important;
-    text-align: center !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     cursor: move !important;
-    color: #593108 !important;
-    touch-action: none !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    font-size: 11px !important;
-}
-
-#tw-panel-body {
-    display: flex !important;
-    flex-direction: row !important;
-    height: 250px !important;
-}
-
-#tw-sidebar {
-    width: 90px !important;
-    background-color: #f4e4bc !important;
-    border-right: 2px solid #804000 !important;
-    overflow-y: auto !important;
-    flex-shrink: 0 !important;
-}
-
-.tw-tab {
-    padding: 8px 5px !important;
-    border-bottom: 1px solid #c1a264 !important;
-    cursor: pointer !important;
-    font-weight: bold !important;
-    color: #593108 !important;
-    text-align: center !important;
-    transition: background 0.1s !important;
-    font-size: 10px !important;
-}
-
-.tw-tab:hover {
-    background-color: #e3d5b3 !important;
-}
-
-.tw-tab.active {
-    background-color: #c1a264 !important;
-    color: #2b1d0c !important;
-    border-right: 2px solid #c1a264 !important;
-    margin-right: -2px !important;
-}
-
-#tw-content-area {
-    flex-grow: 1 !important;
-    padding: 8px !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-content: flex-start !important;
-    gap: 6px !important;
-    overflow-y: auto !important;
-    background-color: #e3d5b3 !important;
-}
-
-.tw-script-item {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: calc(50% - 3px) !important;
-    min-width: 130px !important;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
-    border: 1px solid #7d510f !important;
-    border-radius: 3px !important;
-    padding: 2px !important;
-    box-sizing: border-box !important;
-}
-
-.tw-game-btn {
-    flex-grow: 1 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    padding: 4px !important;
-    cursor: pointer !important;
-    user-select: none !important;
-    color: #2b1d0c !important;
-    overflow: hidden !important;
-}
-
-.tw-status-icon {
-    display: inline-block !important;
-    width: 8px !important;
-    height: 8px !important;
-    border-radius: 50% !important;
-    margin-right: 4px !important;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3) !important;
-    flex-shrink: 0 !important;
-}
-
-.tw-status-on { background-color: #4caf50 !important; border: 1px solid #2e7d32 !important; }
-.tw-status-off { background-color: #f44336 !important; border: 1px solid #c62828 !important; }
-
-.tw-script-name {
-    font-weight: bold !important;
-    font-size: 10px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-.tw-info-icon {
-    position: relative !important;
-    font-size: 11px !important;
-    color: #593108 !important;
-    cursor: pointer !important;
-    padding: 2px 4px !important;
-    font-weight: bold !important;
-    background: #f4e4bc !important;
-    border-left: 1px solid #7d510f !important;
-    line-height: 1 !important;
-    height: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-.tw-tooltip {
-    display: none;
-    position: absolute !important;
-    bottom: 125% !important;
-    right: 0 !important;
-    width: 140px !important;
-    background-color: #f4e4bc !important;
-    border: 1px solid #804000 !important;
-    padding: 5px !important;
-    border-radius: 3px !important;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.4) !important;
-    z-index: 100001 !important;
-    color: #000 !important;
-    text-align: left !important;
-    font-size: 9px !important;
-    font-weight: normal !important;
-    line-height: 1.2 !important;
-    pointer-events: none !important;
-    white-space: normal !important;
-}
-
-.tw-info-icon:hover .tw-tooltip,
-.tw-info-icon:active .tw-tooltip {
-    display: block !important;
+    border-top-left-radius: 4px !important;
+    border-top-right-radius: 4px !important;
+    z-index: 1000000 !important;
 }
 
 .tw-header-btn {
     cursor: pointer !important;
+    padding: 0 3px !important;
+    font-weight: bold !important;
+    color: #f4e4bc !important;
+}
+.tw-header-btn:hover {
+    color: #fff !important;
+}
+
+/* Pionowy pasek z kategoriami */
+#tw-categories-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    background: #e3d2ab !important;
+    padding: 4px !important;
+    gap: 4px !important;
+}
+
+.tw-tab {
+    background: #c1a264 !important;
+    color: #fff !important;
+    padding: 6px 8px !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    border: 1px solid #a88748 !important;
+    text-align: center !important;
+}
+
+.tw-tab:hover, .tw-tab.active {
+    background: #7d5e3c !important;
+}
+
+/* Karta rozwijana PO PRAWEJ STRONIE słupka */
+#tw-content-area {
+    display: none;
+    position: absolute !important;
+    top: 0 !important;
+    left: 100% !important; /* Przyczepione do prawej krawędzi słupka */
+    margin-left: 4px !important;
+    width: 260px !important; /* Szerokość rozwijanej karty ze skryptami */
+    background: #fff8eb !important;
+    border: 2px solid #7d5e3c !important;
+    border-radius: 6px !important;
+    padding: 6px !important;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.4) !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    z-index: 999997 !important;
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+}
+
+.tw-script-item {
+    background: #fdf5e6 !important;
+    border: 1px solid #d4b584 !important;
+    border-radius: 4px !important;
+    padding: 5px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    position: relative !important;
+}
+
+.tw-game-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    flex-grow: 1 !important;
+    overflow: hidden !important;
+}
+
+.tw-status-icon {
+    width: 9px !important;
+    height: 9px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+}
+.tw-status-on { background: #2ecc71 !important; box-shadow: 0 0 4px #2ecc71 !important; }
+.tw-status-off { background: #e74c3c !important; }
+
+.tw-script-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    color: #333 !important;
+    font-weight: bold !important;
+}
+
+/* Dymki informacyjne */
+.tw-info-icon {
+    cursor: pointer !important;
+    color: #7d5e3c !important;
+    font-weight: bold !important;
     font-size: 12px !important;
-    padding: 0 2px !important;
-    user-select: none !important;
+    padding-left: 6px !important;
+    position: relative !important;
+}
+
+.tw-info-icon:hover .tw-tooltip {
+    display: block !important;
+}
+
+.tw-tooltip {
+    display: none !important;
+    position: absolute !important;
+    right: 0 !important;
+    bottom: 22px !important;
+    background: #2b2b2b !important;
+    color: #fff !important;
+    padding: 6px 8px !important;
+    border-radius: 4px !important;
+    width: 170px !important;
+    z-index: 99999999 !important;
+    font-size: 10px !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.5) !important;
+    border: 1px solid #7d5e3c !important;
+    line-height: 1.2 !important;
 }
 
 .tw-empty-msg {
-    width: 100% !important;
     text-align: center !important;
-    padding: 15px !important;
+    color: #666 !important;
     font-style: italic !important;
-    color: #804000 !important;
-}
-
-/* --- NARZUCENIE STYLU ZEWNĘTRZNYM SKRYPTOM I WŁASNYM ELEMENTOM TCM --- */
-
-.tw-script-btn, .tcm-btn, button.tcm-custom-btn {
-    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
-    border: 1px solid #7d510f !important;
-    color: #2b1d0c !important;
-    font-family: Verdana, Arial, sans-serif !important;
-    font-size: 11px !important;
-    border-radius: 3px !important;
-    padding: 2px 6px !important;
-    cursor: pointer !important;
-}
-
-.tw-script-btn:hover, .tcm-btn:hover, button.tcm-custom-btn:hover {
-    background: linear-gradient(to bottom, #c1a473 0%, #f4e4bc 100%) !important;
-}
-
-.tw-script-input, .tcm-input {
-    background-color: #f4e4bc !important;
-    border: 1px solid #7d510f !important;
-    color: #2b1d0c !important;
-    font-family: Verdana, Arial, sans-serif !important;
-    font-size: 11px !important;
-    padding: 2px !important;
-}
-
-.tw-injected-table, .vis.tw-custom-table, table.tcm-table {
-    background-color: #dfba80 !important;
-    border: 1px solid #7d510f !important;
-    font-family: Verdana, Arial, sans-serif !important;
-    font-size: 11px !important;
-}
-
-.tw-injected-table th, .vis.tw-custom-table th, table.tcm-table th {
-    background-color: #c1a264 !important;
-    color: #593108 !important;
-    padding: 4px !important;
-}
-
-.tw-injected-table td, .vis.tw-custom-table td, table.tcm-table td {
-    padding: 4px !important;
-    color: #2b1d0c !important;
+    padding: 8px !important;
 }
