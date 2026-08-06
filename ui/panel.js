@@ -30,7 +30,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
-    header.style.touchAction = 'none'; // Wymuszenie braku domyślnych gestów telefonu na nagłówku
+    // Wymuszenie zachowania dotyku dla starych przeglądarek
+    header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
     
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
@@ -188,66 +189,84 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // --- NIEZAWODNY MECHANIZM PRZECIĄGANIA (POINTER EVENTS) ---
+    // --- BRUTALNA OBSŁUGA DRAG & DROP DLA URZĄDZEŃ MOBILNYCH ---
     let isDragging = false;
+    let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
-    let initialLeft = 0, initialTop = 0;
 
-    function onPointerDown(e) {
-        // Blokada jeśli panel jest przypięty lub kliknięto przycisk w nagłówku
+    function dragStart(e) {
+        // Ignoruj, jeśli przypięto okno lub kliknięto przyciski w nagłówku
         if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
-        
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
+
+        // Wyciąganie pozycji w zależności od tego, czy to dotyk, czy myszka
+        if (e.type === "touchstart") {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        } else {
+            startX = e.clientX;
+            startY = e.clientY;
+        }
 
         const rect = panel.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
+        initialX = rect.left;
+        initialY = rect.top;
 
-        // Odwiązanie kontenera od sztywnych krawędzi CSS
+        // Twarde wymuszenie swobodnego latania
         panel.style.position = 'fixed';
         panel.style.bottom = 'auto';
         panel.style.right = 'auto';
         panel.style.margin = '0';
         panel.style.transform = 'none';
         
-        panel.style.left = initialLeft + 'px';
-        panel.style.top = initialTop + 'px';
+        panel.style.left = initialX + 'px';
+        panel.style.top = initialY + 'px';
 
-        // Przechwycenie wskaźnika (kluczowe na mobilkach!)
-        header.setPointerCapture(e.pointerId);
+        isDragging = true;
 
-        header.addEventListener('pointermove', onPointerMove);
-        header.addEventListener('pointerup', onPointerUp);
-        header.addEventListener('pointercancel', onPointerUp);
+        // Nasłuchujemy przesuwania na całym dokumencie! { passive: false } jest tu najważniejsze
+        document.addEventListener('mousemove', dragMove, { passive: false });
+        document.addEventListener('touchmove', dragMove, { passive: false });
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
     }
 
-    function onPointerMove(e) {
+    function dragMove(e) {
         if (!isDragging) return;
         
-        const deltaX = e.clientX - startX;
-        const deltaY = e.clientY - startY;
+        // TO BLOKUJE SCROLLOWANIE STRONY W TELEFONIE!
+        if (e.cancelable) e.preventDefault(); 
 
-        panel.style.left = (initialLeft + deltaX) + 'px';
-        panel.style.top = (initialTop + deltaY) + 'px';
+        let currentX, currentY;
+        if (e.type === "touchmove") {
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+        } else {
+            currentX = e.clientX;
+            currentY = e.clientY;
+        }
+
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        panel.style.left = (initialX + dx) + 'px';
+        panel.style.top = (initialY + dy) + 'px';
     }
 
-    function onPointerUp(e) {
+    function dragEnd() {
         if (!isDragging) return;
         isDragging = false;
-        
-        try {
-            header.releasePointerCapture(e.pointerId);
-        } catch (err) {}
 
-        header.removeEventListener('pointermove', onPointerMove);
-        header.removeEventListener('pointerup', onPointerUp);
-        header.removeEventListener('pointercancel', onPointerUp);
+        document.removeEventListener('mousemove', dragMove);
+        document.removeEventListener('touchmove', dragMove);
+        document.removeEventListener('mouseup', dragEnd);
+        document.removeEventListener('touchend', dragEnd);
     }
 
-    header.addEventListener('pointerdown', onPointerDown);
+    // Podpinamy start przesuwania do nagłówka. { passive: false } aby e.preventDefault() działało.
+    header.addEventListener('mousedown', dragStart, { passive: false });
+    header.addEventListener('touchstart', dragStart, { passive: false });
 
+    // Włączenie ciemnego motywu jeśli był wcześniej aktywny
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
         callbacks.onToggleTheme(darkThemeConfig.url, true);
     }
