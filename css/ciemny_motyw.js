@@ -2,7 +2,7 @@
 // @name         Ciemny motyw (Shinko Theme)
 // @namespace    https://viayoo.com/
 // @author       TCM
-// @description  Ciemny motyw wizualny dla gry Plemiona oparty na Shinko Theme
+// @description  Ciemny motyw wizualny
 // @match        https://*.plemiona.pl/game.php*
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -11,7 +11,7 @@
     'use strict';
 
     const css = `
-        /* Wzorzec wizualny (Shinko Theme) */
+        /* Wzorzec wizualny */
         :root {
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
