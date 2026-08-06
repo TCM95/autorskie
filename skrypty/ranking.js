@@ -37,7 +37,7 @@
                 color: #ffffdf !important;
                 padding: 8px; font-weight: bold; font-size: 12px;
                 border-bottom: 2px solid #3e4147 !important;
-                cursor: move; user-select: none;
+                user-select: none;
                 display: flex; justify-content: space-between; align-items: center;
             }
             .tcm-label {
@@ -89,12 +89,17 @@
         const savedTribes = localStorage.getItem('TCM_Saved_Tribes') || '';
         const savedLimit = localStorage.getItem('TCM_Saved_Limit') || '1200';
         const savedType = localStorage.getItem('TCM_Saved_Type') || 'scavenge';
-        let savedPos = JSON.parse(localStorage.getItem('TCM_Ranking_Pos'));
+        
+        let savedPos = null;
+        try {
+            savedPos = JSON.parse(localStorage.getItem('TCM_Ranking_Pos'));
+        } catch (e) {
+            localStorage.removeItem('TCM_Ranking_Pos'); // Czyścimy błędne dane z przeszłości
+        }
 
         const ui = document.createElement('div');
         ui.id = 'tcm-ranking-ui';
         
-        // Zabezpieczenie przed przeskakiwaniem (obliczanie precyzyjnego pozycjonowania od razu)
         let initialTop = savedPos ? savedPos.top : '50px';
         let initialLeft = savedPos ? savedPos.left : ((window.innerWidth / 2) - 130) + 'px';
         
@@ -104,7 +109,7 @@
         ui.innerHTML = `
             <div id="tcm-ranking-header">
                 <span>Ranking Zbiorczy</span>
-                <span id="tcm-pin-btn" style="opacity:${savedPos ? '1' : '0.4'};" title="Przypnij">📌</span>
+                <span id="tcm-pin-btn" title="Przypnij/Odepnij">📌</span>
             </div>
             <div style="padding: 10px;">
                 <label class="tcm-label">Typ rankingu:</label>
@@ -132,7 +137,7 @@
         `;
         document.body.appendChild(ui);
 
-        setupDraggableAndPin(ui);
+        setupDraggableAndPin(ui, !!savedPos);
 
         document.getElementById('tcm-generate-btn').addEventListener('click', runRanking);
         document.getElementById('tcm-reset-btn').addEventListener('click', () => {
@@ -150,13 +155,31 @@
         });
     }
 
-    function setupDraggableAndPin(ui) {
+    function setupDraggableAndPin(ui, initialPinState) {
         const handle = document.getElementById('tcm-ranking-header');
         const pinBtn = document.getElementById('tcm-pin-btn');
+        
+        let isPinned = initialPinState;
         let isDragging = false, startX, startY, initialX, initialY;
+
+        const updatePinVisuals = () => {
+            if (isPinned) {
+                pinBtn.style.opacity = '1';
+                pinBtn.style.border = '1px solid #2ecc71';
+                handle.style.cursor = 'default';
+            } else {
+                pinBtn.style.opacity = '0.4';
+                pinBtn.style.border = '1px solid transparent';
+                handle.style.cursor = 'move';
+            }
+        };
+        
+        updatePinVisuals();
 
         const startDrag = (e) => {
             if(e.target === pinBtn) return;
+            if(isPinned) return; // BLOKADA: Nie pozwala przesuwać, jeśli przypięte
+            
             isDragging = true;
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -167,8 +190,8 @@
         };
 
         const onDrag = (e) => {
-            if (!isDragging) return;
-            e.preventDefault(); // Blokuje scrollowanie strony na telefonie
+            if (!isDragging || isPinned) return;
+            e.preventDefault(); 
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
             let dx = clientX - startX;
@@ -188,16 +211,14 @@
         document.addEventListener('touchend', stopDrag);
 
         pinBtn.addEventListener('click', () => {
-            let saved = localStorage.getItem('TCM_Ranking_Pos');
-            if (saved) {
+            if (isPinned) {
                 localStorage.removeItem('TCM_Ranking_Pos');
-                pinBtn.style.opacity = '0.4';
-                pinBtn.style.border = '1px solid transparent';
+                isPinned = false;
             } else {
                 localStorage.setItem('TCM_Ranking_Pos', JSON.stringify({top: ui.style.top, left: ui.style.left}));
-                pinBtn.style.opacity = '1';
-                pinBtn.style.border = '1px solid #2ecc71';
+                isPinned = true;
             }
+            updatePinVisuals();
         });
     }
 
