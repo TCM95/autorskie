@@ -9,7 +9,6 @@
 (function () {
     'use strict';
 
-    // Pula 25 unikalnych kolorów
     const PREDEFINED_COLORS = [
         '#ff4d4d', '#33ccff', '#33cc33', '#ffcc00', '#ff33cc', 
         '#9933ff', '#00ff99', '#ff9933', '#ff8080', '#66b3ff',
@@ -30,32 +29,45 @@
         const ui = document.createElement('div');
         ui.id = 'tcm-ranking-ui';
         
-        let initialTop = savedPos ? savedPos.top : '120px';
-        let initialLeft = savedPos ? savedPos.left : '10px';
+        let initialTop = savedPos ? savedPos.top : '10px';
+        let initialLeft = savedPos ? savedPos.left : '50%';
         
-        ui.style.cssText = `position:fixed; top:${initialTop}; left:${initialLeft}; width:240px; background:#e3d5b3; border:2px solid #7d510f; z-index:999999; padding:8px; font-size:12px; font-family:Verdana; border-radius: 4px; box-shadow: 2px 2px 10px rgba(0,0,0,0.5);`;
+        ui.style.cssText = `position:fixed; top:${initialTop}; left:${initialLeft}; ${!savedPos ? 'transform:translateX(-50%);' : ''} width:260px; z-index:999999; box-shadow: rgba(0, 0, 0, 0.7) 2px 2px 10px;`;
         
         ui.innerHTML = `
-            <div id="tcm-drag-handle" style="background:#c1a264; padding:4px; font-weight:bold; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #7d510f; cursor:move; user-select:none;">
-                <span>Ranking Zbiorczy</span>
-                <span id="tcm-pin-btn" style="cursor:pointer; opacity:${savedPos ? '1' : '0.4'}; font-size:14px;" title="Przypnij">📌</span>
-            </div>
-            <label style="font-size:10px; font-weight:bold; display:block; margin-bottom:2px;">Typ rankingu:</label>
-            <select id="tcm-type-select" style="width:100%; padding:3px; margin-bottom:5px;">
-                <option value="scavenge" ${savedType === 'scavenge' ? 'selected' : ''}>Zbieractwo</option>
-                <option value="loot_res" ${savedType === 'loot_res' ? 'selected' : ''}>Farma (Zrabowane)</option>
-            </select>
-            <label style="font-size:10px; font-weight:bold; display:block; margin-bottom:2px;">Tagi plemion:</label>
-            <input type="text" id="tcm-ally-input" style="width:95%; padding:3px; margin-bottom:5px;" value="${savedTribes}" placeholder="Tagi (np. ABC XYZ)">
-            <label style="font-size:10px; font-weight:bold; display:block; margin-bottom:2px;">Limit pozycji:</label>
-            <input type="number" id="tcm-limit-input" style="width:95%; padding:3px; margin-bottom:8px;" value="${savedLimit}">
-            <button id="tcm-generate-btn" style="width:100%; padding:5px; background:#1b721b; color:#fff; font-weight:bold; border:1px solid #0f400f; cursor:pointer; margin-bottom:5px;">Generuj Ranking</button>
-            <button id="tcm-reset-btn" style="width:100%; padding:3px; background:#8b0000; color:#fff; font-size:10px; border:1px solid #4a0000; cursor:pointer; margin-bottom:5px;">Resetuj Historię</button>
-            <div style="background:#ccc; width:100%; height:8px; border-radius:3px; overflow:hidden;">
-                <div id="tcm-progress" style="width:0%; height:100%; background:#00a500; transition: width 0.2s;"></div>
-            </div>
-            <textarea id="tcm-ranking-output" style="width:95%; height:120px; margin-top:8px; display:none; font-size:11px;"></textarea>
-            <button id="tcm-copy-btn" style="width:100%; display:none; margin-top:5px; padding:5px; background:#2c638e; color:white; font-weight:bold; border:1px solid #1a3c57; cursor:pointer;">Kopiuj</button>
+            <table class="vis" style="width:100%; margin:0;">
+                <tr>
+                    <th id="tcm-drag-handle" style="cursor:move; user-select:none; display:flex; justify-content:space-between; align-items:center; padding: 5px;">
+                        <span>Ranking Zbiorczy</span>
+                        <span id="tcm-pin-btn" style="cursor:pointer; opacity:${savedPos ? '1' : '0.4'}; font-size:14px; margin-left:10px;" title="Przypnij">📌</span>
+                    </th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; text-align: center;">
+                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Typ rankingu:</label>
+                        <select id="tcm-type-select" style="width:100%; padding:3px; margin-bottom:5px; box-sizing: border-box;">
+                            <option value="scavenge" ${savedType === 'scavenge' ? 'selected' : ''}>Zbieractwo</option>
+                            <option value="loot_res" ${savedType === 'loot_res' ? 'selected' : ''}>Farma (Zrabowane)</option>
+                        </select>
+                        
+                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Tagi plemion:</label>
+                        <input type="text" id="tcm-ally-input" style="width:100%; padding:3px; margin-bottom:5px; box-sizing: border-box;" value="${savedTribes}" placeholder="np. ABC XYZ">
+                        
+                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Limit pozycji:</label>
+                        <input type="number" id="tcm-limit-input" style="width:100%; padding:3px; margin-bottom:10px; box-sizing: border-box;" value="${savedLimit}">
+                        
+                        <button id="tcm-generate-btn" class="btn" style="width:100%; margin-bottom:5px;">Generuj Ranking</button>
+                        <button id="tcm-reset-btn" class="btn btn-cancel" style="width:100%; margin-bottom:5px;">Resetuj Historię</button>
+                        
+                        <div style="background:#e3d5b3; border: 1px inset #7d510f; width:100%; height:10px; margin-top:5px; box-sizing: border-box;">
+                            <div id="tcm-progress" style="width:0%; height:100%; background:green; transition: width 0.2s;"></div>
+                        </div>
+                        
+                        <textarea id="tcm-ranking-output" style="width:100%; height:120px; margin-top:10px; display:none; font-size:11px; box-sizing: border-box;"></textarea>
+                        <button id="tcm-copy-btn" class="btn" style="width:100%; display:none; margin-top:5px;">Kopiuj</button>
+                    </td>
+                </tr>
+            </table>
         `;
         document.body.appendChild(ui);
 
@@ -73,7 +85,7 @@
             const output = document.getElementById('tcm-ranking-output');
             output.select();
             document.execCommand('copy');
-            alert('Skopiowano!');
+            alert('Skopiowano pomyślnie!');
         });
     }
 
@@ -91,11 +103,16 @@
             startY = clientY;
             initialX = ui.offsetLeft;
             initialY = ui.offsetTop;
+            
+            // Remove transform if we start dragging to avoid coordinate jumping
+            if (ui.style.transform) {
+                ui.style.transform = '';
+            }
         };
 
         const onDrag = (e) => {
             if (!isDragging) return;
-            e.preventDefault();
+            e.preventDefault(); 
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
             let dx = clientX - startX;
@@ -119,9 +136,11 @@
             if (saved) {
                 localStorage.removeItem('TCM_Ranking_Pos');
                 pinBtn.style.opacity = '0.4';
+                alert('Pozycja odpięta.');
             } else {
                 localStorage.setItem('TCM_Ranking_Pos', JSON.stringify({top: ui.style.top, left: ui.style.left}));
                 pinBtn.style.opacity = '1';
+                alert('Pozycja przypięta pomyślnie!');
             }
         });
     }
@@ -140,6 +159,12 @@
         tribes.forEach((t, i) => tribeColors[t] = PREDEFINED_COLORS[i % PREDEFINED_COLORS.length]);
 
         const progress = document.getElementById('tcm-progress');
+        const outputBtn = document.getElementById('tcm-copy-btn');
+        const outputArea = document.getElementById('tcm-ranking-output');
+        
+        outputBtn.style.display = 'none';
+        outputArea.style.display = 'none';
+
         let data = [];
         const histKey = `TCM_Hist_${game_data.world}_${rankingType}`;
         let hist = JSON.parse(localStorage.getItem(histKey)) || {};
@@ -150,7 +175,9 @@
             progress.style.width = Math.round((i / totalSteps) * 100) + '%';
             
             try {
-                let res = await fetch(`game.php?village=${game_data.village.id}&screen=ranking&mode=in_a_day&offset=${i * 25}&type=${rankingType}`);
+                let res = await fetch(`game.php?screen=ranking&mode=in_a_day&offset=${i * 25}&type=${rankingType}`);
+                if (!res.ok) throw new Error("Network response was not ok");
+                
                 let text = await res.text();
                 let doc = new DOMParser().parseFromString(text, "text/html");
                 let table = doc.querySelector(".vis.ranking-table") || doc.querySelector("#in_a_day_ranking_table");
@@ -162,7 +189,10 @@
                     if (tds.length < 5) continue;
                     
                     let globalRank = parseInt(tds[0].innerText);
-                    if (globalRank > limit) break;
+                    if (globalRank > limit) {
+                        i = totalSteps; // Force exit outer loop
+                        break; 
+                    }
                     
                     let name = tds[1].innerText.trim();
                     let tribe = tds[2].innerText.trim();
@@ -174,14 +204,17 @@
                         newHist[name] = globalRank;
                     }
                 }
-            } catch (e) { break; }
+            } catch (e) {
+                console.warn("Wystąpił błąd podczas pobierania danych:", e);
+                break; 
+            }
         }
 
         const currentDate = new Date().toLocaleDateString('pl-PL');
         const rankingTitle = rankingType === 'scavenge' ? 'Ranking Zbieractwa' : 'Ranking Farmy';
         let legend = tribes.map(t => `[color=${tribeColors[t]}]■[/color] [ally]${t}[/ally]`).join(' ');
         
-        let bb = `[b]${rankingTitle} - ${currentDate}[/b]\n\nLegenda: ${legend}\n\n[spoiler=Ranking]\n[table]\n[**]LP[||]Global[||]Gracz[||]Plemie[||]Wynik[||]Zmiana[||]Data[/**]\n`;
+        let bb = `[b]${rankingTitle} - ${currentDate}[/b]\n\nLegenda: ${legend}\n\n[spoiler=Ranking]\n[table]\n[**]LP[||]Global[||]Gracz[||]Plemię[||]Wynik[||]Zmiana[||]Data[/**]\n`;
 
         data.forEach((p, idx) => {
             let oldRank = hist[p.name];
@@ -200,12 +233,12 @@
         });
         bb += `[/table]\n[/spoiler]`;
 
-        document.getElementById('tcm-ranking-output').value = bb;
-        document.getElementById('tcm-ranking-output').style.display = 'block';
-        document.getElementById('tcm-copy-btn').style.display = 'block';
+        outputArea.value = bb;
+        outputArea.style.display = 'block';
+        outputBtn.style.display = 'block';
         progress.style.width = '100%';
         
-        localStorage.setItem(histKey, JSON.stringify(newHist));
+        localStorage.setItem(histKey, JSON.stringify(Object.assign({}, hist, newHist)));
     }
 
     setInterval(() => { if (typeof game_data !== 'undefined' && document.body) injectUI(); }, 1000);
