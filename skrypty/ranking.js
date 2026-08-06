@@ -17,9 +17,74 @@
         '#800000', '#000080', '#808000', '#800080', '#008080'
     ];
 
+    function injectStyles() {
+        if (document.getElementById('tcm-ranking-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'tcm-ranking-styles';
+        style.innerHTML = `
+            #tcm-ranking-ui {
+                position: fixed; z-index: 999999; width: 260px;
+                background-color: #36393f !important;
+                border: 2px solid #3e4147 !important;
+                border-radius: 4px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+                font-family: Verdana, Arial, sans-serif;
+                color: white !important;
+                touch-action: none;
+            }
+            #tcm-ranking-header {
+                background-color: #202225 !important;
+                color: #ffffdf !important;
+                padding: 8px; font-weight: bold; font-size: 12px;
+                border-bottom: 2px solid #3e4147 !important;
+                cursor: move; user-select: none;
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            .tcm-label {
+                font-weight: bold; display: block; margin-bottom: 4px; font-size: 11px; color: #ffffdf !important;
+            }
+            .tcm-input {
+                background-color: #32353b !important;
+                color: #ffffdf !important;
+                border: 1px solid #3e4147 !important;
+                padding: 6px; width: 100%; box-sizing: border-box;
+                margin-bottom: 10px; border-radius: 3px; outline: none;
+            }
+            .tcm-btn {
+                background-image: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important;
+                color: white !important;
+                border: 1px solid #3e4147 !important;
+                border-radius: 3px; cursor: pointer; padding: 6px;
+                font-weight: bold; width: 100%; margin-bottom: 6px;
+                text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+            }
+            .tcm-btn:hover { background-image: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
+            .tcm-btn-green {
+                background-image: linear-gradient(#2ecc71 0%, #27ae60 100%) !important;
+                border: 1px solid #1e8449 !important;
+                font-size: 12px; padding: 8px;
+            }
+            .tcm-btn-green:hover { background-image: linear-gradient(#27ae60 0%, #2ecc71 100%) !important; }
+            .tcm-btn-red {
+                background-image: linear-gradient(#e74c3c 0%, #c0392b 100%) !important;
+                border: 1px solid #922b21 !important;
+                font-size: 10px;
+            }
+            .tcm-btn-red:hover { background-image: linear-gradient(#c0392b 0%, #e74c3c 100%) !important; }
+            #tcm-pin-btn {
+                cursor: pointer; font-size: 14px; padding: 2px 5px;
+                background: rgba(0,0,0,0.2); border-radius: 3px; border: 1px solid transparent;
+            }
+            #tcm-pin-btn:active { background: rgba(0,0,0,0.5); }
+        `;
+        document.head.appendChild(style);
+    }
+
     function injectUI() {
         if (document.getElementById('tcm-ranking-ui')) return;
         if (!window.location.href.includes('screen=ranking') || !window.location.href.includes('mode=in_a_day')) return;
+
+        injectStyles();
 
         const savedTribes = localStorage.getItem('TCM_Saved_Tribes') || '';
         const savedLimit = localStorage.getItem('TCM_Saved_Limit') || '1200';
@@ -29,45 +94,41 @@
         const ui = document.createElement('div');
         ui.id = 'tcm-ranking-ui';
         
-        let initialTop = savedPos ? savedPos.top : '10px';
-        let initialLeft = savedPos ? savedPos.left : '50%';
+        // Zabezpieczenie przed przeskakiwaniem (obliczanie precyzyjnego pozycjonowania od razu)
+        let initialTop = savedPos ? savedPos.top : '50px';
+        let initialLeft = savedPos ? savedPos.left : ((window.innerWidth / 2) - 130) + 'px';
         
-        ui.style.cssText = `position:fixed; top:${initialTop}; left:${initialLeft}; ${!savedPos ? 'transform:translateX(-50%);' : ''} width:260px; z-index:999999; box-shadow: rgba(0, 0, 0, 0.7) 2px 2px 10px;`;
+        ui.style.top = initialTop;
+        ui.style.left = initialLeft;
         
         ui.innerHTML = `
-            <table class="vis" style="width:100%; margin:0;">
-                <tr>
-                    <th id="tcm-drag-handle" style="cursor:move; user-select:none; display:flex; justify-content:space-between; align-items:center; padding: 5px;">
-                        <span>Ranking Zbiorczy</span>
-                        <span id="tcm-pin-btn" style="cursor:pointer; opacity:${savedPos ? '1' : '0.4'}; font-size:14px; margin-left:10px;" title="Przypnij">📌</span>
-                    </th>
-                </tr>
-                <tr>
-                    <td style="padding: 10px; text-align: center;">
-                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Typ rankingu:</label>
-                        <select id="tcm-type-select" style="width:100%; padding:3px; margin-bottom:5px; box-sizing: border-box;">
-                            <option value="scavenge" ${savedType === 'scavenge' ? 'selected' : ''}>Zbieractwo</option>
-                            <option value="loot_res" ${savedType === 'loot_res' ? 'selected' : ''}>Farma (Zrabowane)</option>
-                        </select>
-                        
-                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Tagi plemion:</label>
-                        <input type="text" id="tcm-ally-input" style="width:100%; padding:3px; margin-bottom:5px; box-sizing: border-box;" value="${savedTribes}" placeholder="np. ABC XYZ">
-                        
-                        <label style="font-weight:bold; display:block; margin-bottom:2px; font-size:11px;">Limit pozycji:</label>
-                        <input type="number" id="tcm-limit-input" style="width:100%; padding:3px; margin-bottom:10px; box-sizing: border-box;" value="${savedLimit}">
-                        
-                        <button id="tcm-generate-btn" class="btn" style="width:100%; margin-bottom:5px;">Generuj Ranking</button>
-                        <button id="tcm-reset-btn" class="btn btn-cancel" style="width:100%; margin-bottom:5px;">Resetuj Historię</button>
-                        
-                        <div style="background:#e3d5b3; border: 1px inset #7d510f; width:100%; height:10px; margin-top:5px; box-sizing: border-box;">
-                            <div id="tcm-progress" style="width:0%; height:100%; background:green; transition: width 0.2s;"></div>
-                        </div>
-                        
-                        <textarea id="tcm-ranking-output" style="width:100%; height:120px; margin-top:10px; display:none; font-size:11px; box-sizing: border-box;"></textarea>
-                        <button id="tcm-copy-btn" class="btn" style="width:100%; display:none; margin-top:5px;">Kopiuj</button>
-                    </td>
-                </tr>
-            </table>
+            <div id="tcm-ranking-header">
+                <span>Ranking Zbiorczy</span>
+                <span id="tcm-pin-btn" style="opacity:${savedPos ? '1' : '0.4'};" title="Przypnij">📌</span>
+            </div>
+            <div style="padding: 10px;">
+                <label class="tcm-label">Typ rankingu:</label>
+                <select id="tcm-type-select" class="tcm-input">
+                    <option value="scavenge" ${savedType === 'scavenge' ? 'selected' : ''}>Zbieractwo</option>
+                    <option value="loot_res" ${savedType === 'loot_res' ? 'selected' : ''}>Farma (Zrabowane)</option>
+                </select>
+                
+                <label class="tcm-label">Tagi plemion:</label>
+                <input type="text" id="tcm-ally-input" class="tcm-input" value="${savedTribes}" placeholder="np. ABC XYZ">
+                
+                <label class="tcm-label">Limit pozycji:</label>
+                <input type="number" id="tcm-limit-input" class="tcm-input" value="${savedLimit}">
+                
+                <button id="tcm-generate-btn" class="tcm-btn tcm-btn-green">Generuj Ranking</button>
+                <button id="tcm-reset-btn" class="tcm-btn tcm-btn-red">Resetuj Historię</button>
+                
+                <div style="background:#202225; border: 1px solid #3e4147; width:100%; height:12px; margin-top:8px; border-radius:3px; overflow:hidden;">
+                    <div id="tcm-progress" style="width:0%; height:100%; background: linear-gradient(90deg, #2ecc71, #27ae60); transition: width 0.2s;"></div>
+                </div>
+                
+                <textarea id="tcm-ranking-output" class="tcm-input" style="height:120px; margin-top:10px; display:none; resize:none;"></textarea>
+                <button id="tcm-copy-btn" class="tcm-btn" style="display:none; background-image: linear-gradient(#3498db 0%, #2980b9 100%) !important;">Kopiuj do schowka</button>
+            </div>
         `;
         document.body.appendChild(ui);
 
@@ -90,7 +151,7 @@
     }
 
     function setupDraggableAndPin(ui) {
-        const handle = document.getElementById('tcm-drag-handle');
+        const handle = document.getElementById('tcm-ranking-header');
         const pinBtn = document.getElementById('tcm-pin-btn');
         let isDragging = false, startX, startY, initialX, initialY;
 
@@ -103,16 +164,11 @@
             startY = clientY;
             initialX = ui.offsetLeft;
             initialY = ui.offsetTop;
-            
-            // Remove transform if we start dragging to avoid coordinate jumping
-            if (ui.style.transform) {
-                ui.style.transform = '';
-            }
         };
 
         const onDrag = (e) => {
             if (!isDragging) return;
-            e.preventDefault(); 
+            e.preventDefault(); // Blokuje scrollowanie strony na telefonie
             let clientX = e.touches ? e.touches[0].clientX : e.clientX;
             let clientY = e.touches ? e.touches[0].clientY : e.clientY;
             let dx = clientX - startX;
@@ -136,11 +192,11 @@
             if (saved) {
                 localStorage.removeItem('TCM_Ranking_Pos');
                 pinBtn.style.opacity = '0.4';
-                alert('Pozycja odpięta.');
+                pinBtn.style.border = '1px solid transparent';
             } else {
                 localStorage.setItem('TCM_Ranking_Pos', JSON.stringify({top: ui.style.top, left: ui.style.left}));
                 pinBtn.style.opacity = '1';
-                alert('Pozycja przypięta pomyślnie!');
+                pinBtn.style.border = '1px solid #2ecc71';
             }
         });
     }
@@ -176,7 +232,7 @@
             
             try {
                 let res = await fetch(`game.php?screen=ranking&mode=in_a_day&offset=${i * 25}&type=${rankingType}`);
-                if (!res.ok) throw new Error("Network response was not ok");
+                if (!res.ok) throw new Error("Network error");
                 
                 let text = await res.text();
                 let doc = new DOMParser().parseFromString(text, "text/html");
@@ -190,7 +246,7 @@
                     
                     let globalRank = parseInt(tds[0].innerText);
                     if (globalRank > limit) {
-                        i = totalSteps; // Force exit outer loop
+                        i = totalSteps;
                         break; 
                     }
                     
@@ -205,7 +261,7 @@
                     }
                 }
             } catch (e) {
-                console.warn("Wystąpił błąd podczas pobierania danych:", e);
+                console.warn("Wystąpił błąd:", e);
                 break; 
             }
         }
