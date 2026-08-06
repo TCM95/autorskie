@@ -4,13 +4,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
-    // Przycisk otwierający w lewym górnym rogu
     const opener = document.createElement('div');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none; display: block;">`;
     document.body.appendChild(opener);
 
-    // Główny panel - pionowy słupek
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
 
@@ -18,7 +16,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     header.id = 'tw-script-panel-header';
     
     const titleSpan = document.createElement('span');
-    titleSpan.innerText = 'TCM';
+    titleSpan.innerText = 'Menu';
     
     const controls = document.createElement('div');
     controls.style.display = 'flex';
@@ -58,16 +56,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     header.appendChild(controls);
     panel.appendChild(header);
 
-    // Pionowy pasek z kategoriami
     const categoriesBar = document.createElement('div');
     categoriesBar.id = 'tw-categories-bar';
 
-    // Karta obszaru skryptów rozwijana po prawej stronie
     const contentArea = document.createElement('div');
     contentArea.id = 'tw-content-area';
 
+    const contentInner = document.createElement('div');
+    contentInner.className = 'tw-content-inner';
+    contentArea.appendChild(contentInner);
+
     function renderScripts() {
-        contentArea.innerHTML = '';
+        contentInner.innerHTML = '';
         const state = callbacks.getScriptsState();
         let filtered = scriptsArray.filter(s => s.id !== 'ciemny_motyw' && (s.category || "Ogólne") === currentCategory);
 
@@ -75,7 +75,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'tw-empty-msg';
             emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
-            contentArea.appendChild(emptyMsg);
+            contentInner.appendChild(emptyMsg);
             return;
         }
 
@@ -115,7 +115,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             infoIcon.appendChild(tooltip);
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
-            contentArea.appendChild(item);
+            contentInner.appendChild(item);
         });
     }
 
@@ -125,7 +125,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.innerText = cat;
         tab.onclick = () => {
             if (currentCategory === cat) {
-                // Po ponownym kliknięciu w tę samą kategorię – zwijamy kartę boczną
                 currentCategory = null;
                 tab.classList.remove('active');
                 contentArea.style.setProperty('display', 'none', 'important');
@@ -134,7 +133,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 tab.classList.add('active');
                 currentCategory = cat;
                 renderScripts();
-                contentArea.style.setProperty('display', 'grid', 'important');
+                contentArea.style.setProperty('display', 'block', 'important');
             }
         };
         categoriesBar.appendChild(tab);
@@ -143,7 +142,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
 
-    // Kliknięcie w ikonę główną włącza/wyłącza pionowy słupek
     opener.onclick = () => { 
         if (panel.style.display === 'none' || !panel.style.display) {
             panel.style.setProperty('display', 'flex', 'important');
@@ -154,7 +152,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // Drag and drop dla pionowego słupka
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     header.onmousedown = header.ontouchstart = dragStart;
 
