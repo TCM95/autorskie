@@ -1,4 +1,4 @@
-/* Wyłączenie niebieskiego obramowania na telefonach */
+/* Resetowanie obramowań i podświetleń mobilnych */
 #tw-script-panel button,
 #tw-script-panel div,
 #tw-panel-opener {
@@ -26,7 +26,7 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
 }
 
-/* Główny słupek */
+/* Główny słupek menu */
 #tw-script-panel {
     position: fixed !important;
     top: 40px !important;
@@ -62,6 +62,7 @@
     align-items: center !important;
     cursor: move !important;
     user-select: none !important;
+    touch-action: none !important;
     border-bottom: 1px solid #3c2a17 !important;
 }
 
@@ -84,7 +85,7 @@
     gap: 4px !important;
 }
 
-/* Przyciski zakładek (Plemionowy ciemny brąz) */
+/* Przyciski zakładek */
 .tw-tab {
     cursor: pointer !important;
     font-size: 11px !important;
@@ -106,7 +107,7 @@
     border-color: #3b0909 !important;
 }
 
-/* Wysuwany panel boczny ze skryptami */
+/* Wysuwany panel ze skryptami */
 #tw-content-area {
     display: none;
     position: absolute !important;
@@ -131,7 +132,7 @@
     background: #fff8eb !important;
 }
 
-/* Pojedynczy wiersz skryptu */
+/* Wiersz ze skryptem */
 .tw-script-item {
     background: #fdf5e6 !important;
     border: 1px solid #d4b584 !important;
@@ -186,7 +187,7 @@
     color: #f4e4bc !important;
 }
 
-/* Globalny dymek informacyjny */
+/* Dymek tooltip */
 #tw-global-tooltip {
     background: #2b2b2b !important;
     color: #ffffff !important;
@@ -200,9 +201,38 @@
     z-index: 999999999 !important;
 }
 
-/* NARZUCANIE STYLI ZEWNĘTRZNYM OKIENKOM SKRYPTÓW W GRZE */
-div[id*="script"], div[class*="script"], .popup_box {
-    background-color: #fff8eb !important;
+/* =========================================================
+   Narzucanie spójnego wyglądu zewnętrznym skryptom w grze
+   ========================================================= */
+
+/* Dedykowane kontenery Twoich skryptów */
+#friend-manager-ui,
+#balanser-container,
+#results,
+div[id*="-ui"],
+div[id*="-container"] {
+    background: #f4e4bc !important;
     border: 2px solid #7d5e3c !important;
     color: #333 !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6) !important;
+}
+
+/* Nagłówki zewnętrznych skryptów */
+#fm-header,
+div[id*="-header"] {
+    background: linear-gradient(to bottom, #7d5e3c 0%, #5a4128 100%) !important;
+    color: #fff !important;
+    border-bottom: 2px solid #3c2a17 !important;
+}
+
+/* Przyciski w zewnętrznych skryptach */
+.fm-btn,
+div[id*="-container"] button,
+#friend-manager-ui button {
+    background: linear-gradient(to bottom, #6f4e2b 0%, #4a331a 100%) !important;
+    color: #f4e4bc !important;
+    border: 1px solid #312110 !important;
+    border-radius: 3px !important;
+    font-weight: bold !important;
 }
