@@ -11,8 +11,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
-    // Domyślnie ukryty poprzez inline style override (nie gryzie się z flex po otwarciu)
-    panel.style.display = 'none'; 
+    // Usuwamy domyślny inline display, aby styl z pliku style.css w pełni kontrolował flex, 
+    // a ukrywaniem sterujemy przez ukrycie elementu w inny sposób lub nadpisanie display: none na start.
+    panel.style.display = 'none';
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
@@ -148,9 +149,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panelBody.appendChild(contentArea);
     panel.appendChild(panelBody);
 
-    // Poprawne przełączanie widoczności z zachowaniem flexa z CSS
+    // Czyste przełączanie oparte o wymuszenie poprawnego display z uwzględnieniem stylów plikowych
     opener.onclick = () => { 
-        panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'flex' : 'none'; 
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.setProperty('display', 'flex', 'important');
+        } else {
+            panel.style.setProperty('display', 'none', 'important');
+        }
     };
 
     if (isPinned) {
