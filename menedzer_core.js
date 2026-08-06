@@ -5,7 +5,7 @@
     const UI_JS = ['ui/panel.js'];
     const UI_CSS_URL = `${BASE_URL}style.css`;
     
-    const CATEGORIES = ["Ogólne", "Atak/obrona", "Farma/zbieractwo", "Budowa/rekrutacja", "Mapa"];
+    const CATEGORIES = ["Ogólne", "Atak/obrona", "Farma/zbieractwo", "Budowa/rekrutacja", "Surowce", "Mapa"];
     const STORAGE_KEY = 'tw_scripts_state';
 
     function getScriptsState() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
