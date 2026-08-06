@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Wybijak_Monet_TCM - Shinko Theme
+// @name         Wybijak_Monet
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=overview_villages*
