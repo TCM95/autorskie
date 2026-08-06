@@ -15,6 +15,18 @@
     const parentThingie = document.getElementById("inner-border");
     if (!parentThingie) return;
 
+    // Wstrzyknięcie dedykowanych stylów Shinko
+    const style = document.createElement('style');
+    style.textContent = `
+        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; font-size: 11px; }
+        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 6px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: move; user-select: none; border-radius: 3px 3px 0 0; }
+        .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 4px 8px; text-shadow: 1px 1px 2px black; }
+        .tcm-shinko-btn:hover { background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
+        .tcm-shinko-input { background-color: #202225 !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; padding: 4px !important; box-sizing: border-box; }
+        .tcm-shinko-inner { background-color: #2f3136; border: 1px solid #3e4147; padding: 6px; border-radius: 3px; margin-bottom: 6px; }
+    `;
+    document.head.appendChild(style);
+
     const saveToStorage = (key, val) => localStorage.setItem('TCM_Etykiety_' + key, val);
     const getFromStorage = (key) => localStorage.getItem('TCM_Etykiety_' + key);
 
@@ -24,13 +36,12 @@
 
     const container = document.createElement("div");
     container.id = "tcm-draggable-ui";
+    container.className = "tcm-shinko-panel";
     
     container.style = `position: ${isPinned ? 'fixed' : 'relative'}; 
                        top: ${isPinned ? initTop : '0'}; 
                        left: ${isPinned ? initLeft : '0'}; 
-                       z-index: 9999; background: #e3d5b8; border: 2px solid #7d510f; 
-                       padding: 8px; margin: 10px 0; border-radius: 5px; 
-                       box-shadow: 2px 2px 5px rgba(0,0,0,0.5); font-size: 11px; color: #000; 
+                       z-index: 9999; padding: 8px; margin: 10px 0; 
                        width: 320px; max-width: 95vw;`;
     
     if(isPinned) {
@@ -41,11 +52,12 @@
 
     const header = document.createElement("div");
     header.id = "tcm-drag-handle";
-    header.style = "display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #7d510f; padding-bottom: 5px; margin-bottom: 8px; cursor: move; background: #cbb58c; padding: 4px; border-radius: 3px;";
+    header.className = "tcm-shinko-header";
+    header.style.marginBottom = "8px";
     
     header.innerHTML = `
-        <b style="padding-left: 5px; font-size: 12px;">TCM RENAMER (Przeciągnij)</b>
-        <button class="btn" id="tcm-pin-btn" style="font-size: 12px; padding: 2px 6px; background: ${isPinned ? '#214d21' : '#6b4209'}; color: white; cursor:pointer;">${isPinned ? '📌 Odepnij' : '📌 Przypnij'}</button>
+        <b style="padding-left: 5px; font-size: 12px;">TCM RENAMER</b>
+        <button class="tcm-shinko-btn" id="tcm-pin-btn" style="font-size: 12px; padding: 2px 6px; opacity: ${isPinned ? '1' : '0.4'};">${isPinned ? '📌 Odepnij' : '📌 Przypnij'}</button>
     `;
     container.appendChild(header);
 
@@ -121,42 +133,45 @@
     const selectPanel = document.createElement("div");
     selectPanel.style = "display: flex; gap: 4px; justify-content: center;";
     selectPanel.innerHTML = `
-        <button class="btn" id="tcm-select-all" style="flex:1; font-size: 10px;">ZAZNACZ WSZYSTKIE</button>
-        <button class="btn" id="tcm-select-none" style="flex:1; font-size: 10px;">ODZNACZ WSZYSTKIE</button>
+        <button class="tcm-shinko-btn" id="tcm-select-all" style="flex:1; font-size: 10px;">ZAZNACZ WSZYSTKIE</button>
+        <button class="tcm-shinko-btn" id="tcm-select-none" style="flex:1; font-size: 10px;">ODZNACZ WSZYSTKIE</button>
     `;
     controlPanel.appendChild(selectPanel);
 
     // PANEL SORTOWANIA
     const sortRow = document.createElement("div");
-    sortRow.style = "display: flex; flex-direction: column; gap: 5px; border: 1px solid #a3753a; padding: 4px; background: #ebdcb9;";
+    sortRow.className = "tcm-shinko-inner";
+    sortRow.style.display = "flex";
+    sortRow.style.flexDirection = "column";
+    sortRow.style.gap = "5px";
     sortRow.innerHTML = `
         <div style="display: flex; gap: 5px; align-items: center;">
-            <span style="font-weight: bold; font-size: 10px; width: 85px;">Wioska Start (X|Y):</span>
-            <input type="text" id="tcm-sort-start-coords" placeholder="np. 500|500" value="${getFromStorage('startCoords') || ''}" style="flex: 1; padding: 2px; font-size: 10px; text-align: center;">
+            <span style="font-weight: bold; font-size: 10px; width: 85px; color: #ffffdf;">Wioska Start (X|Y):</span>
+            <input type="text" id="tcm-sort-start-coords" class="tcm-shinko-input" placeholder="np. 500|500" value="${getFromStorage('startCoords') || ''}" style="flex: 1; font-size: 10px; text-align: center;">
         </div>
         <div style="display: flex; gap: 5px; align-items: center;">
-            <span style="font-weight: bold; font-size: 10px; width: 85px;">Kierunek fali:</span>
-            <select id="tcm-sort-type" class="btn" style="flex: 1; height: 22px; font-size: 10px;">
+            <span style="font-weight: bold; font-size: 10px; width: 85px; color: #ffffdf;">Kierunek fali:</span>
+            <select id="tcm-sort-type" class="tcm-shinko-input" style="flex: 1; height: 24px; font-size: 10px; padding: 2px !important;">
                 <option value="dist">Promień (Najbliższe od startu)</option>
                 <option value="ltr">Od Startu -> w Prawo (Wschód)</option>
                 <option value="rtl">Od Startu -> w Lewo (Zachód)</option>
                 <option value="ttb">Od Startu -> w Dół (Południe)</option>
             </select>
         </div>
-        <button id="tcm-apply-sort" class="btn" style="background: #4a2c06; color: white; font-size: 10px; width: 100%;">SORTUJ OD WIOSKI STARTOWEJ</button>
+        <button id="tcm-apply-sort" class="tcm-shinko-btn" style="font-size: 10px; width: 100%;">SORTUJ OD WIOSKI STARTOWEJ</button>
     `;
     controlPanel.appendChild(sortRow);
 
     const smartPanel = document.createElement("div");
-    smartPanel.style = "border: 1px solid #a3753a; padding: 5px; background: #ebdcb9;";
+    smartPanel.className = "tcm-shinko-inner";
     controlPanel.appendChild(smartPanel);
 
     const smartRow1 = document.createElement("div");
     smartRow1.style = "display: flex; gap: 5px; align-items: center; margin-bottom: 5px;";
     smartRow1.innerHTML = `
-        <span style="font-weight: bold; width: 40px;">Nazwa:</span>
-        <input type="text" id="tcm-base-name" placeholder="np. Xxx-x" value="${getFromStorage('baseName') || ''}" style="flex: 1; padding: 2px; font-size: 11px;">
-        <select id="tcm-pos" class="btn" style="height: 22px; font-size: 10px;">
+        <span style="font-weight: bold; width: 40px; color: #ffffdf;">Nazwa:</span>
+        <input type="text" id="tcm-base-name" class="tcm-shinko-input" placeholder="np. Xxx-x" value="${getFromStorage('baseName') || ''}" style="flex: 1; font-size: 11px;">
+        <select id="tcm-pos" class="tcm-shinko-input" style="height: 24px; font-size: 10px; padding: 2px !important;">
             <option value="after" ${getFromStorage('pos') === 'after' ? 'selected' : ''}>[Nazwa] [Numer]</option>
             <option value="before" ${getFromStorage('pos') === 'before' ? 'selected' : ''}>[Numer] [Nazwa]</option>
         </select>
@@ -166,17 +181,17 @@
     const smartRow2 = document.createElement("div");
     smartRow2.style = "display: flex; gap: 3px; align-items: center;";
     smartRow2.innerHTML = `
-        <span style="font-weight: bold; width: 40px;">Numer:</span>
-        <input type="text" id="tcm-num-pre" placeholder="[" value="${getFromStorage('numPre') || ''}" style="width: 25px; padding: 2px; text-align:center;">
-        <input type="text" id="tcm-start-num" placeholder="01" value="${getFromStorage('startNum') || ''}" style="width: 35px; padding: 2px; text-align: center;">
-        <input type="text" id="tcm-num-suf" placeholder="]" value="${getFromStorage('numSuf') || ''}" style="width: 25px; padding: 2px; text-align:center;">
-        <button id="tcm-smart-start" class="btn" style="flex: 1; background: #214d21; color: white; font-weight: bold; margin-left: 5px;">NADAJ</button>
+        <span style="font-weight: bold; width: 40px; color: #ffffdf;">Numer:</span>
+        <input type="text" id="tcm-num-pre" class="tcm-shinko-input" placeholder="[" value="${getFromStorage('numPre') || ''}" style="width: 25px; text-align:center;">
+        <input type="text" id="tcm-start-num" class="tcm-shinko-input" placeholder="01" value="${getFromStorage('startNum') || ''}" style="width: 35px; text-align: center;">
+        <input type="text" id="tcm-num-suf" class="tcm-shinko-input" placeholder="]" value="${getFromStorage('numSuf') || ''}" style="width: 25px; text-align:center;">
+        <button id="tcm-smart-start" class="tcm-shinko-btn" style="flex: 1; background: linear-gradient(#2ea043 0%, #238636 100%) !important; margin-left: 5px;">NADAJ</button>
     `;
     smartPanel.appendChild(smartRow2);
 
     const listToggleContainer = document.createElement("div");
-    listToggleContainer.style = "border-top: 1px solid #7d510f; margin-top: 5px; padding-top: 5px;";
-    listToggleContainer.innerHTML = `<button id="tcm-toggle-list" class="btn" style="width: 100%; font-weight: bold; margin-bottom: 5px;">POKAŻ / UKRYJ LISTĘ</button>`;
+    listToggleContainer.style = "border-top: 1px solid #3e4147; margin-top: 5px; padding-top: 5px;";
+    listToggleContainer.innerHTML = `<button id="tcm-toggle-list" class="tcm-shinko-btn" style="width: 100%; margin-bottom: 5px;">POKAŻ / UKRYJ LISTĘ</button>`;
     container.appendChild(listToggleContainer);
 
     const listPanel = document.createElement("div");
@@ -184,8 +199,8 @@
     listToggleContainer.appendChild(listPanel);
 
     listPanel.innerHTML = `
-        <textarea id="tcm-vill-names" rows="4" style="width: 96%; font-family: monospace; font-size: 10px; color: #000;"></textarea>
-        <button id="tcm-start-list" class="btn" style="width: 100%; font-weight: bold; background: #8a2b2b; color: white;">NADAJ Z LISTY</button>
+        <textarea id="tcm-vill-names" class="tcm-shinko-input" rows="4" style="width: 100%; font-family: monospace; font-size: 10px; resize: vertical;"></textarea>
+        <button id="tcm-start-list" class="tcm-shinko-btn" style="width: 100%; background: linear-gradient(#da3633 0%, #b62324 100%) !important;">NADAJ Z LISTY</button>
     `;
 
     const injectChecks = () => {
@@ -196,7 +211,7 @@
                 chk.type = 'checkbox';
                 chk.className = 'tcm-village-check';
                 chk.checked = true;
-                chk.style = "width: 18px; height: 18px; margin-right: 8px; vertical-align: middle; cursor: pointer;";
+                chk.style = "width: 18px; height: 18px; margin-right: 8px; vertical-align: middle; cursor: pointer; accent-color: #2ea043;";
                 renameIcon.parentNode.insertBefore(chk, renameIcon);
             }
         });
@@ -227,7 +242,6 @@
         return match ? { x: parseInt(match[1], 10), y: parseInt(match[2], 10) } : { x: 0, y: 0 };
     };
 
-    // NOWA, PRECYZYJNA LOGIKA SORTOWANIA ZE WSKAZANĄ WIOSKĄ STARTOWĄ
     document.getElementById("tcm-apply-sort").onclick = () => {
         const sortType = document.getElementById("tcm-sort-type").value;
         const startCoordsRaw = document.getElementById("tcm-sort-start-coords").value.trim();
@@ -250,7 +264,6 @@
             const cA = getCoords(a);
             const cB = getCoords(b);
 
-            // Odległość geometryczna od punktu startowego
             const distA = Math.sqrt(Math.pow(cA.x - startX, 2) + Math.pow(cA.y - startY, 2));
             const distB = Math.sqrt(Math.pow(cB.x - startX, 2) + Math.pow(cB.y - startY, 2));
 
@@ -258,21 +271,18 @@
                 return distA - distB;
             } 
             else if (sortType === "ltr") {
-                // Skrypt premiuje wioski leżące po prawej stronie od punktu startowego
                 const vecA = cA.x - startX;
                 const vecB = cB.x - startX;
                 if (vecA !== vecB) return vecA - vecB;
                 return distA - distB;
             } 
             else if (sortType === "rtl") {
-                // Skrypt premiuje wioski leżące po lewej stronie od punktu startowego
                 const vecA = startX - cA.x;
                 const vecB = startX - cB.x;
                 if (vecA !== vecB) return vecA - vecB;
                 return distA - distB;
             } 
             else if (sortType === "ttb") {
-                // Skrypt premiuje wioski leżące w dół od punktu startowego
                 const vecA = cA.y - startY;
                 const vecB = cB.y - startY;
                 if (vecA !== vecB) return vecA - vecB;
@@ -281,11 +291,11 @@
             return 0;
         });
 
-        // Fizyczna zmiana w tabeli DOM
         tableBody.innerHTML = '';
         if(headers) tableBody.appendChild(headers);
         rows.forEach((r, idx) => {
-            r.style.backgroundColor = idx % 2 === 0 ? "#fff5e1" : "#f7e8cc"; // Naprzemienne podświetlenie nowej kolejności
+            r.style.backgroundColor = idx % 2 === 0 ? "#2f3136" : "#202225"; 
+            r.style.color = "#ffffff";
             tableBody.appendChild(r);
         });
         
