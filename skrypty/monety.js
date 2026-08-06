@@ -1,8 +1,9 @@
 // ==UserScript==
-// @name         Wybijak_Monet
+// @name         Wybijak_Monet_TCM - Shinko Theme
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=overview_villages*
+// @match        *://*.plemiona.pl/game.php*screen=snob*
 // @grant        none
 // ==/UserScript==
 
@@ -49,7 +50,6 @@
         const header = document.getElementById('tcm-header-w');
         const pinBtn = document.getElementById('pin-btn-w');
         
-        // Regulacja przezroczystości pinezki na podstawie przypięcia
         pinBtn.style.opacity = uiState.pinned ? '1' : '0.4';
 
         pinBtn.onclick = () => {
@@ -65,21 +65,52 @@
         // Logika aktywacji
         document.getElementById('start-wybijak').onclick = async () => {
             const status = document.getElementById('wybijak-status');
-            const elementyWioski = document.querySelectorAll('span.quickedit-vn[data-id]');
-            const wioski = Array.from(elementyWioski).map(el => el.getAttribute('data-id'));
+            
+            // --- KOMPLEKSOWE ZBIERANIE ID WIOSEK Z RÓŻNYCH WIDOKÓW ---
+            let wioski = [];
+            
+            // 1. Sprawdzamy Przegląd dla graczy z KP (Konto Premium)
+            const spanWiosek = document.querySelectorAll('span.quickedit-vn[data-id]');
+            
+            // 2. Sprawdzamy widok Masowego Wybijania w Pałacu
+            const wierszePalacu = document.querySelectorAll('tr[id^="village_"]');
+            
+            if (spanWiosek.length > 0) {
+                wioski = Array.from(spanWiosek).map(el => el.getAttribute('data-id'));
+            } 
+            else if (wierszePalacu.length > 0) {
+                wioski = Array.from(wierszePalacu).map(tr => tr.id.replace('village_', ''));
+            } 
+            else {
+                // 3. Widok Przeglądu bez KP (wyciąganie ID z linków w głównej tabeli)
+                const tabelaPrzegladu = document.getElementById('production_table') || document.getElementById('combined_table');
+                if (tabelaPrzegladu) {
+                    const linki = tabelaPrzegladu.querySelectorAll('a[href*="village="]');
+                    linki.forEach(a => {
+                        const match = a.href.match(/[?&]village=(\d+)/);
+                        if (match && match[1]) wioski.push(match[1]);
+                    });
+                } 
+                // 4. Pojedynczy widok Pałacu (pobieramy ID obecnej wioski z pamięci gry)
+                else if (window.game_data && window.game_data.village && window.game_data.village.id) {
+                    wioski.push(window.game_data.village.id);
+                }
+            }
+            
+            // Usuwamy duplikaty
+            wioski = [...new Set(wioski)];
             
             if (wioski.length === 0) {
-                status.innerHTML = "Nie znaleziono wiosek!";
+                status.innerHTML = "Nie znaleziono wiosek! Otwórz Pałac lub Przegląd.";
                 status.style.color = "#ff4444";
                 return;
             }
 
             status.style.color = "#ffffdf";
-            const token = game_data.csrf;
+            const token = window.game_data.csrf;
             for (let i = 0; i < wioski.length; i++) {
                 status.innerHTML = `Przetwarzanie: ${i + 1} / ${wioski.length}`;
                 await fetch(`/game.php?village=${wioski[i]}&screen=snob&action=start_auto_minting_session&h=${token}`, { method: 'POST' });
-                // Oryginalny timeout dla odczekania między requestami pozostał bez zmian
                 await new Promise(r => setTimeout(r, 300));
             }
             status.innerHTML = "Gotowe!";
@@ -87,6 +118,5 @@
         };
     };
 
-    // Jednorazowe opóźnienie, aby tabela wiosek zdążyła się załadować w DOM
     setTimeout(stworzUI, 500);
 })();
