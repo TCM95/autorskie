@@ -1,14 +1,16 @@
 // ==UserScript==
 // @name         MAPA-KORDY-HYBRYDA
-// @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  Skanowanie z ekranu + całego świata z przełącznikiem
+// @namespace    https://viayoo.com/
+// @version      1.2
+// @description  Skanowanie z ekranu + całego świata z przełącznikiem (Shinko UI)
 // @author       TCM
 // @match        *.plemiona.pl/game.php?*screen=map*
 // @grant        none
 // ==/UserScript==
 
 (function () {
+    'use strict';
+
     const STORAGE_TAGS = "tcm_v5_tags";
     const STORAGE_PLAYERS = "tcm_v5_players";
     const STORAGE_PTS = "tcm_v5_pts";
@@ -17,12 +19,68 @@
     let set = new Set(JSON.parse(localStorage.getItem(STORAGE_LIST) || "[]"));
     const cleanPoints = (pts) => parseInt(String(pts).replace(/\./g, '')) || 0;
 
+    // Wstrzyknięcie stylów Shinko Theme
+    function injectStyles() {
+        if (document.getElementById('tcm-map-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'tcm-map-styles';
+        style.innerHTML = `
+            #tcm_ui {
+                position: fixed; z-index: 999999; width: 240px;
+                background-color: #36393f !important;
+                border: 2px solid #3e4147 !important;
+                border-radius: 4px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+                font-family: Verdana, Arial, sans-serif;
+                color: white !important;
+                touch-action: none;
+                top: 100px; left: 20px;
+            }
+            #tcm-drag-handle {
+                background-color: #202225 !important;
+                color: #ffffdf !important;
+                padding: 8px; font-weight: bold; font-size: 11px;
+                border-bottom: 2px solid #3e4147 !important;
+                user-select: none;
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            .tcm-input {
+                background-color: #32353b !important;
+                color: #ffffdf !important;
+                border: 1px solid #3e4147 !important;
+                padding: 5px; width: 100%; box-sizing: border-box;
+                margin-bottom: 6px; border-radius: 3px; outline: none; font-size: 10px;
+            }
+            .tcm-btn {
+                background-image: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important;
+                color: white !important;
+                border: 1px solid #3e4147 !important;
+                border-radius: 3px; cursor: pointer; padding: 6px;
+                font-weight: bold; width: 100%; text-shadow: 1px 1px 1px rgba(0,0,0,0.8);
+                font-size: 10px;
+            }
+            .tcm-btn:hover { background-image: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
+            .tcm-btn-green {
+                background-image: linear-gradient(#2ecc71 0%, #27ae60 100%) !important;
+                border: 1px solid #1e8449 !important;
+            }
+            .tcm-btn-red {
+                background-image: linear-gradient(#e74c3c 0%, #c0392b 100%) !important;
+                border: 1px solid #922b21 !important;
+            }
+            #tcm-pin-btn {
+                cursor: pointer; font-size: 13px; padding: 2px 5px;
+                background: rgba(0,0,0,0.2); border-radius: 3px; border: 1px solid transparent;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     const updateButtonText = () => {
         const btn = document.getElementById('tcm_out_btn');
         if (btn) btn.innerText = `LISTA (${set.size})`;
     };
 
-    // TWOJA ORYGINALNA FUNKCJA OZNACZANIA
     const pinFramesToTiles = () => {
         const mini = document.getElementById('minimap');
         if (!mini) return;
@@ -79,7 +137,6 @@
         btn.disabled = true;
 
         if (mode === "screen") {
-            // TWOJA ORYGINALNA LOGIKA SKANOWANIA Z EKRANU
             if (typeof TWMap !== 'undefined' && TWMap.map.pos) {
                 const pos = TWMap.map.pos;
                 const size = TWMap.map.size;
@@ -117,9 +174,8 @@
                 }
             }
         } else if (mode === "global") {
-            // LOGIKA SKANOWANIA CAŁEGO ŚWIATA
             if (tTags.length === 0 && tPlayers.length === 0) {
-                alert("W trybie 'Cały świat' podaj tag plemienia lub gracza! Inaczej skrypt pobierze setki tysięcy wiosek i zawiesi przeglądarkę.");
+                alert("W trybie 'Cały świat' podaj tag plemienia lub gracza!");
                 btn.innerText = "SKANUJ";
                 btn.disabled = false;
                 return;
@@ -181,38 +237,120 @@
         btn.disabled = false;
     };
 
+    function setupDraggableAndPin(ui, initialPinState) {
+        const handle = document.getElementById('tcm-drag-handle');
+        const pinBtn = document.getElementById('tcm-pin-btn');
+        
+        let isPinned = initialPinState;
+        let isDragging = false, startX, startY, initialX, initialY;
+
+        const updatePinVisuals = () => {
+            if (isPinned) {
+                pinBtn.style.opacity = '1';
+                pinBtn.style.border = '1px solid #2ecc71';
+                handle.style.cursor = 'default';
+            } else {
+                pinBtn.style.opacity = '0.4';
+                pinBtn.style.border = '1px solid transparent';
+                handle.style.cursor = 'move';
+            }
+        };
+        updatePinVisuals();
+
+        const startDrag = (e) => {
+            if(e.target === pinBtn) return;
+            if(isPinned) return;
+            
+            isDragging = true;
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startX = clientX;
+            startY = clientY;
+            initialX = ui.offsetLeft;
+            initialY = ui.offsetTop;
+        };
+
+        const onDrag = (e) => {
+            if (!isDragging || isPinned) return;
+            e.preventDefault();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            let dx = clientX - startX;
+            let dy = clientY - startY;
+            ui.style.left = (initialX + dx) + 'px';
+            ui.style.top = (initialY + dy) + 'px';
+        };
+
+        const stopDrag = () => { isDragging = false; };
+
+        handle.addEventListener('mousedown', startDrag);
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+        handle.addEventListener('touchstart', startDrag, {passive: false});
+        document.addEventListener('touchmove', onDrag, {passive: false});
+        document.addEventListener('touchend', stopDrag);
+
+        pinBtn.addEventListener('click', () => {
+            if (isPinned) {
+                localStorage.removeItem('TCM_MapUI_Pos');
+                isPinned = false;
+            } else {
+                localStorage.setItem('TCM_MapUI_Pos', JSON.stringify({top: ui.style.top, left: ui.style.left}));
+                isPinned = true;
+            }
+            updatePinVisuals();
+        });
+    }
+
     const initUI = () => {
-        const anchor = $('#content_value h2').first();
-        if (!anchor.length || $('#tcm_ui').length) return;
+        if ($('#tcm_ui').length) return;
+        injectStyles();
 
         const sTags = localStorage.getItem(STORAGE_TAGS) || "";
         const sPlayers = localStorage.getItem(STORAGE_PLAYERS) || "";
         const sPts = localStorage.getItem(STORAGE_PTS) || "3000";
 
-        anchor.after(`
-            <div id="tcm_ui" style="background:#e3d5b3; border:2px solid #000; margin:10px 0; padding:8px; display:inline-block; width:220px; font-size:10px; border-radius:4px;">
-                <div style="margin-bottom:5px; padding-bottom:5px; border-bottom:1px solid #000;">
-                    <label style="margin-right:8px;"><input type="radio" name="tcm_mode" value="screen" checked> Z ekranu</label>
+        let savedPos = null;
+        try { savedPos = JSON.parse(localStorage.getItem('TCM_MapUI_Pos')); } catch(e) { localStorage.removeItem('TCM_MapUI_Pos'); }
+
+        const ui = document.createElement('div');
+        ui.id = 'tcm_ui';
+        if (savedPos) {
+            ui.style.top = savedPos.top;
+            ui.style.left = savedPos.left;
+        }
+
+        ui.innerHTML = `
+            <div id="tcm-drag-handle">
+                <span>Skaner Mapy</span>
+                <span id="tcm-pin-btn" title="Przypnij/Odepnij">📌</span>
+            </div>
+            <div style="padding: 8px;">
+                <div style="margin-bottom:6px; padding-bottom:5px; border-bottom:1px solid #3e4147; font-size:10px;">
+                    <label style="margin-right:6px;"><input type="radio" name="tcm_mode" value="screen" checked> Z ekranu</label>
                     <label><input type="radio" name="tcm_mode" value="global"> Cały świat</label>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <input type="number" id="tcm_min_pts" value="${sPts}" style="width:50px;" placeholder="Pkt">
-                    <button id="tcm_scan" class="btn" style="background:#214d21; color:#fff; padding:2px 10px;">SKANUJ</button>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px; gap:5px;">
+                    <input type="number" id="tcm_min_pts" class="tcm-input" value="${sPts}" style="width:60px; margin-bottom:0;" placeholder="Pkt">
+                    <button id="tcm_scan" class="tcm-btn tcm-btn-green" style="flex:1;">SKANUJ</button>
                 </div>
-                <input type="text" id="tcm_target_tags" value="${sTags}" placeholder="Tagi (oddziel przecinkiem)" style="width:100%; margin-bottom:5px; box-sizing:border-box;">
-                <input type="text" id="tcm_target_players" value="${sPlayers}" placeholder="Gracze (oddziel przecinkiem)" style="width:100%; margin-bottom:5px; box-sizing:border-box;">
-                <div style="display:flex; gap:5px;">
-                    <button id="tcm_out_btn" class="btn" style="flex:1;">LISTA (${set.size})</button>
-                    <button id="tcm_reset_btn" class="btn" style="background:#800; color:#fff; width:60px;">RESET</button>
+                <input type="text" id="tcm_target_tags" class="tcm-input" value="${sTags}" placeholder="Tagi (oddziel przecinkiem)">
+                <input type="text" id="tcm_target_players" class="tcm-input" value="${sPlayers}" placeholder="Gracze (oddziel przecinkiem)">
+                <div style="display:flex; gap:5px; margin-top:4px;">
+                    <button id="tcm_out_btn" class="tcm-btn" style="flex:1;">LISTA (${set.size})</button>
+                    <button id="tcm_reset_btn" class="tcm-btn tcm-btn-red" style="width:50px;">RESET</button>
                 </div>
-            </div>`);
+            </div>`;
+
+        document.body.appendChild(ui);
+        setupDraggableAndPin(ui, !!savedPos);
 
         $('#tcm_scan').click(scanMap);
         $('#tcm_out_btn').click(() => {
              const out = [...set].join(" ");
-             Dialog.show('tcm_box', `<div style="padding:15px; background:#f4e4bc; border:2px solid #000;">
-                <textarea id="tcm_copy" style="width:100%; height:120px; border:1px solid #000;">${out}</textarea>
-                <button class="btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('tcm_copy').select();document.execCommand('copy');">KOPIUJ</button>
+             Dialog.show('tcm_box', `<div style="padding:15px; background:#36393f; border:2px solid #3e4147; color:#fff;">
+                <textarea id="tcm_copy" class="tcm-input" style="width:100%; height:120px; resize:none;">${out}</textarea>
+                <button class="tcm-btn tcm-btn-green" style="width:100%; margin-top:10px;" onclick="document.getElementById('tcm_copy').select();document.execCommand('copy');">KOPIUJ</button>
              </div>`);
         });
         $('#tcm_reset_btn').click(() => {
