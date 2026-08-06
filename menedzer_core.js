@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Menedżer TCM
 // @namespace    https://viayoo.com/
-// @description  Menedżer skryptów z rozwijanym menu, układem kolumnowym i ikoną danego świata.
+// @description  Menedżer skryptów z rozwijanym menu, układem kolumnowym i poprawnymi dymkami
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php*
 // @grant        none
@@ -15,9 +15,8 @@
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
-    // Nowe połączone kategorie
     const CATEGORIES = ["Ogólne", "Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Surowce", "Mapa"];
-    let currentCategory = null; // Null oznacza, że po włączeniu żaden panel boczny nie jest rozwinięty
+    let currentCategory = null; 
 
     function getScriptsState() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -44,24 +43,67 @@
             console.error("TCM Menedżer: Błąd pobierania pliku style.css", error);
         }
 
-        // Łatka CSS dla układu kolumnowego, toolipów i ukrywania panelu (nie wymaga modyfikacji pliku z GitHuba)
+        // Łatka CSS - Poprawa dymków, z-index i kompaktowego rozmiaru
         const customFix = document.createElement('style');
         customFix.type = 'text/css';
         customFix.innerHTML = `
-            #tw-script-panel-header { z-index: 10; position: relative; }
-            .tw-info-icon { position: relative; }
-            .tw-tooltip { z-index: 999999 !important; white-space: normal; min-width: 180px; }
-            #tw-panel-body { display: flex; align-items: flex-start; }
-            #tw-sidebar { display: flex; flex-direction: column; min-width: 130px; }
+            #tw-script-panel { 
+                width: max-content !important; 
+                height: max-content !important;
+                background: #e3d5b3; /* Tło na wypadek, by ładnie wyglądało przed załadowaniem stylów */
+                border: 2px solid #804000;
+            }
+            #tw-script-panel-header { 
+                z-index: 1 !important; 
+                position: relative; 
+            }
+            #tw-panel-body { 
+                display: flex; 
+                align-items: flex-start; 
+                position: relative;
+            }
+            #tw-sidebar { 
+                display: flex; 
+                flex-direction: column; 
+                min-width: 130px; 
+                z-index: 1 !important; 
+            }
             #tw-content-area { 
                 display: none; 
                 flex-flow: column wrap; 
-                max-height: 220px; /* Wysokość panelu aby wymusić kolumny */
-                overflow-x: auto; 
-                padding-left: 10px;
+                max-height: 220px; /* Wysokość dopasowana do słupka kategorii */
+                align-content: flex-start; /* Zapobiega niepotrzebnemu rozciąganiu w poziomie */
+                overflow: visible !important; /* Pozwala dymkom wyjść poza krawędź! */
+                padding-left: 5px;
                 gap: 5px;
+                z-index: 100 !important; /* Wymuszenie nad nagłówkiem i kategoriami */
+                position: relative;
             }
-            .tw-script-item { margin: 0; min-width: 150px; }
+            .tw-script-item { 
+                margin: 0; 
+                min-width: 140px; 
+                position: relative;
+                z-index: inherit;
+            }
+            .tw-info-icon { 
+                position: relative; 
+                cursor: help;
+            }
+            .tw-tooltip { 
+                z-index: 999999 !important; 
+                white-space: normal; 
+                min-width: 180px; 
+                position: absolute;
+                top: 100%; /* Wyświetla pod ikonką */
+                right: 0; /* Zrównane z prawą krawędzią ikonki */
+                background: #f4e4bc;
+                border: 1px solid #7d510f;
+                padding: 5px;
+                color: #000;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+                font-size: 11px;
+                margin-top: 5px;
+            }
         `;
         document.head.appendChild(customFix);
     }
@@ -97,7 +139,6 @@
         container.innerHTML = '';
         const state = getScriptsState();
         
-        // Filtrowanie i alfabetyczne sortowanie skryptów (A-Z)
         let filtered = scriptsArray.filter(s => {
             if (s.id === 'ciemny_motyw') return false;
             const cat = s.category || "Ogólne";
@@ -144,11 +185,10 @@
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'ⓘ';
 
-            // Dodanie parametru 'screens' do opisu tooltipa
             const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
             const tooltip = document.createElement('div');
             tooltip.className = 'tw-tooltip';
-            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak.'}<br><br><strong>Ekrany (screens):</strong> ${screensInfo}`;
+            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak.'}<br><br><strong>Działa na (screens):</strong> ${screensInfo}`;
 
             infoIcon.appendChild(tooltip);
             item.appendChild(gameBtn);
@@ -163,7 +203,6 @@
         const opener = document.createElement('div');
         opener.id = 'tw-panel-opener';
         
-        // Pobieranie odpowiedniego faviconu z bieżącego świata
         const currentOrigin = window.location.origin;
         opener.innerHTML = `<img src="${currentOrigin}/favicon.ico" style="width: 24px; height: 24px; pointer-events: none;" alt="Favicon">`;
         opener.style.display = 'flex';
@@ -244,7 +283,6 @@
             tab.innerText = cat;
             
             tab.onclick = () => {
-                // Logika rozwijania/ukrywania (Akordeon)
                 if (currentCategory === cat) {
                     currentCategory = null;
                     tab.classList.remove('active');
