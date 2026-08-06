@@ -1,3 +1,4 @@
+
 [
     {
         "id": "ciemny_motyw",
@@ -29,7 +30,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
-        "screens": ["mode=incomings", [overview]]
+        "screens": ["mode=incomings", ["overview"]]
     },
     {
         "id": "tager_wychodzace",
