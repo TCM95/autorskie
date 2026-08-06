@@ -2,7 +2,7 @@
 // @name         etykiety
 // @namespace    https://viayoo.com/
 // @author       TCM
-// @description  Etykiety z panelem i filtrowaniem jednostek w stylu Shinko Theme.
+// @description  Etykiety
 // @match        *://*.plemiona.pl/game.php*screen=overview_villages*mode=incomings*subtype=attacks*
 // @match        *://*.plemiona.pl/game.php*screen=overview_villages*mode=incomings*
 // @grant        none
