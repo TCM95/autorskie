@@ -38,13 +38,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
+    // Płaskie ikony Unicode, które przejmą kolor z CSS
+    const iconDark = '☾';
+    const iconLight = '☼';
+
     const themeBtn = document.createElement('button');
     themeBtn.className = 'tw-header-btn';
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    themeBtn.innerText = isDark ? '🌙' : '☀️';
+    themeBtn.innerText = isDark ? iconDark : iconLight;
     themeBtn.onclick = async () => {
         isDark = !isDark;
-        themeBtn.innerText = isDark ? '🌙' : '☀️';
+        themeBtn.innerText = isDark ? iconDark : iconLight;
         if (darkThemeConfig && callbacks.onToggleTheme) {
             await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
         }
@@ -184,7 +188,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // Dynamiczna i bezbłędna obsługa przeciągania (Mouse & Touch)
+    // --- ULEPSZONA OBSŁUGA PRZECIĄGANIA ---
     let isDragging = false;
     let startX = 0, startY = 0;
     let initialLeft = 0, initialTop = 0;
@@ -205,6 +209,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialLeft = rect.left;
         initialTop = rect.top;
 
+        // Wymuszenie swobodnego pozycjonowania (odwiązanie od marginesów i right/bottom)
+        panel.style.position = 'fixed';
+        panel.style.bottom = 'auto';
+        panel.style.right = 'auto';
+        panel.style.margin = '0';
+        panel.style.transform = 'none'; 
+        
+        // Zabezpieczenie przed uskokiem po zmianie parametrów pozycyjnych
+        panel.style.left = initialLeft + 'px';
+        panel.style.top = initialTop + 'px';
+
         document.addEventListener('mousemove', onDragMove);
         document.addEventListener('touchmove', onDragMove, { passive: false });
         document.addEventListener('mouseup', onDragEnd);
@@ -213,7 +228,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function onDragMove(e) {
         if (!isDragging) return;
-        if (e.cancelable) e.preventDefault(); // Blokada gestów przeglądarki podczas przeciągania
+        if (e.cancelable) e.preventDefault(); // Blokada scrollowania tła podczas przesuwania panelu
 
         const coords = getCoords(e);
         const deltaX = coords.clientX - startX;
