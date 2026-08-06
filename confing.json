@@ -18,7 +18,7 @@
     {
         "id": "etykiety",
         "name": "etykiety",
-        "category": "Etykiety",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
         "description": "Etykiety z filtrami.",
         "screens": ["incomings"]
@@ -26,82 +26,74 @@
     {
         "id": "tager_przychodzace",
         "name": "tager przychodzące",
-        "category": "Obrona",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
-        "screens": []
+        "screens": ["incomings", "info_village"]
     },
     {
         "id": "tager_wychodzace",
-        "name": "tager wychodzące",
-        "category": "Wojsko",
+        "name": "tager wychodzące + filtry",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
-        "description": "Ataki wychodzące.",
-        "screens": []
-    },
-    {
-        "id": "filtry_tag",
-        "name": "Filtry do tagera",
-        "category": "Wojsko",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/filtry_tag.js",
-        "description": "Filtry podpięte pod tagera wychodzące.",
-        "screens": []
+        "description": "Ataki wychodzące oraz filtry do tagera.",
+        "screens": ["commands"]
     },
     {
         "id": "edytor_nazw",
         "name": "edytor nazw",
-        "category": "Zarządzanie",
+        "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek.",
-        "screens": []
+        "screens": ["overview_villages"]
     },
     {
         "id": "poparcie",
         "name": "Pop.",
-        "category": "Statystyki",
+        "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/pop.js",
         "description": "Liczy wzrosty poparcia najpierw trzeba przejrzeć raporty",
-        "screens": []
+        "screens": ["report", "info_village"]
     },
     {
         "id": "pokonani",
         "name": "Profil. Pokonani",
-        "category": "Statystyki",
+        "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js",
         "description": "Pokazuje ranking pokonanych profilu",
-        "screens": []
+        "screens": ["info_player", "info_village"]
     },
     {
         "id": "komendy",
         "name": "Komendy",
-        "category": "Wojsko",
+        "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
         "description": "Udostępnianie komend",
-        "screens": []
+        "screens": ["settings", "info_command"]
     },
     {
         "id": "rank",
         "name": "Ranking",
-        "category": "Statystyki",
+        "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
         "description": "Ranking zbieractwo/farma",
-        "screens": []
+        "screens": ["ranking"]
     },
     {
         "id": "farma",
         "name": "FARMA",
-        "category": "Farma",
+        "category": "Farma/zbieractwo",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
         "description": "Automatyczne wspomaganie farmienia.",
-        "screens": []
+        "screens": ["am_farm"]
     },
     {
         "id": "szablony_wojsk",
         "name": "Szablony wojsk",
-        "category": "Wojsko",
+        "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
         "description": "Zarządzanie szablonami wojsk.",
-        "screens": []
+        "screens": ["accountmanager", "train"]
     },
     {
         "id": "mapa_kordy",
@@ -109,39 +101,39 @@
         "category": "Mapa",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
         "description": "Kopiowanie współrzędnych z mapy.",
-        "screens": []
+        "screens": ["map"]
     },
     {
         "id": "atak_wsparcie",
         "name": "Atak/wsparcie",
-        "category": "Wojsko",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
         "description": "Szybkie przełączanie między atakiem i wsparciem.",
-        "screens": []
+        "screens": ["place"]
     },
     {
         "id": "szablony_budowy",
         "name": "Szablony budowy (MK)",
-        "category": "Budowa",
+        "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
         "description": "Zarządzanie szablonami budowy.",
-        "screens": []
+        "screens": ["memo"]
     },
     {
         "id": "klin_cofka",
         "name": "Klin z cofki",
-        "category": "Wojsko",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
         "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować.",
-        "screens": []
+        "screens": ["place", "info_command"]
     },
     {
         "id": "zbierak_mass",
         "name": "Zbierak mass",
-        "category": "Farma",
+        "category": "Farma/zbieractwo",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
         "description": "Masowe wysyłanie na zbieractwo.",
-        "screens": []
+        "screens": ["scavenge_mass"]
     },
     {
         "id": "podswietlanie_wioski",
@@ -149,6 +141,6 @@
         "category": "Mapa",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
         "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków.",
-        "screens": []
+        "screens": ["map"]
     }
 ]
