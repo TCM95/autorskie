@@ -14,7 +14,7 @@
         "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
         "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet.",
-        "screens": ["snob"]
+        "screens": ["snob"], ["overview_villages"]
     },
     {
         "id": "etykiety",
