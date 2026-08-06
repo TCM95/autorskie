@@ -1,24 +1,23 @@
 // ==UserScript==
 // @name         Menedżer TCM
 // @namespace    https://viayoo.com/
-// @description  Menedżer skryptów do gry Plemiona z podziałem na kategorie i ścisłą weryfikacją ekranów.
+// @description  Menedżer skryptów z rozwijanym menu, układem kolumnowym i ikoną danego świata.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php*
 // @grant        none
-// ==UserScript==
+// ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Poprawione linki do repozytorium "autorskie"
     const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/confing.json'; 
     const CSS_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/style.css';
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
-    // Lista zakładek menu
-    const CATEGORIES = ["Ogólne", "Atak", "Obrona", "Mapa", "Surowce", "Zbieractwo", "Farma", "Etykiety", "Budowa"];
-    let currentCategory = "Ogólne";
+    // Nowe połączone kategorie
+    const CATEGORIES = ["Ogólne", "Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Surowce", "Mapa"];
+    let currentCategory = null; // Null oznacza, że po włączeniu żaden panel boczny nie jest rozwinięty
 
     function getScriptsState() {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -44,6 +43,27 @@
         } catch (error) {
             console.error("TCM Menedżer: Błąd pobierania pliku style.css", error);
         }
+
+        // Łatka CSS dla układu kolumnowego, toolipów i ukrywania panelu (nie wymaga modyfikacji pliku z GitHuba)
+        const customFix = document.createElement('style');
+        customFix.type = 'text/css';
+        customFix.innerHTML = `
+            #tw-script-panel-header { z-index: 10; position: relative; }
+            .tw-info-icon { position: relative; }
+            .tw-tooltip { z-index: 999999 !important; white-space: normal; min-width: 180px; }
+            #tw-panel-body { display: flex; align-items: flex-start; }
+            #tw-sidebar { display: flex; flex-direction: column; min-width: 130px; }
+            #tw-content-area { 
+                display: none; 
+                flex-flow: column wrap; 
+                max-height: 220px; /* Wysokość panelu aby wymusić kolumny */
+                overflow-x: auto; 
+                padding-left: 10px;
+                gap: 5px;
+            }
+            .tw-script-item { margin: 0; min-width: 150px; }
+        `;
+        document.head.appendChild(customFix);
     }
 
     async function toggleDarkTheme(darkScriptUrl, enable) {
@@ -77,16 +97,19 @@
         container.innerHTML = '';
         const state = getScriptsState();
         
-        const filtered = scriptsArray.filter(s => {
+        // Filtrowanie i alfabetyczne sortowanie skryptów (A-Z)
+        let filtered = scriptsArray.filter(s => {
             if (s.id === 'ciemny_motyw') return false;
             const cat = s.category || "Ogólne";
             return cat === currentCategory;
         });
 
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+
         if (filtered.length === 0) {
             const msg = document.createElement('div');
             msg.className = 'tw-empty-msg';
-            msg.innerText = 'Brak skryptów w tej zakładce.';
+            msg.innerText = 'Brak skryptów.';
             container.appendChild(msg);
             return;
         }
@@ -121,9 +144,11 @@
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'ⓘ';
 
+            // Dodanie parametru 'screens' do opisu tooltipa
+            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
             const tooltip = document.createElement('div');
             tooltip.className = 'tw-tooltip';
-            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak opisu.'}`;
+            tooltip.innerHTML = `<strong>Opis:</strong> ${script.description || 'Brak.'}<br><br><strong>Ekrany (screens):</strong> ${screensInfo}`;
 
             infoIcon.appendChild(tooltip);
             item.appendChild(gameBtn);
@@ -137,7 +162,13 @@
 
         const opener = document.createElement('div');
         opener.id = 'tw-panel-opener';
-        opener.innerText = '🏰'; 
+        
+        // Pobieranie odpowiedniego faviconu z bieżącego świata
+        const currentOrigin = window.location.origin;
+        opener.innerHTML = `<img src="${currentOrigin}/favicon.ico" style="width: 24px; height: 24px; pointer-events: none;" alt="Favicon">`;
+        opener.style.display = 'flex';
+        opener.style.justifyContent = 'center';
+        opener.style.alignItems = 'center';
         document.body.appendChild(opener);
 
         const panel = document.createElement('div');
@@ -148,7 +179,7 @@
         header.id = 'tw-script-panel-header';
         
         const titleSpan = document.createElement('span');
-        titleSpan.innerText = 'Menedżer TCM';
+        titleSpan.innerText = 'MENU';
         
         const controls = document.createElement('div');
         controls.style.display = 'flex';
@@ -186,7 +217,9 @@
         closeBtn.className = 'tw-header-btn';
         closeBtn.innerText = '✕';
         closeBtn.style.color = '#804000';
-        closeBtn.onclick = () => panel.style.display = 'none';
+        closeBtn.onclick = () => {
+            panel.style.display = 'none';
+        };
         
         controls.appendChild(themeBtn);
         controls.appendChild(pinBtn);
@@ -207,14 +240,22 @@
 
         CATEGORIES.forEach(cat => {
             const tab = document.createElement('div');
-            tab.className = 'tw-tab' + (cat === currentCategory ? ' active' : '');
+            tab.className = 'tw-tab';
             tab.innerText = cat;
             
             tab.onclick = () => {
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentCategory = cat;
-                renderScripts(scriptsArray, contentArea);
+                // Logika rozwijania/ukrywania (Akordeon)
+                if (currentCategory === cat) {
+                    currentCategory = null;
+                    tab.classList.remove('active');
+                    contentArea.style.display = 'none';
+                } else {
+                    document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentCategory = cat;
+                    contentArea.style.display = 'flex';
+                    renderScripts(scriptsArray, contentArea);
+                }
             };
             sidebar.appendChild(tab);
         });
@@ -224,7 +265,7 @@
         panel.appendChild(panelBody);
 
         opener.onclick = () => {
-            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'flex' : 'none';
+            panel.style.display = panel.style.display === 'none' || panel.style.display === '' ? 'block' : 'none';
         };
 
         if (isPinned) {
@@ -239,15 +280,13 @@
         document.body.appendChild(panel);
         makeDraggable(panel, header);
 
-        renderScripts(scriptsArray, contentArea);
-
         if (isDark && darkThemeConfig) {
             toggleDarkTheme(darkThemeConfig.url, true);
         }
     }
 
     async function loadActiveScripts(scriptsArray) {
-        if (!scriptsArray) return;
+        if (!scriptsArray || !Array.isArray(scriptsArray)) return;
         const state = getScriptsState();
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -257,17 +296,8 @@
             if (script.id === 'ciemny_motyw') continue;
 
             if (state[script.id]) {
-                
-                // Rygorystyczna blokada: Wymuszenie parametru 'screens'
-                if (!script.screens || !Array.isArray(script.screens)) {
-                    console.warn(`TCM Menedżer: Skrypt "${script.name}" pominięty. Brak parametru 'screens' w confing.json.`);
-                    continue; 
-                }
-
-                // Weryfikacja ekranu
-                if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) {
-                    continue; 
-                }
+                if (!script.screens || !Array.isArray(script.screens)) continue;
+                if (!script.screens.includes(currentScreen) && !script.screens.includes('*')) continue;
 
                 try {
                     const scriptUrl = script.url.includes('?') ? `${script.url}&t=${Date.now()}` : `${script.url}?t=${Date.now()}`;
@@ -280,7 +310,7 @@
                         document.head.appendChild(scriptEl);
                     }
                 } catch (error) {
-                    console.error(`TCM Menedżer: Błąd ładowania ${script.name}`, error);
+                    console.error("TCM Menedżer: Błąd ładowania skryptu", error);
                 }
             }
         }
@@ -345,13 +375,15 @@
 
         if (CONFIG_URL && CONFIG_URL.startsWith('http')) {
             try {
-                const fetchUrl = CONFIG_URL.includes('?') ? `${CONFIG_URL}&t=${Date.now()}` : `${CONFIG_URL}?t=${Date.now()}`;
-                const response = await fetch(fetchUrl);
+                const response = await fetch(`${CONFIG_URL}?t=${Date.now()}`);
                 if(response.ok) {
                     fetchedScripts = await response.json();
+                    if (!Array.isArray(fetchedScripts)) {
+                        fetchedScripts = fetchedScripts.scripts || [];
+                    }
                 }
             } catch (error) {
-                console.error("TCM Menedżer: Błąd pobierania JSON.", error);
+                console.error("TCM Menedżer: Błąd JSON", error);
             }
         }
         
