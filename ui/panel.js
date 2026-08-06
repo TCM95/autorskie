@@ -4,17 +4,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
+    // Tworzenie globalnego dymku na body (rozwiązuje problem braku tła i ucinania)
     let globalTooltip = document.getElementById('tw-global-tooltip');
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
-        globalTooltip.className = 'vis popup_box';
-        globalTooltip.style.cssText = `
-            display: none; position: absolute; z-index: 999999999;
-            padding: 6px 8px; width: 190px; font-size: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.7); line-height: 1.3;
-            text-align: left; pointer-events: none;
-        `;
+        globalTooltip.style.display = 'none';
+        globalTooltip.style.position = 'absolute';
         document.body.appendChild(globalTooltip);
     }
 
@@ -25,21 +21,16 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // Przycisk otwierający używający natywnej klasy Plemion "btn btn-default"
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.className = 'btn btn-default';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 16px; height: 16px; pointer-events: none; vertical-align: middle;">`;
     document.body.appendChild(opener);
 
-    // Główny panel jako tabelka systemowa Plemion (vis main_layout / main)
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
-    panel.className = 'vis main_layout';
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
-    header.className = 'head';
     
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
@@ -87,7 +78,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const contentArea = document.createElement('div');
     contentArea.id = 'tw-content-area';
-    contentArea.className = 'vis';
 
     const contentInner = document.createElement('div');
     contentInner.className = 'tw-content-inner';
@@ -109,7 +99,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
             const item = document.createElement('div');
-            item.className = 'tw-script-item vis';
+            item.className = 'tw-script-item';
 
             const gameBtn = document.createElement('div');
             gameBtn.className = 'tw-game-btn';
@@ -131,7 +121,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             };
 
             const infoIcon = document.createElement('button');
-            infoIcon.className = 'tw-info-icon btn btn-default';
+            infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'i';
             
             infoIcon.onclick = (e) => {
@@ -143,7 +133,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
                     
-                    globalTooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+                    globalTooltip.innerHTML = `<strong style="color: #f4e4bc;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
                     
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
@@ -160,7 +150,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     categories.forEach(cat => {
         const tab = document.createElement('button');
-        tab.className = 'tw-tab btn btn-default';
+        tab.className = 'tw-tab';
         tab.innerText = cat;
         tab.onclick = () => {
             globalTooltip.style.display = 'none';
@@ -168,11 +158,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             
             if (currentCategory === cat) {
                 currentCategory = null;
-                tab.classList.remove('btn-confirm-yes');
+                tab.classList.remove('active-tab');
                 contentArea.style.setProperty('display', 'none', 'important');
             } else {
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('btn-confirm-yes'));
-                tab.classList.add('btn-confirm-yes');
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+                tab.classList.add('active-tab');
                 currentCategory = cat;
                 renderScripts();
                 contentArea.style.setProperty('display', 'block', 'important');
@@ -195,7 +185,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // Poprawiony Drag & Drop dla mobilnych przeglądarek
+    // Przesuwanie okienka (Drag & Drop z obsługą dotyku)
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
     header.addEventListener('mousedown', dragStart);
@@ -215,7 +205,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     }
 
     function dragMove(e) {
-        if (e.cancelable) e.preventDefault(); // Powstrzymuje przewijanie strony na telefonie
+        if (e.cancelable) e.preventDefault();
 
         const ev = e.type === 'touchmove' ? e.touches[0] : e;
         pos1 = pos3 - ev.clientX;
