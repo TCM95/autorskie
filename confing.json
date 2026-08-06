@@ -46,23 +46,7 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek.",
         "screens": ["overview_villages"]
-    },
-    {
-        "id": "poparcie",
-        "name": "Pop.",
-        "category": "Ogólne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/pop.js",
-        "description": "Liczy wzrosty poparcia najpierw trzeba przejrzeć raporty",
-        "screens": ["report", "info_village"]
-    },
-    {
-        "id": "pokonani",
-        "name": "Profil. Pokonani",
-        "category": "Ogólne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js",
-        "description": "Pokazuje ranking pokonanych profilu",
-        "screens": ["info_player", "info_village"]
-    },
+    },     
     {
         "id": "komendy",
         "name": "Komendy",
