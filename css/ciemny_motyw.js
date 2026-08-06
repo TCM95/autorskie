@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         ciemny motyw
+// @name         Ciemny motyw (Shinko Theme)
 // @namespace    https://viayoo.com/
 // @author       TCM
-// @description  Ciemny motyw wizualny (Dark Theme) dla gry Plemiona
+// @description  Ciemny motyw wizualny dla gry Plemiona oparty na Shinko Theme
 // @match        https://*.plemiona.pl/game.php*
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -11,10 +11,22 @@
     'use strict';
 
     const css = `
+        /* Wzorzec wizualny (Shinko Theme) */
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+
+        /* Paski przewijania */
         ::-webkit-scrollbar-track {
-            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
             border-radius: 10px;
-            background-color: #212121;
+            background-color: var(--bg-header);
         }
         html[hide-scrollbar="true"] ::-webkit-scrollbar {
             display:none;
@@ -22,74 +34,44 @@
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
-            background-color: #212121;
+            background-color: var(--bg-header);
         }
         ::-webkit-scrollbar-thumb {
             border-radius: 10px;
-            -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, .3);
-            background-color: #FF0000;
+            background-color: var(--border-color);
         }
         ::placeholder {
-            color: white !important;
+            color: var(--text-color) !important;
+            opacity: 0.7;
         }
         input:-moz-placeholder {
-            color: white !important;
+            color: var(--text-color) !important;
+            opacity: 0.7;
         }
-        scrollbar {
-            ytp-moz-appearance: none !important;
-            background: #040406 !important;
-        }
-        scrollbar[orient="vertical"] {
-            min-width: 8px !important;
-            max-width: 8px !important;
-        }
-        scrollbar[orient="horizontal"] {
-            min-height: 8px !important;
-            max-height: 8px !important;
-        }
-        scrollbar slider {
-            -moz-appearance: none !important;
-            background: transparent !important;
-        }
-        scrollbar thumb {
-            -moz-appearance: none !important;
-            background: #333 !important;
-            border: none !important;
-        }
-        scrollbar thumb:not(:active):hover {
-            background: #383838 !important;
-        }
-        scrollbar thumb:active, scrollbar thumb:hover:active, scrollbar thumb[active="true"] {
-            background: #5c5c5c !important;
-            border: none !important;
-        }
-        scrollbar scrollbarbutton, iron-overlay-backdrop.opened {
-            display: none;
-        }
-        scrollcorner {
-            -moz-appearance: none !important;
-            background: #040406 !important;
-            border: none !important;
-        }
-        ::-moz-dropdown-list {
-            -moz-appearance: none !important;
-            border: none !important;
-        }
+        
+        /* Tło główne i teksty */
         body {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            background: linear-gradient(to top right, rgba(254, 203, 111, 1) 0%, rgba(252, 155, 112, 1) 15%, rgba(237, 106, 111, 1) 30%, rgba(203, 78, 108, 1) 48%, rgba(140, 65, 104, 1) 65%, rgba(81, 60, 99, 1) 82%, rgba(57, 59, 98, 1) 100%) !important;
-            object-fit: cover !important;
-            background-attachment: fixed !important;
-            background-size: cover !important;
-            color: #bdbdbd;
+            background: var(--bg-main) !important;
+            color: var(--text-color);
         }
-        .box-item, th, .vis > h4, .vis td:not(.luck-item), .row {
-            background: rgba(0, 0, 0, .4) !important;
+
+        /* Tabele, wiersze i nagłówki */
+        .box-item, .vis td:not(.luck-item), .row {
+            background: var(--bg-row-alt) !important;
+            color: var(--text-color) !important;
+        }
+        th, .vis > h4 {
+            background: var(--bg-header) !important;
+            color: var(--title-color) !important;
+            border-bottom: 1px solid var(--border-color) !important;
         }
         .luck {
-            background-color: rgba(150, 150, 150, .2) !important;
+            background-color: var(--bg-header) !important;
         }
+        
+        /* Ikony i strzałki */
         .widget-button, .list-right > img, .chat-button {
             filter: invert(100%);
         }
@@ -99,240 +81,235 @@
         img:not(*) {
             border-radius: 50%;
         }
+
+        /* Główne okna */
         #main_layout, .content > .inner {
-            background: rgba(0, 0, 0, .5) !important;
+            background: var(--bg-main) !important;
             border-radius: 0 0 8px 8px;
-            color: #bdbdbd;
+            color: var(--text-color);
         }
         .widget-tabs > li > a {
-            background: rgba(0, 0, 0, .3);
+            background: var(--bg-header);
             border-radius: 0;
-            color: #bdbdbd;
+            color: var(--text-color);
         }
         .selected {
-            background: none !important;
+            background: var(--bg-row-alt) !important;
             border-radius: 8px 8px 0 0;
-            color: #bdbdbd;
+            color: var(--title-color);
         }
+
+        /* Czat */
         .chat-header, .chat-body, .chat-message, .chat-footer, .chat-input {
-            background: rgba(0, 0, 0, .9) !important;
+            background: var(--bg-header) !important;
             border-radius: 4px 4px 0 0;
-            color: #bdbdbd;
+            color: var(--text-color);
+            border-color: var(--border-color) !important;
         }
-        .bg_left, .bg_bottomcenter, .bg_bottomright, .bg_right, .maincell, .bg_bottomleft, .bg_bottomright, .box, .header-border, .server_info, .content-border, #inner-border, .widget, .head, .forum-content, .row h4, ul, li, .widget-content > div, .tickLabel, .flot-tick-Label, #chartdiv > canvas, .content, .divider, .divider::before, .divider::after, #menu_row > td.menu-item, .bg, .widget-content > div, .content > div, .popup_box_content, .popup_box, .borderimage, .topTable, .top_bar, .menu_column, .decoration, .confirmation-box, #attack_spy_buildings_left, #attack_spy_buildings_right, .premium-advantage, .knight_card, .village-item, #inline_popup {
+
+        /* Przezroczyste i wyzerowane tła ze zmienionym kolorem tekstu */
+        .bg_left, .bg_bottomcenter, .bg_bottomright, .bg_right, .maincell, .bg_bottomleft, .box, .header-border, .server_info, .content-border, #inner-border, .widget, .head, .forum-content, .row h4, ul, li, .widget-content > div, .tickLabel, .flot-tick-Label, #chartdiv > canvas, .content, .divider, .divider::before, .divider::after, #menu_row > td.menu-item, .bg, .popup_box_content, .borderimage, .topTable, .top_bar, .menu_column, .decoration, .confirmation-box, #attack_spy_buildings_left, #attack_spy_buildings_right, .premium-advantage, .knight_card, .village-item, #inline_popup {
             background: rgba(0, 0, 0, 0) !important;
             box-shadow: none;
-            color: #bdbdbd;
+            color: var(--text-color);
             border: none !important;
             border-image: none !important;
         }
+        
+        /* Podświetlenia wiosek */
         .village-item.read-only:hover, .village-item.village-selected, .village-item:hover {
-            background: rgba(255, 255, 255, .1) !important;
-            box-shadow: none;
-            color: #bdbdbd;
-            border: none !important;
-            border-image: none !important;
+            background: var(--bg-row-alt) !important;
+            color: var(--title-color);
         }
+        
+        /* Cele i zadania */
         .quest-goal, .quest-goal > table {
-            background: linear-gradient(to right, rgba(0, 0, 0, .7) 0%, rgba(0, 0, 0, .1) 50%);
+            background: var(--bg-header);
             box-shadow: none;
-            color: #bdbdbd;
-            border-width: 1px;
-            border-style: solid;
-            border-color: rgba(255, 255, 255, .5);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
         }
+        .quest-summary {
+            background: rgba(0, 0, 0, 0) !important;
+            border: 2px solid var(--border-color);
+        }
+
+        /* Popupy i menu */
         .popup_box, #menu_row > td.menu-item > a {
-            background: rgba(0, 0, 0, .5) !important;
+            background: var(--bg-header) !important;
             border-radius: 8px;
+            color: var(--text-color);
         }
         .flag_box {
-            background-color: rgba(0, 0, 0, .5) !important;
+            background-color: var(--bg-header) !important;
             border-radius: 8px;
         }
         .flag_box_empty, .flag_box_small {
-            opacity: .2;
+            opacity: .4;
             border-radius: 8px;
         }
         .flag_count, #village_targets, #village_targets_menu, #village_targets_content {
-            background: rgba(0, 0, 0, .5) !important;
+            background: var(--bg-header) !important;
             border-radius: 0 0 8px 0;
         }
+
+        /* Elementy informacyjne */
         .premium_account_hint {
-            background: rgba(0, 0, 0, .5) url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/premium/features/Premium_hint.png) no-repeat 4px center;
+            background: var(--bg-row-alt) url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/premium/features/Premium_hint.png) no-repeat 4px center;
+            border: 1px solid var(--border-color);
         }
         .info_box {
-            background: url(https://dsbr.innogamescdn.com/asset/1d2499b/graphic/questionmark.png) no-repeat 4px center, rgba(0,0,0,.6) !important;
+            background: url(https://dsbr.innogamescdn.com/asset/1d2499b/graphic/questionmark.png) no-repeat 4px center, var(--bg-row-alt) !important;
+            border: 1px solid var(--border-color);
         }
-        .btn {
-            background:rgba(108, 72, 36, .3);
+        .error_box {
+            background: var(--bg-row-alt) url(https://dsbr.innogamescdn.com/asset/1d2499b/graphic/error.png) no-repeat 3px center;
+            border: 1px solid red;
         }
-        .btn:hover {
-            background:rgba(128, 92, 56, .5);
+
+        /* Przyciski (Shinko Theme) */
+        .btn, .btn-confirm-yes, .btn-confirm-no {
+            background: var(--btn-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
         }
-        .btn-build {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, rgba(108, 72, 36, .3);
+        .btn:hover, .btn-confirm-yes:hover, .btn-confirm-no:hover {
+            background: var(--btn-hover) !important;
         }
-        .btn-build:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, rgba(128, 92, 56, .5);
+
+        /* Przyciski z ikonami (łączą oryginalną ikonę z gradientem Shinko) */
+        .btn-build { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, var(--btn-bg) !important; }
+        .btn-build:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, var(--btn-hover) !important; }
+        
+        .btn-cancel { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -174px, var(--btn-bg) !important; }
+        .btn-cancel:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -174px, var(--btn-hover) !important; }
+        
+        .btn-instant, .btn-btr { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, var(--btn-bg) !important; }
+        .btn-instant:hover, .btn-btr:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, var(--btn-hover) !important; }
+        
+        .btn-bcr { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, var(--btn-bg) !important; }
+        .btn-bcr:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, var(--btn-hover) !important; }
+        
+        .btn-recruit { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -125px, var(--btn-bg) !important; }
+        .btn-recruit:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -125px, var(--btn-hover) !important; }
+        
+        .btn-attack { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -74px, var(--btn-bg) !important; }
+        .btn-attack:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -74px, var(--btn-hover) !important; }
+        
+        .btn-support { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -99px, var(--btn-bg) !important; }
+        .btn-support:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -99px, var(--btn-hover) !important; }
+        
+        .btn-bcr-disabled, .btn-bcr-disabled:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, var(--bg-row-alt) !important; opacity: 0.6; }
+        
+        .btn-instant-free { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, var(--btn-bg) !important; border-color: #2b7a2b !important; }
+        .btn-instant-free:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, var(--btn-hover) !important; border-color: #3b9a3b !important; }
+        
+        .current-quest { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, var(--btn-bg) !important; border: 1px solid #2b7a2b !important; }
+        .current-quest:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, var(--btn-hover) !important; }
+        
+        .btn-research { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -146px, var(--btn-bg) !important; }
+        .btn-research:hover { background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -146px, var(--btn-hover) !important; }
+        
+        .btn-pp { background: url("https://dsbr.innogamescdn.com/asset/1d2499b/graphic/btn/buttons.png") no-repeat 3px -224px, var(--btn-bg) !important; }
+        .btn-pp:hover { background: url("https://dsbr.innogamescdn.com/asset/1d2499b/graphic/btn/buttons.png") no-repeat 3px -224px, var(--btn-hover) !important; }
+
+        /* Tooltipy, Zadania, Stopka, Różne boxy */
+        #tooltip, .quest, #footer, .world_button_active, .world_button_inactive, .confirmation-box-content-pane, .labeled-box-label, .active-skill-list > div, .premium-box-content, .premium-box-head, .premium-box-foot, .feature-header, .advantage-content, .knight_card_container, .scavenge-option, #template_create, #map_popup, .report-preview-content, .side-notification, #tooltip_graph > div, #quickbar_inner .main, #quickbar_inner .left, #quickbar_inner .right {
+            background: var(--bg-header) !important;
+            color: var(--text-color);
+            border-color: var(--border-color) !important;
         }
-        .btn-cancel {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -174px, rgba(108, 72, 36, .3);
-        }
-        .btn-cancel:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -174px, rgba(128, 92, 56, .5);
-        }
-        .btn-instant, .btn-btr {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, rgba(108, 72, 36, .3);
-        }
-        .btn-instant:hover, .btn-btr:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, rgba(128, 92, 56, .5);
-        }
-        .btn-bcr {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, rgba(108, 72, 36, .3);
-        }
-        .btn-bcr:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, rgba(128, 92, 56, .5);
-        }
-        .btn-recruit {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -125px, rgba(108, 72, 36, .3);
-        }
-        .btn-recruit:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -125px, rgba(128, 92, 56, .5);
-        }
-        .btn-attack {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -74px, rgba(108, 72, 36, .3);
-        }
-        .btn-attack:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -74px, rgba(128, 92, 56, .5);
-        }
-        .btn-support {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -99px, rgba(108, 72, 36, .3);
-        }
-        .btn-support:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -99px, rgba(128, 92, 56, .5);
-        }
-        .btn-bcr-disabled, .btn-bcr-disabled:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -24px, rgba(100, 100, 100, .5);
-        }
-        .btn-instant-free {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, rgba(11, 172, 0, .4);
-        }
-        .btn-instant-free:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -49px, rgba(31, 192, 0, .5);
-        }
-        .current-quest {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, rgba(50, 200, 0, .4) !important;
-        }
-        .current-quest:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px 1px, rgba(50, 230, 0, .5) !important;
-        }
-        .btn-research {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -146px, rgba(108, 72, 36, .3) !important;
-        }
-        .btn-research:hover {
-            background: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/btn/buttons.png) no-repeat 3px -146px, rgba(128, 92, 56, .5) !important;
-        }
-        .btn-pp{
-            background: url("https://dsbr.innogamescdn.com/asset/1d2499b/graphic/btn/buttons.png") no-repeat 3px -224px, rgba(108, 72, 36, .3);
-        }
-        .btn-pp:hover{
-            background: url("https://dsbr.innogamescdn.com/asset/1d2499b/graphic/btn/buttons.png") no-repeat 3px -224px, rgba(128, 92, 56, .5);
-        }
-        .btn-confirm-yes {
-            background: rgba(0, 60, 0, .7) !important;
-        }
-        .btn-confirm-no {
-            background: rgba(90, 0, 0, .7) !important;
-        }
-        #tooltip {
-            background: rgba(0, 0, 0, .8) !important;
-            border-radius: 8px;
-        }
-        .quest {
-            background-color: rgba(0, 0, 0, .8) !important;
-            border-radius: 8px;
-        }
-        #footer, .world_button_active, .world_button_inactive, .confirmation-box-content-pane, .labeled-box-label, .active-skill-list > div, .premium-box-content, .premium-box-head, .premium-box-foot, .feature-header, .advantage-content, .knight_card_container, .scavenge-option, #template_create, #map_popup, .report-preview-content, .side-notification, #tooltip_graph > div, #quickbar_inner .main, #quickbar_inner .left, #quickbar_inner .right {
-            background: rgba(0, 0, 0, .6) !important;
-            color: white;
-        }
+        
         .menu-column-item > a, .menu-column, .menu-column-item, .corner, .bottom, .chat-new-message-notification, #inline_popup_menu, #inline_popup_main, #tooltip_graph, .slimScrollDiv {
-            background: rgb(0, 0, 0) !important;
-            opacity: .9;
+            background: var(--bg-main) !important;
         }
-        .lit .lit-item, #menu_row > td.menu-item > a, #topContainer, .item_container, .item_container > div, .inventory_items, .inventory_search, .searchbar > a, .labeled-box, .labeled-box-content, .count, .quote_message, .forum, .regimen_container {
-            background-color: rgba(0, 0, 0, .3) !important;
+
+        .lit .lit-item, #topContainer, .item_container, .item_container > div, .inventory_items, .inventory_search, .searchbar > a, .labeled-box, .labeled-box-content, .count, .quote_message, .forum, .regimen_container {
+            background-color: var(--bg-row-alt) !important;
+            border-color: var(--border-color) !important;
         }
+
+        /* Pola input */
         input, .target-input, .float_left {
-            background-color: rgba(0, 0, 0, .3) !important;
-            color: white !important;
-            border: 2px solid rgba(255, 255, 255, .2);
+            background-color: var(--bg-header) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
+            padding: 2px 4px;
         }
+        
         img[alt=Lida], img[title=Lida], img[title=Fechado] {
             opacity: .6;
         }
+        
         .searchbar input[type=submit] {
             background-image: url(https://dsbr.innogamescdn.com/asset/c820c05/graphic/search.png);
+            background-color: var(--bg-header) !important;
         }
         input[type=image] {
-            border-radius: 7px !important;
+            border-radius: 4px !important;
         }
+
+        /* Elementy list, forów i raportów */
         .award-group-head, .award-group-content, .award-group-foot, .mentoring-cards, .mentor-list-nav, .map-legend-container table, .map_container, .widget_content, .side-notification-container, .vis_item, .igmline, .post, .report_transparent_overlay, .inventory_detail, .spoiler > div, #plunder_list_filters {
-            background: rgba(0, 0, 0, .3) !important;
+            background: var(--bg-row-alt) !important;
+            border-color: var(--border-color) !important;
         }
         .spoiler div {
-            background: rgba(255, 255, 255, .2);
-            border: 1px inset;
+            border: 1px solid var(--border-color);
             margin: 3px 0;
             padding: 6px;
             overflow: auto;
         }
-        .quest-summary {
-            background: rgba(0, 0, 0, 0) !important;
-            border-color: black;
-            border-width: 2px;
-        }
+
+        /* Paski postępu */
         .progress-bar, .ttl_bar {
-            background: rgba(255, 255, 255, .2) !important;
-        }
-        .shared_forum, .reportable.chat-row:hover {
-            background: rgba(20, 20, 130, .3) !important;
-            border-radius: 0;
-        }
-        .error_box {
-            background: rgba(255, 90, 90, .4) url(https://dsbr.innogamescdn.com/asset/1d2499b/graphic/error.png) no-repeat 3px center;
-        }
-        .progress-bar > span {
-            color: white !important;
-        }
-        #info_content, .report-preview {
-            background: none !important;
-            border: white solid 1px;
+            background: var(--bg-main) !important;
+            border: 1px solid var(--border-color);
         }
         .progress-bar > div, .ttl_bar > div {
-            background: linear-gradient(to right, rgba(254, 203, 111, 1) 0%, rgba(252, 155, 112, 1) 15%, rgba(237, 106, 111, 1) 30%, rgba(203, 78, 108, 1) 48%, rgba(140, 65, 104, 1) 65%, rgba(81, 60, 99, 1) 82%, rgba(57, 59, 98, 1) 100%);
+            background: var(--btn-bg) !important;
         }
+        .progress-bar > span {
+            color: var(--text-color) !important;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* Różne */
+        .shared_forum, .reportable.chat-row:hover {
+            background: var(--bg-header) !important;
+            border-radius: 0;
+        }
+        #info_content, .report-preview {
+            background: var(--bg-main) !important;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Usuwanie reklam */
         #SkyScraperAd, #ContentAd {
             height: 0px;
             width: 0px;
             display:none;
         }
-        .thread_edit, .thread_answer, .thread_new, .thread_poll, .tickLabel {
-            color: black;
+        
+        .thread_edit, .thread_answer, .thread_new, .thread_poll {
+            color: var(--text-color);
         }
+        
         td:not(.nowrap):not(.village_overview_effect) > img, .friend, .chat-status:before {
             border-radius: 50%;
         }
+
+        /* Teksty i odnośniki */
         strong, a {
-            color: white !important;
+            color: var(--text-color) !important;
         }
         a:hover {
-            color: rgb(200, 200, 255) !important;
+            color: var(--title-color) !important;
+            text-decoration: underline;
         }
     `;
 
-    // Wstrzyknięcie stylów do nagłówka strony
     if (typeof GM_addStyle !== 'undefined') {
         GM_addStyle(css);
     } else {
