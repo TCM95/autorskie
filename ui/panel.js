@@ -30,6 +30,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
+    header.style.touchAction = 'none'; // Wymuszenie braku domyślnych gestów telefonu na nagłówku
     
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
@@ -38,7 +39,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    // Płaskie ikony Unicode, które przejmą kolor z CSS
     const iconDark = '☾';
     const iconLight = '☼';
 
@@ -136,7 +136,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
                     
-                    globalTooltip.innerHTML = `<strong style="color: #f4e4bc;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+                    globalTooltip.innerHTML = `<strong style="color: #ffffdf;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #3e4147; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
                     
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
@@ -188,66 +188,65 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // --- ULEPSZONA OBSŁUGA PRZECIĄGANIA ---
+    // --- NIEZAWODNY MECHANIZM PRZECIĄGANIA (POINTER EVENTS) ---
     let isDragging = false;
     let startX = 0, startY = 0;
     let initialLeft = 0, initialTop = 0;
 
-    function getCoords(e) {
-        return e.touches && e.touches.length > 0 ? e.touches[0] : e;
-    }
-
-    function onDragStart(e) {
-        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.classList.contains('tw-header-btn')) return;
+    function onPointerDown(e) {
+        // Blokada jeśli panel jest przypięty lub kliknięto przycisk w nagłówku
+        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
         
         isDragging = true;
-        const coords = getCoords(e);
-        startX = coords.clientX;
-        startY = coords.clientY;
+        startX = e.clientX;
+        startY = e.clientY;
 
         const rect = panel.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
 
-        // Wymuszenie swobodnego pozycjonowania (odwiązanie od marginesów i right/bottom)
+        // Odwiązanie kontenera od sztywnych krawędzi CSS
         panel.style.position = 'fixed';
         panel.style.bottom = 'auto';
         panel.style.right = 'auto';
         panel.style.margin = '0';
-        panel.style.transform = 'none'; 
+        panel.style.transform = 'none';
         
-        // Zabezpieczenie przed uskokiem po zmianie parametrów pozycyjnych
         panel.style.left = initialLeft + 'px';
         panel.style.top = initialTop + 'px';
 
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('touchmove', onDragMove, { passive: false });
-        document.addEventListener('mouseup', onDragEnd);
-        document.addEventListener('touchend', onDragEnd);
+        // Przechwycenie wskaźnika (kluczowe na mobilkach!)
+        header.setPointerCapture(e.pointerId);
+
+        header.addEventListener('pointermove', onPointerMove);
+        header.addEventListener('pointerup', onPointerUp);
+        header.addEventListener('pointercancel', onPointerUp);
     }
 
-    function onDragMove(e) {
+    function onPointerMove(e) {
         if (!isDragging) return;
-        if (e.cancelable) e.preventDefault(); // Blokada scrollowania tła podczas przesuwania panelu
-
-        const coords = getCoords(e);
-        const deltaX = coords.clientX - startX;
-        const deltaY = coords.clientY - startY;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
 
         panel.style.left = (initialLeft + deltaX) + 'px';
         panel.style.top = (initialTop + deltaY) + 'px';
     }
 
-    function onDragEnd() {
+    function onPointerUp(e) {
+        if (!isDragging) return;
         isDragging = false;
-        document.removeEventListener('mousemove', onDragMove);
-        document.removeEventListener('touchmove', onDragMove);
-        document.removeEventListener('mouseup', onDragEnd);
-        document.removeEventListener('touchend', onDragEnd);
+        
+        try {
+            header.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+
+        header.removeEventListener('pointermove', onPointerMove);
+        header.removeEventListener('pointerup', onPointerUp);
+        header.removeEventListener('pointercancel', onPointerUp);
     }
 
-    header.addEventListener('mousedown', onDragStart);
-    header.addEventListener('touchstart', onDragStart, { passive: false });
+    header.addEventListener('pointerdown', onPointerDown);
 
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
         callbacks.onToggleTheme(darkThemeConfig.url, true);
