@@ -21,7 +21,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
         "description": "Etykiety z filtrami.",
-        "screens": ["incomings"]
+        "screens": ["incomings", "attacks"]
     },
     {
         "id": "tager_przychodzace",
