@@ -13,7 +13,7 @@
         "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
         "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet.",
-        "screens": ["snob"]]
+        "screens": ["snob"]
     },
     {
         "id": "etykiety",
@@ -29,7 +29,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
-        "screens": ["mode=incomings", ["overview"]]
+        "screens": ["mode=incomings"]
     },
     {
         "id": "tager_wychodzace",
