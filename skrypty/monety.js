@@ -1,73 +1,146 @@
 // ==UserScript==
-// @name         Wybijak_Monet_TCM
+// @name         Wybijak Monet - Shinko Theme
 // @namespace    https://viayoo.com/
 // @author       TCM
-// @match        *://*.plemiona.pl/game.php*screen=overview_villages*
+// @description  Wybijanie monet z panelem i odliczaniem w stylu Shinko Theme.
+// @match        *://*.plemiona.pl/game.php*screen=snob*
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    const urlKey = window.location.hostname.split('.')[0];
-    let uiState = JSON.parse(localStorage.getItem(`wybijak_ui_${urlKey}`)) || { pinned: false, top: '10%', left: '50%' };
-    
-    const stworzUI = () => {
-        if (document.getElementById('tcm-wybijak-wrapper')) return;
+    // Wstrzyknięcie dedykowanych stylów Shinko
+    const style = document.createElement('style');
+    style.textContent = `
+        .tcm-shinko-panel {
+            background-color: #36393f !important;
+            border: 1px solid #3e4147 !important;
+            color: #ffffff !important;
+            font-family: Verdana, sans-serif !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+            overflow: hidden !important;
+            margin-bottom: 15px;
+        }
+        .tcm-shinko-header {
+            background-color: #202225 !important;
+            border-bottom: 1px solid #3e4147 !important;
+            color: #ffffdf !important;
+            padding: 6px 10px !important;
+            font-weight: bold !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+        }
+        .tcm-shinko-btn {
+            background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important;
+            border: 1px solid #3e4147 !important;
+            color: #ffffff !important;
+            border-radius: 3px !important;
+            cursor: pointer !important;
+            font-weight: bold !important;
+            transition: background 0.2s !important;
+            padding: 4px 8px !important;
+        }
+        .tcm-shinko-btn:hover {
+            background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important;
+        }
+        .tcm-shinko-input {
+            background-color: #202225 !important;
+            border: 1px solid #3e4147 !important;
+            color: #ffffff !important;
+            border-radius: 3px !important;
+            text-align: center !important;
+            padding: 2px !important;
+        }
+    `;
+    document.head.appendChild(style);
 
-        const win = document.createElement('div');
-        win.id = 'tcm-wybijak-wrapper';
-        win.style = `position: fixed; top: ${uiState.top}; left: ${uiState.left}; transform: ${uiState.pinned ? 'none' : 'translateX(-50%)'}; z-index: 10000; background: #e3d5b3; border: 2px solid #603000; border-radius: 6px; width: 95%; max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Verdana, sans-serif;`;
+    const getSetting = (key, defaultValue) => localStorage.getItem('at_mint_' + key) || defaultValue;
+    const saveSetting = (key, value) => localStorage.setItem('at_mint_' + key, value);
 
-        win.innerHTML = `
-            <div id="tcm-header-w" style="background: #3e2711; color: #fff; padding: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: ${uiState.pinned ? 'default' : 'move'};">
-                <span>🪙 MASOWE WYBIJANIE</span>
-                <div>
-                    <span id="pin-btn-w" style="cursor: pointer; margin-right: 10px;">${uiState.pinned ? '📌' : '📍'}</span>
-                    <span id="close-wybijak" style="cursor: pointer; background: #8b0000; padding: 2px 8px; border-radius: 3px; font-size: 11px;">X</span>
+    let isRunning = getSetting('running', '0') === '1';
+    let minTime = parseInt(getSetting('minTime', '300'));
+    let maxTime = parseInt(getSetting('maxTime', '600'));
+
+    const setupUI = () => {
+        const statusColor = isRunning ? '#00ff00' : '#ff4444';
+
+        const container = $('<div id="mint_panel" class="tcm-shinko-panel" style="display: inline-block; min-width: 250px;"></div>');
+
+        const header = $(`
+            <div class="tcm-shinko-header">
+                <span>Wybijak Monet <span id="status_dot" style="color: ${statusColor}; text-shadow: 0 0 3px black;">●</span></span>
+                <span id="timer_display" style="font-weight: normal; min-width: 40px; text-align: right; color: #ffffff;"></span>
+            </div>
+        `);
+
+        const content = $(`
+            <div style="padding: 8px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; gap: 5px;">
+                    <span>Odświeżanie (s):</span>
+                    <div>
+                        <input type="number" id="min_input" class="tcm-shinko-input" value="${minTime}" style="width: 45px;" title="Minimum sekund">
+                        <input type="number" id="max_input" class="tcm-shinko-input" value="${maxTime}" style="width: 45px;" title="Maksimum sekund">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button id="btn_toggle" class="tcm-shinko-btn" style="flex: 1;">${isRunning ? 'Wyłącz Auto-Wybijanie' : 'Włącz Auto-Wybijanie'}</button>
                 </div>
             </div>
-            <div style="padding: 10px; text-align: center;">
-                <button id="start-wybijak" class="btn" style="width: 100%; padding: 8px; background: #004080; color: white; font-weight: bold; border-radius: 3px; border: 1px solid #002240;">Uruchom Wybijanie</button>
-                <div id="wybijak-status" style="margin-top: 10px; font-size: 12px; font-weight: bold;"></div>
-            </div>
-        `;
-        document.body.appendChild(win);
+        `);
 
-        // Obsługa Drag & Drop oraz Pin
-        const header = document.getElementById('tcm-header-w');
-        const pinBtn = document.getElementById('pin-btn-w');
-        pinBtn.onclick = () => {
-            uiState.pinned = !uiState.pinned;
-            pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
-            header.style.cursor = uiState.pinned ? 'default' : 'move';
-            win.style.transform = uiState.pinned ? 'none' : 'translateX(-50%)';
-            localStorage.setItem(`wybijak_ui_${urlKey}`, JSON.stringify(uiState));
-        };
-        
-        document.getElementById('close-wybijak').onclick = () => win.style.display = 'none';
+        container.append(header).append(content);
 
-        // Logika aktywacji
-        document.getElementById('start-wybijak').onclick = async () => {
-            const status = document.getElementById('wybijak-status');
-            // Zmiana: Szukamy wszystkich spanów z danymi wioski
-            const elementyWioski = document.querySelectorAll('span.quickedit-vn[data-id]');
-            const wioski = Array.from(elementyWioski).map(el => el.getAttribute('data-id'));
-            
-            if (wioski.length === 0) {
-                status.innerHTML = "Nie znaleziono wiosek!";
-                return;
-            }
+        // Umiejscowienie panelu nad główną zawartością gry
+        $("#content_value").prepend(container);
 
-            const token = game_data.csrf;
-            for (let i = 0; i < wioski.length; i++) {
-                status.innerHTML = `Przetwarzanie: ${i + 1} / ${wioski.length}`;
-                await fetch(`/game.php?village=${wioski[i]}&screen=snob&action=start_auto_minting_session&h=${token}`, { method: 'POST' });
-                await new Promise(r => setTimeout(r, 300));
-            }
-            status.innerHTML = "Gotowe!";
-        };
+        $('#min_input').on('change', function() { saveSetting('minTime', $(this).val()); });
+        $('#max_input').on('change', function() { saveSetting('maxTime', $(this).val()); });
+
+        $('#btn_toggle').on('click', function() {
+            isRunning = !isRunning;
+            saveSetting('running', isRunning ? '1' : '0');
+            location.reload();
+        });
     };
 
-    setTimeout(stworzUI, 500);
+    const executeMinting = () => {
+        // Skrypt szuka przycisku "Zaznacz wszystkie" (może to być id #select_anchor_top w zależności od widoku)
+        const selectAllBtn = $('#select_anchor_top');
+        if (selectAllBtn.length) {
+            selectAllBtn.trigger('click');
+            
+            setTimeout(() => {
+                // Po zaznaczeniu szuka przycisku odpowiadającego za wybicie ("Wybij monety")
+                const mintBtn = $('form[action*="action=train"] input[type="submit"]');
+                if (mintBtn.length) {
+                    mintBtn.trigger('click');
+                }
+            }, 1000);
+        }
+    };
+
+    if (isRunning) {
+        const randomSeconds = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+        let timeLeft = randomSeconds;
+
+        setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) location.reload();
+            if ($('#timer_display').length) {
+                $('#timer_display').text(timeLeft + "s");
+            }
+        }, 1000);
+
+        // Uruchomienie wybijania chwilę po załadowaniu (żeby DOM zdążył przetworzyć wszystko)
+        setTimeout(() => {
+           executeMinting();
+        }, 2000);
+    }
+
+    $(document).ready(function() {
+        setupUI();
+    });
 })();
