@@ -1,5 +1,5 @@
 /* =========================================================
-   GŁÓWNE ZMIENNE
+   GŁÓWNE ZMIENNE (Styl: ciemny)
    ========================================================= */
 :root {
     --bg-main: #36393f;
@@ -12,9 +12,7 @@
     --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
 }
 
-/* =========================================================
-   RESET I GLOBALNE WYMUSZENIE CZCIONKI / KOLORÓW
-   ========================================================= */
+/* Resetowanie obramowań i podświetleń mobilnych */
 #tw-script-panel *, 
 [id*="-ui"] *, 
 [id*="-container"] * {
@@ -26,29 +24,78 @@
 }
 
 /* =========================================================
-   KONTENERY SKRYPTÓW (Wszystkie okienka)
+   UKŁAD - POZYCJONOWANIE (Przywrócone na górę)
    ========================================================= */
-#tw-script-panel,
-[id*="-ui"],
-[id*="-container"],
-#results,
-#massScavengeFinal {
+
+/* Przycisk otwierający */
+#tw-panel-opener {
+    position: fixed !important;
+    top: 5px !important;
+    left: 5px !important;
+    z-index: 999999 !important;
+    cursor: pointer !important;
+    padding: 3px 6px !important;
+    background-image: var(--btn-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
+}
+
+/* Główny słupek menu */
+#tw-script-panel {
+    position: fixed !important;
+    top: 40px !important;
+    left: 10px !important;
+    z-index: 999998 !important;
+    width: 140px !important;
     background-color: var(--bg-main) !important;
     border: 2px solid var(--border-color) !important;
     border-radius: 4px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-    touch-action: none !important; /* Blokada scrolla pod palcem na nagłówku */
+    display: none;
+    flex-direction: column !important;
+    touch-action: none !important;
 }
 
-/* Tło wewnętrznej sekcji na skrypty (rozwijanej) */
-#tw-content-area, .tw-content-inner {
+/* Pasek kategorii */
+#tw-categories-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 4px !important;
+    gap: 4px !important;
+    background-color: var(--bg-main) !important;
+}
+
+/* Wysuwany panel ze skryptami */
+#tw-content-area {
+    display: none;
+    position: absolute !important;
+    top: -2px !important;
+    left: 100% !important;
+    margin-left: 5px !important;
+    width: 270px !important;
     background-color: var(--bg-row-alt) !important;
-    border-color: var(--border-color) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
+    z-index: 999997 !important;
+}
+
+.tw-content-inner {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    padding: 5px !important;
+    background-color: var(--bg-row-alt) !important;
 }
 
 /* =========================================================
-   NAGŁÓWKI
+   WYGLĄD - SHINKO THEME
    ========================================================= */
+
+/* Nagłówki */
 #tw-script-panel-header,
 [id*="-header"],
 .fm-header {
@@ -56,6 +103,7 @@
     color: var(--title-color) !important;
     padding: 8px !important;
     font-weight: bold !important;
+    font-size: 12px !important;
     border-bottom: 2px solid var(--border-color) !important;
     cursor: move !important;
     user-select: none !important;
@@ -65,13 +113,10 @@
     align-items: center !important;
 }
 
-/* =========================================================
-   PRZYCISKI (Z gradientami)
-   ========================================================= */
+/* Przyciski (Z gradientami) */
 .tw-tab,
 .fm-btn,
 .tw-info-icon,
-#tw-panel-opener,
 [id*="-ui"] button,
 [id*="-container"] button {
     background-image: var(--btn-bg) !important;
@@ -80,9 +125,20 @@
     border: 1px solid var(--border-color) !important;
     border-radius: 3px !important;
     cursor: pointer !important;
+    font-size: 11px !important;
     font-weight: bold !important;
     padding: 5px !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
+}
+
+.tw-info-icon {
+    width: auto !important;
+    display: inline-block !important;
+    padding: 2px 6px !important;
+    margin-left: 4px !important;
 }
 
 .tw-tab:hover,
@@ -99,6 +155,9 @@
     color: var(--title-color) !important;
     font-size: 12px !important;
     box-shadow: none !important;
+    padding: 0 3px !important;
+    cursor: pointer !important;
+    font-weight: bold !important;
 }
 
 /* Aktywna zakładka w Menu */
@@ -117,7 +176,6 @@
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    margin-bottom: 4px !important;
 }
 
 .tw-game-btn {
@@ -133,6 +191,15 @@
     box-shadow: none !important;
 }
 
+.tw-script-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: var(--title-color) !important;
+}
+
 /* Kontrolki statusu (ON/OFF) */
 .tw-status-icon {
     width: 10px !important;
@@ -144,9 +211,18 @@
 .tw-status-on { background: #2ecc71 !important; box-shadow: 0 0 4px #2ecc71 !important; }
 .tw-status-off { background: #e74c3c !important; }
 
-/* =========================================================
-   TABELE, POLA INPUT I ELEMENTY POZOSTAŁE W SKRYPTACH
-   ========================================================= */
+/* Dedykowane kontenery innych skryptów - tylko tło i ramki, żeby nie zepsuć ich fixed position */
+[id*="-ui"],
+[id*="-container"],
+#results,
+#massScavengeFinal {
+    background-color: var(--bg-main) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+}
+
+/* Tabele w skryptach */
 [id*="-ui"] table, 
 [id*="-container"] table {
     width: 100% !important;
@@ -191,6 +267,3 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
     z-index: 999999999 !important;
 }
-
-/* Ukrywanie klas domyślnych wplecionych z zewnątrz */
-.fm-hidden { display: none !important; }
