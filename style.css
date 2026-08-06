@@ -1,209 +1,213 @@
 /* --- STYLE GŁÓWNEGO PANELU TCM --- */
 
 #tw-panel-opener {
-    position: fixed;
-    top: 5px;
-    left: 5px;
-    width: 30px;
-    height: 30px;
-    z-index: 100000;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
-    border: 2px solid #804000;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-    color: #593108;
+    position: fixed !important;
+    top: 5px !important;
+    left: 5px !important;
+    width: 30px !important;
+    height: 30px !important;
+    z-index: 100000 !important;
+    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
+    border: 2px solid #804000 !important;
+    border-radius: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
+    color: #593108 !important;
 }
 
 #tw-script-panel {
-    display: none;
-    position: fixed;
-    top: 45px;
-    left: 10px;
-    width: 90vw;
-    max-width: 480px;
-    background-color: #e3d5b3;
-    border: 2px solid #804000;
-    border-radius: 3px;
-    z-index: 99999;
-    font-family: Verdana, Arial, sans-serif;
-    font-size: 11px;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
+    display: none; /* Domyślnie ukryty */
+    position: fixed !important;
+    top: 45px !important;
+    left: 10px !important;
+    width: 90vw !important;
+    max-width: 480px !important;
+    background-color: #e3d5b3 !important;
+    border: 2px solid #804000 !important;
+    border-radius: 3px !important;
+    z-index: 99999 !important;
+    font-family: Verdana, Arial, sans-serif !important;
+    font-size: 11px !important;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.5) !important;
+    flex-direction: column !important;
+}
+
+/* KLASA OTWOTORZONEGO PANELU */
+#tw-script-panel.open {
+    display: flex !important;
 }
 
 #tw-script-panel-header {
-    background-color: #c1a264;
-    border-bottom: 2px solid #804000;
-    padding: 4px 6px;
-    font-weight: bold;
-    text-align: center;
-    cursor: move;
-    color: #593108;
-    touch-action: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
+    background-color: #c1a264 !important;
+    border-bottom: 2px solid #804000 !important;
+    padding: 4px 6px !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    cursor: move !important;
+    color: #593108 !important;
+    touch-action: none !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 11px !important;
 }
 
 #tw-panel-body {
-    display: flex;
-    flex-direction: row;
-    height: 250px;
+    display: flex !important;
+    flex-direction: row !important;
+    height: 250px !important;
 }
 
 #tw-sidebar {
-    width: 90px;
-    background-color: #f4e4bc;
-    border-right: 2px solid #804000;
-    overflow-y: auto;
-    flex-shrink: 0;
+    width: 90px !important;
+    background-color: #f4e4bc !important;
+    border-right: 2px solid #804000 !important;
+    overflow-y: auto !important;
+    flex-shrink: 0 !important;
 }
 
 .tw-tab {
-    padding: 8px 5px;
-    border-bottom: 1px solid #c1a264;
-    cursor: pointer;
-    font-weight: bold;
-    color: #593108;
-    text-align: center;
-    transition: background 0.1s;
-    font-size: 10px;
+    padding: 8px 5px !important;
+    border-bottom: 1px solid #c1a264 !important;
+    cursor: pointer !important;
+    font-weight: bold !important;
+    color: #593108 !important;
+    text-align: center !important;
+    transition: background 0.1s !important;
+    font-size: 10px !important;
 }
 
 .tw-tab:hover {
-    background-color: #e3d5b3;
+    background-color: #e3d5b3 !important;
 }
 
 .tw-tab.active {
-    background-color: #c1a264;
-    color: #2b1d0c;
-    border-right: 2px solid #c1a264;
-    margin-right: -2px;
+    background-color: #c1a264 !important;
+    color: #2b1d0c !important;
+    border-right: 2px solid #c1a264 !important;
+    margin-right: -2px !important;
 }
 
 #tw-content-area {
-    flex-grow: 1;
-    padding: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    align-content: flex-start;
-    gap: 6px;
-    overflow-y: auto;
-    background-color: #e3d5b3;
+    flex-grow: 1 !important;
+    padding: 8px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 6px !important;
+    overflow-y: auto !important;
+    background-color: #e3d5b3 !important;
 }
 
 .tw-script-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(50% - 3px);
-    min-width: 130px;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%);
-    border: 1px solid #7d510f;
-    border-radius: 3px;
-    padding: 2px;
-    box-sizing: border-box;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: calc(50% - 3px) !important;
+    min-width: 130px !important;
+    background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
+    border: 1px solid #7d510f !important;
+    border-radius: 3px !important;
+    padding: 2px !important;
+    box-sizing: border-box !important;
 }
 
 .tw-game-btn {
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 4px;
-    cursor: pointer;
-    user-select: none;
-    color: #2b1d0c;
-    overflow: hidden;
+    flex-grow: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 4px !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    color: #2b1d0c !important;
+    overflow: hidden !important;
 }
 
 .tw-status-icon {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 4px;
-    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
-    flex-shrink: 0;
+    display: inline-block !important;
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    margin-right: 4px !important;
+    box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3) !important;
+    flex-shrink: 0 !important;
 }
 
-.tw-status-on { background-color: #4caf50; border: 1px solid #2e7d32; }
-.tw-status-off { background-color: #f44336; border: 1px solid #c62828; }
+.tw-status-on { background-color: #4caf50 !important; border: 1px solid #2e7d32 !important; }
+.tw-status-off { background-color: #f44336 !important; border: 1px solid #c62828 !important; }
 
 .tw-script-name {
-    font-weight: bold;
-    font-size: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: bold !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
 }
 
 .tw-info-icon {
-    position: relative;
-    font-size: 11px;
-    color: #593108;
-    cursor: pointer;
-    padding: 2px 4px;
-    font-weight: bold;
-    background: #f4e4bc;
-    border-left: 1px solid #7d510f;
-    line-height: 1;
-    height: 100%;
-    display: flex;
-    align-items: center;
+    position: relative !important;
+    font-size: 11px !important;
+    color: #593108 !important;
+    cursor: pointer !important;
+    padding: 2px 4px !important;
+    font-weight: bold !important;
+    background: #f4e4bc !important;
+    border-left: 1px solid #7d510f !important;
+    line-height: 1 !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
 .tw-tooltip {
     display: none;
-    position: absolute;
-    bottom: 125%;
-    right: 0;
-    width: 140px;
-    background-color: #f4e4bc;
-    border: 1px solid #804000;
-    padding: 5px;
-    border-radius: 3px;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-    z-index: 100001;
-    color: #000;
-    text-align: left;
-    font-size: 9px;
-    font-weight: normal;
-    line-height: 1.2;
-    pointer-events: none;
-    white-space: normal;
+    position: absolute !important;
+    bottom: 125% !important;
+    right: 0 !important;
+    width: 140px !important;
+    background-color: #f4e4bc !important;
+    border: 1px solid #804000 !important;
+    padding: 5px !important;
+    border-radius: 3px !important;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.4) !important;
+    z-index: 100001 !important;
+    color: #000 !important;
+    text-align: left !important;
+    font-size: 9px !important;
+    font-weight: normal !important;
+    line-height: 1.2 !important;
+    pointer-events: none !important;
+    white-space: normal !important;
 }
 
 .tw-info-icon:hover .tw-tooltip,
 .tw-info-icon:active .tw-tooltip {
-    display: block;
+    display: block !important;
 }
 
 .tw-header-btn {
-    cursor: pointer;
-    font-size: 12px;
-    padding: 0 2px;
-    user-select: none;
+    cursor: pointer !important;
+    font-size: 12px !important;
+    padding: 0 2px !important;
+    user-select: none !important;
 }
 
 .tw-empty-msg {
-    width: 100%;
-    text-align: center;
-    padding: 15px;
-    font-style: italic;
-    color: #804000;
+    width: 100% !important;
+    text-align: center !important;
+    padding: 15px !important;
+    font-style: italic !important;
+    color: #804000 !important;
 }
 
-/* --- NARZUCENIE STYLU ZEWNĘTRZNYM SKRYPTOM --- */
+/* --- NARZUCENIE STYLU ZEWNĘTRZNYM SKRYPTOM I WŁASNYM ELEMENTOM TCM --- */
 
-body button, body input[type="button"], body input[type="submit"], .btn {
+.tw-script-btn, .tcm-btn, button.tcm-custom-btn {
     background: linear-gradient(to bottom, #f4e4bc 0%, #c1a473 100%) !important;
     border: 1px solid #7d510f !important;
     color: #2b1d0c !important;
@@ -214,11 +218,11 @@ body button, body input[type="button"], body input[type="submit"], .btn {
     cursor: pointer !important;
 }
 
-body button:hover, body input[type="button"]:hover, body input[type="submit"]:hover {
+.tw-script-btn:hover, .tcm-btn:hover, button.tcm-custom-btn:hover {
     background: linear-gradient(to bottom, #c1a473 0%, #f4e4bc 100%) !important;
 }
 
-body input[type="text"], body select, body textarea {
+.tw-script-input, .tcm-input {
     background-color: #f4e4bc !important;
     border: 1px solid #7d510f !important;
     color: #2b1d0c !important;
@@ -227,20 +231,20 @@ body input[type="text"], body select, body textarea {
     padding: 2px !important;
 }
 
-.tw-injected-table, body .vis.tw-custom-table {
+.tw-injected-table, .vis.tw-custom-table, table.tcm-table {
     background-color: #dfba80 !important;
     border: 1px solid #7d510f !important;
     font-family: Verdana, Arial, sans-serif !important;
     font-size: 11px !important;
 }
 
-.tw-injected-table th, body .vis.tw-custom-table th {
+.tw-injected-table th, .vis.tw-custom-table th, table.tcm-table th {
     background-color: #c1a264 !important;
     color: #593108 !important;
     padding: 4px !important;
 }
 
-.tw-injected-table td, body .vis.tw-custom-table td {
+.tw-injected-table td, .vis.tw-custom-table td, table.tcm-table td {
     padding: 4px !important;
     color: #2b1d0c !important;
 }
