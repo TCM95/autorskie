@@ -61,7 +61,7 @@
         "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js",
         "description": "Pokazuje ranking pokonanych profilu",
-        "screens": ["info_player", "info_village"]
+        "screens": ["*"]
     },
     {
         "id": "komendy",
@@ -93,7 +93,7 @@
         "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
         "description": "Zarządzanie szablonami wojsk.",
-        "screens": ["accountmanager", "train"]
+        "screens": ["am_troops", "train"]
     },
     {
         "id": "mapa_kordy",
