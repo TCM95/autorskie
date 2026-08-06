@@ -4,6 +4,30 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
+    // Inicjalizacja globalnego dymku (tworzony tylko raz na body)
+    let globalTooltip = document.getElementById('tw-global-tooltip');
+    if (!globalTooltip) {
+        globalTooltip = document.createElement('div');
+        globalTooltip.id = 'tw-global-tooltip';
+        globalTooltip.style.cssText = `
+            display: none; position: absolute; z-index: 999999999;
+            background: #2b2b2b; color: #fff; padding: 6px 8px;
+            border-radius: 4px; width: 190px; font-size: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.7);
+            border: 1px solid #7d5e3c; line-height: 1.3; text-align: left;
+            font-family: Verdana, Arial, sans-serif; pointer-events: none;
+        `;
+        document.body.appendChild(globalTooltip);
+    }
+
+    // Zamknij dymek przy kliknięciu gdziekolwiek indziej
+    document.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('tw-info-icon')) {
+            globalTooltip.style.display = 'none';
+            globalTooltip.dataset.activeId = '';
+        }
+    });
+
     const opener = document.createElement('div');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none; display: block;">`;
@@ -107,12 +131,29 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'ⓘ';
             
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tw-tooltip';
-            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
-            tooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+            // Obsługa kliknięcia w dymek
+            infoIcon.onclick = (e) => {
+                e.stopPropagation(); // Blokuje propagację, aby nasłuchiwacz na 'document' od razu go nie zamknął
+                
+                if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
+                    // Jeśli kliknięto w ten sam przycisk, zamknij dymek
+                    globalTooltip.style.display = 'none';
+                    globalTooltip.dataset.activeId = '';
+                } else {
+                    // Otwórz dymek i oblicz pozycję
+                    const rect = infoIcon.getBoundingClientRect();
+                    const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
+                    
+                    globalTooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+                    
+                    // Pozycjonowanie dymku względem klikniętego "i" (z poprawką na scroll)
+                    globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
+                    globalTooltip.style.left = (rect.right + window.scrollX + 15) + 'px';
+                    globalTooltip.style.display = 'block';
+                    globalTooltip.dataset.activeId = script.id;
+                }
+            };
             
-            infoIcon.appendChild(tooltip);
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
             contentInner.appendChild(item);
@@ -124,6 +165,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.className = 'tw-tab';
         tab.innerText = cat;
         tab.onclick = () => {
+            // Zamykaj dymek przy zmianie zakładki
+            globalTooltip.style.display = 'none';
+            globalTooltip.dataset.activeId = '';
+            
             if (currentCategory === cat) {
                 currentCategory = null;
                 tab.classList.remove('active');
@@ -147,6 +192,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             panel.style.setProperty('display', 'flex', 'important');
         } else {
             panel.style.setProperty('display', 'none', 'important');
+            globalTooltip.style.display = 'none'; // Zamknij dymek po zamknięciu menu
         }
     };
 
