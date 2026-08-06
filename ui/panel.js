@@ -4,13 +4,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
+    // Przycisk otwierający - narzucona pozycja na sztywno w lewym górnym rogu
     const opener = document.createElement('div');
     opener.id = 'tw-panel-opener';
+    opener.setAttribute('style', 'position: fixed !important; top: 5px !important; left: 5px !important; z-index: 999999 !important;');
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none;">`;
     document.body.appendChild(opener);
 
+    // Główny kontener panelu
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
+    panel.setAttribute('style', 'display: none;'); // Startowo ukryty
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
@@ -51,7 +55,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const closeBtn = document.createElement('span');
     closeBtn.className = 'tw-header-btn';
     closeBtn.innerText = '✕';
-    closeBtn.onclick = () => { panel.classList.remove('open'); };
+    closeBtn.onclick = () => { panel.style.display = 'none'; };
     
     controls.appendChild(themeBtn);
     controls.appendChild(pinBtn);
@@ -145,9 +149,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panelBody.appendChild(contentArea);
     panel.appendChild(panelBody);
 
-    // Otwieranie / Zamykanie przełączaniem klasy CSS .open
+    // Przełączanie pokazywania panelu w trybie flex
     opener.onclick = () => { 
-        panel.classList.toggle('open');
+        if (panel.style.display === 'none') {
+            panel.style.setProperty('display', 'flex', 'important');
+        } else {
+            panel.style.setProperty('display', 'none', 'important');
+        }
     };
 
     if (isPinned) {
@@ -158,6 +166,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
+    // Obsługa przesuwania okienka
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     header.onmousedown = header.ontouchstart = dragStart;
 
