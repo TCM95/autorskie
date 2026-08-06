@@ -4,27 +4,25 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
-    // Przycisk otwierający - narzucona pozycja na sztywno w lewym górnym rogu
+    // Przycisk otwierający w lewym górnym rogu
     const opener = document.createElement('div');
     opener.id = 'tw-panel-opener';
-    opener.setAttribute('style', 'position: fixed !important; top: 5px !important; left: 5px !important; z-index: 999999 !important;');
-    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none;">`;
+    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none; display: block;">`;
     document.body.appendChild(opener);
 
-    // Główny kontener panelu
+    // Główny panel - pionowy słupek
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
-    panel.setAttribute('style', 'display: none;'); // Startowo ukryty
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
     
     const titleSpan = document.createElement('span');
-    titleSpan.innerText = 'Menedżer TCM';
+    titleSpan.innerText = 'TCM';
     
     const controls = document.createElement('div');
     controls.style.display = 'flex';
-    controls.style.gap = '5px';
+    controls.style.gap = '4px';
 
     const themeBtn = document.createElement('span');
     themeBtn.className = 'tw-header-btn';
@@ -46,10 +44,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         isPinned = !isPinned;
         localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
         pinBtn.innerText = isPinned ? '📍' : '📌';
-        if (isPinned) {
-            localStorage.setItem('tw_panel_top', panel.style.top || '45px');
-            localStorage.setItem('tw_panel_left', panel.style.left || '10px');
-        }
     };
 
     const closeBtn = document.createElement('span');
@@ -64,12 +58,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     header.appendChild(controls);
     panel.appendChild(header);
 
-    const panelBody = document.createElement('div');
-    panelBody.id = 'tw-panel-body';
+    // Pionowy pasek z kategoriami
+    const categoriesBar = document.createElement('div');
+    categoriesBar.id = 'tw-categories-bar';
 
-    const sidebar = document.createElement('div');
-    sidebar.id = 'tw-sidebar';
-
+    // Karta obszaru skryptów rozwijana po prawej stronie
     const contentArea = document.createElement('div');
     contentArea.id = 'tw-content-area';
 
@@ -81,7 +74,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'tw-empty-msg';
-            emptyMsg.innerText = 'Brak skryptów.';
+            emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
             contentArea.appendChild(emptyMsg);
             return;
         }
@@ -116,8 +109,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             
             const tooltip = document.createElement('div');
             tooltip.className = 'tw-tooltip';
-            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
-            tooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #c1a264; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
+            tooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
             
             infoIcon.appendChild(tooltip);
             item.appendChild(gameBtn);
@@ -132,46 +125,41 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.innerText = cat;
         tab.onclick = () => {
             if (currentCategory === cat) {
+                // Po ponownym kliknięciu w tę samą kategorię – zwijamy kartę boczną
                 currentCategory = null;
                 tab.classList.remove('active');
-                contentArea.innerHTML = '';
+                contentArea.style.setProperty('display', 'none', 'important');
             } else {
                 document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 currentCategory = cat;
                 renderScripts();
+                contentArea.style.setProperty('display', 'grid', 'important');
             }
         };
-        sidebar.appendChild(tab);
+        categoriesBar.appendChild(tab);
     });
 
-    panelBody.appendChild(sidebar);
-    panelBody.appendChild(contentArea);
-    panel.appendChild(panelBody);
+    panel.appendChild(categoriesBar);
+    panel.appendChild(contentArea);
 
-    // Przełączanie pokazywania panelu w trybie flex
+    // Kliknięcie w ikonę główną włącza/wyłącza pionowy słupek
     opener.onclick = () => { 
-        if (panel.style.display === 'none') {
+        if (panel.style.display === 'none' || !panel.style.display) {
             panel.style.setProperty('display', 'flex', 'important');
         } else {
             panel.style.setProperty('display', 'none', 'important');
         }
     };
 
-    if (isPinned) {
-        const t = localStorage.getItem('tw_panel_top');
-        const l = localStorage.getItem('tw_panel_left');
-        if (t && l) { panel.style.top = t; panel.style.left = l; }
-    }
-
     document.body.appendChild(panel);
 
-    // Obsługa przesuwania okienka
+    // Drag and drop dla pionowego słupka
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     header.onmousedown = header.ontouchstart = dragStart;
 
     function dragStart(e) {
-        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.className === 'tw-header-btn') return;
+        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.className.includes('tw-header-btn')) return;
         const ev = e.type === 'touchstart' ? e.touches[0] : e;
         pos3 = ev.clientX; pos4 = ev.clientY;
         document.onmouseup = document.ontouchend = dragEnd;
