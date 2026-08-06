@@ -11,7 +11,7 @@
     'use strict';
 
     // Link do konfiguracji zgodnie z Twoim repozytorium
-    const CONFIG_URL = 'https://raw.githubusercontent.com/TCM95/TW-DB/refs/heads/main/confing.json'; 
+    const CONFIG_URL = 'https://github.com/TCM95/autorskie/raw/refs/heads/main/confing.json'; 
     const STORAGE_KEY = 'tw_scripts_state';
     const DARK_THEME_KEY = 'tw_dark_theme';
     
