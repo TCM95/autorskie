@@ -4,23 +4,20 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
-    // Inicjalizacja globalnego dymku (tworzony tylko raz na body)
     let globalTooltip = document.getElementById('tw-global-tooltip');
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
+        globalTooltip.className = 'vis popup_box';
         globalTooltip.style.cssText = `
             display: none; position: absolute; z-index: 999999999;
-            background: #2b2b2b; color: #fff; padding: 6px 8px;
-            border-radius: 4px; width: 190px; font-size: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.7);
-            border: 1px solid #7d5e3c; line-height: 1.3; text-align: left;
-            font-family: Verdana, Arial, sans-serif; pointer-events: none;
+            padding: 6px 8px; width: 190px; font-size: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.7); line-height: 1.3;
+            text-align: left; pointer-events: none;
         `;
         document.body.appendChild(globalTooltip);
     }
 
-    // Zamknij dymek przy kliknięciu gdziekolwiek indziej
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
@@ -28,16 +25,21 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    const opener = document.createElement('div');
+    // Przycisk otwierający używający natywnej klasy Plemion "btn btn-default"
+    const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none; display: block;">`;
+    opener.className = 'btn btn-default';
+    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 16px; height: 16px; pointer-events: none; vertical-align: middle;">`;
     document.body.appendChild(opener);
 
+    // Główny panel jako tabelka systemowa Plemion (vis main_layout / main)
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
+    panel.className = 'vis main_layout';
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
+    header.className = 'head';
     
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
@@ -46,7 +48,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    const themeBtn = document.createElement('span');
+    const themeBtn = document.createElement('button');
     themeBtn.className = 'tw-header-btn';
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
     themeBtn.innerText = isDark ? '🌙' : '☀️';
@@ -58,7 +60,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     };
 
-    const pinBtn = document.createElement('span');
+    const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
     pinBtn.innerText = isPinned ? '📍' : '📌';
@@ -68,7 +70,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         pinBtn.innerText = isPinned ? '📍' : '📌';
     };
 
-    const closeBtn = document.createElement('span');
+    const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
     closeBtn.innerText = '✕';
     closeBtn.onclick = () => { panel.style.display = 'none'; };
@@ -85,6 +87,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const contentArea = document.createElement('div');
     contentArea.id = 'tw-content-area';
+    contentArea.className = 'vis';
 
     const contentInner = document.createElement('div');
     contentInner.className = 'tw-content-inner';
@@ -97,7 +100,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.className = 'tw-empty-msg';
+            emptyMsg.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 8px;';
             emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
             contentInner.appendChild(emptyMsg);
             return;
@@ -106,7 +109,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
             const item = document.createElement('div');
-            item.className = 'tw-script-item';
+            item.className = 'tw-script-item vis';
 
             const gameBtn = document.createElement('div');
             gameBtn.className = 'tw-game-btn';
@@ -127,28 +130,23 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 state[script.id] = newState;
             };
 
-            const infoIcon = document.createElement('span');
-            infoIcon.className = 'tw-info-icon';
-            infoIcon.innerText = 'ⓘ';
+            const infoIcon = document.createElement('button');
+            infoIcon.className = 'tw-info-icon btn btn-default';
+            infoIcon.innerText = 'i';
             
-            // Obsługa kliknięcia w dymek
             infoIcon.onclick = (e) => {
-                e.stopPropagation(); // Blokuje propagację, aby nasłuchiwacz na 'document' od razu go nie zamknął
-                
+                e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
-                    // Jeśli kliknięto w ten sam przycisk, zamknij dymek
                     globalTooltip.style.display = 'none';
                     globalTooltip.dataset.activeId = '';
                 } else {
-                    // Otwórz dymek i oblicz pozycję
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
                     
                     globalTooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #7d5e3c; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
                     
-                    // Pozycjonowanie dymku względem klikniętego "i" (z poprawką na scroll)
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
-                    globalTooltip.style.left = (rect.right + window.scrollX + 15) + 'px';
+                    globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
                 }
@@ -161,21 +159,20 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     }
 
     categories.forEach(cat => {
-        const tab = document.createElement('div');
-        tab.className = 'tw-tab';
+        const tab = document.createElement('button');
+        tab.className = 'tw-tab btn btn-default';
         tab.innerText = cat;
         tab.onclick = () => {
-            // Zamykaj dymek przy zmianie zakładki
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
             
             if (currentCategory === cat) {
                 currentCategory = null;
-                tab.classList.remove('active');
+                tab.classList.remove('btn-confirm-yes');
                 contentArea.style.setProperty('display', 'none', 'important');
             } else {
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('btn-confirm-yes'));
+                tab.classList.add('btn-confirm-yes');
                 currentCategory = cat;
                 renderScripts();
                 contentArea.style.setProperty('display', 'block', 'important');
@@ -192,33 +189,49 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             panel.style.setProperty('display', 'flex', 'important');
         } else {
             panel.style.setProperty('display', 'none', 'important');
-            globalTooltip.style.display = 'none'; // Zamknij dymek po zamknięciu menu
+            globalTooltip.style.display = 'none';
         }
     };
 
     document.body.appendChild(panel);
 
+    // Poprawiony Drag & Drop dla mobilnych przeglądarek
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    header.onmousedown = header.ontouchstart = dragStart;
+
+    header.addEventListener('mousedown', dragStart);
+    header.addEventListener('touchstart', dragStart, { passive: false });
 
     function dragStart(e) {
-        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.className.includes('tw-header-btn')) return;
+        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.classList.contains('tw-header-btn')) return;
+        
         const ev = e.type === 'touchstart' ? e.touches[0] : e;
-        pos3 = ev.clientX; pos4 = ev.clientY;
-        document.onmouseup = document.ontouchend = dragEnd;
-        document.onmousemove = document.ontouchmove = dragMove;
+        pos3 = ev.clientX;
+        pos4 = ev.clientY;
+
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('touchend', dragEnd);
+        document.addEventListener('touchmove', dragMove, { passive: false });
     }
 
     function dragMove(e) {
+        if (e.cancelable) e.preventDefault(); // Powstrzymuje przewijanie strony na telefonie
+
         const ev = e.type === 'touchmove' ? e.touches[0] : e;
-        pos1 = pos3 - ev.clientX; pos2 = pos4 - ev.clientY;
-        pos3 = ev.clientX; pos4 = ev.clientY;
+        pos1 = pos3 - ev.clientX;
+        pos2 = pos4 - ev.clientY;
+        pos3 = ev.clientX;
+        pos4 = ev.clientY;
+
         panel.style.top = (panel.offsetTop - pos2) + "px";
         panel.style.left = (panel.offsetLeft - pos1) + "px";
     }
 
     function dragEnd() {
-        document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
+        document.removeEventListener('mouseup', dragEnd);
+        document.removeEventListener('mousemove', dragMove);
+        document.removeEventListener('touchend', dragEnd);
+        document.removeEventListener('touchmove', dragMove);
     }
 
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
