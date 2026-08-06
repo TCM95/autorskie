@@ -1,109 +1,187 @@
-(async function() {
-    'use strict';
+window.TCM_UI = window.TCM_UI || {};
 
-    const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/';
-    const UI_JS = ['ui/panel.js'];
+window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
+    const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
+    let currentCategory = null;
+
+    const opener = document.createElement('div');
+    opener.id = 'tw-panel-opener';
+    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none;">`;
+    document.body.appendChild(opener);
+
+    const panel = document.createElement('div');
+    panel.id = 'tw-script-panel';
+
+    const header = document.createElement('div');
+    header.id = 'tw-script-panel-header';
     
-    // Plik style.css jest w głównym folderze (tam gdzie menedzer_core.js)
-    const UI_CSS_URL = `${BASE_URL}style.css`;
+    const titleSpan = document.createElement('span');
+    titleSpan.innerText = 'Menedżer TCM';
     
-    const CATEGORIES = ["Ogólne", "Atak/obrona", "Farma/zbieractwo", "Budowa/rekrutacja", "Mapa"];
-    const STORAGE_KEY = 'tw_scripts_state';
+    const controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.gap = '5px';
 
-    function getScriptsState() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-    function saveScriptState(id, isActive) {
-        const state = getScriptsState();
-        state[id] = isActive;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    async function loadCSS() {
-        try {
-            const res = await fetch(`${UI_CSS_URL}?t=${Date.now()}`);
-            if (res.ok) {
-                const style = document.createElement('style');
-                style.textContent = await res.text();
-                document.head.appendChild(style);
-            } else {
-                console.error("Nie udało się pobrać pliku CSS, status:", res.status);
-            }
-        } catch (e) {
-            console.error("Błąd sieci przy pobieraniu CSS:", e);
+    const themeBtn = document.createElement('span');
+    themeBtn.className = 'tw-header-btn';
+    let isDark = localStorage.getItem('tw_dark_theme') === '1';
+    themeBtn.innerText = isDark ? '🌙' : '☀️';
+    themeBtn.onclick = async () => {
+        isDark = !isDark;
+        themeBtn.innerText = isDark ? '🌙' : '☀️';
+        if (darkThemeConfig && callbacks.onToggleTheme) {
+            await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
         }
-    }
+    };
 
-    async function loadModule(path) {
-        const res = await fetch(`${BASE_URL}${path}?t=${Date.now()}`);
-        if (res.ok) {
-            const script = document.createElement('script');
-            script.textContent = await res.text();
-            document.head.appendChild(script);
+    const pinBtn = document.createElement('span');
+    pinBtn.className = 'tw-header-btn';
+    let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
+    pinBtn.innerText = isPinned ? '📍' : '📌';
+    pinBtn.onclick = () => {
+        isPinned = !isPinned;
+        localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
+        pinBtn.innerText = isPinned ? '📍' : '📌';
+        if (isPinned) {
+            localStorage.setItem('tw_panel_top', panel.style.top || '45px');
+            localStorage.setItem('tw_panel_left', panel.style.left || '10px');
         }
-    }
+    };
 
-    async function toggleDarkTheme(darkScriptUrl, enable) {
-        let themeElement = document.getElementById('tcm-dark-theme-script');
-        if (enable) {
-            localStorage.setItem('tw_dark_theme', '1');
-            if (!themeElement && darkScriptUrl) {
-                try {
-                    const fetchUrl = darkScriptUrl.includes('?') ? `${darkScriptUrl}&t=${Date.now()}` : `${darkScriptUrl}?t=${Date.now()}`;
-                    const response = await fetch(fetchUrl);
-                    if (response.ok) {
-                        const code = await response.text();
-                        themeElement = document.createElement('script');
-                        themeElement.id = 'tcm-dark-theme-script';
-                        themeElement.textContent = code;
-                        document.head.appendChild(themeElement);
-                    }
-                } catch (e) {
-                    console.error("Błąd motywu:", e);
-                }
-            }
-        } else {
-            localStorage.setItem('tw_dark_theme', '0');
-            if (themeElement) themeElement.remove();
-            location.reload();
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'tw-header-btn';
+    closeBtn.innerText = '✕';
+    closeBtn.onclick = () => { panel.classList.remove('open'); };
+    
+    controls.appendChild(themeBtn);
+    controls.appendChild(pinBtn);
+    controls.appendChild(closeBtn);
+    header.appendChild(titleSpan);
+    header.appendChild(controls);
+    panel.appendChild(header);
+
+    const panelBody = document.createElement('div');
+    panelBody.id = 'tw-panel-body';
+
+    const sidebar = document.createElement('div');
+    sidebar.id = 'tw-sidebar';
+
+    const contentArea = document.createElement('div');
+    contentArea.id = 'tw-content-area';
+
+    function renderScripts() {
+        contentArea.innerHTML = '';
+        const state = callbacks.getScriptsState();
+        let filtered = scriptsArray.filter(s => s.id !== 'ciemny_motyw' && (s.category || "Ogólne") === currentCategory);
+
+        if (filtered.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'tw-empty-msg';
+            emptyMsg.innerText = 'Brak skryptów.';
+            contentArea.appendChild(emptyMsg);
+            return;
         }
-    }
 
-    async function loadActiveScripts(scripts) {
-        const state = getScriptsState();
-        const url = window.location.href;
-        
-        for (const s of scripts) {
-            if (s.id === 'ciemny_motyw' || !state[s.id] || !s.screens) continue;
+        filtered.forEach(script => {
+            const isActive = state[script.id] === true;
+            const item = document.createElement('div');
+            item.className = 'tw-script-item';
+
+            const gameBtn = document.createElement('div');
+            gameBtn.className = 'tw-game-btn';
             
-            if (s.screens.includes('*') || s.screens.some(sc => url.includes(sc))) {
-                const sRes = await fetch(`${s.url}?t=${Date.now()}`);
-                if (sRes.ok) {
-                    const el = document.createElement('script');
-                    el.textContent = await sRes.text();
-                    document.head.appendChild(el);
-                }
-            }
-        }
-    }
+            const statusIcon = document.createElement('span');
+            statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
+            
+            const nameLabel = document.createElement('span');
+            nameLabel.className = 'tw-script-name';
+            nameLabel.innerText = script.name;
 
-    try {
-        await loadCSS();
-        for (const file of UI_JS) await loadModule(file);
-        
-        const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
-        let scripts = [];
-        if (confRes.ok) {
-            const json = await confRes.json();
-            scripts = Array.isArray(json) ? json : (json.scripts || []);
-        }
+            gameBtn.appendChild(statusIcon);
+            gameBtn.appendChild(nameLabel);
+            gameBtn.onclick = () => {
+                const newState = !state[script.id];
+                callbacks.saveScriptState(script.id, newState);
+                statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
+                state[script.id] = newState;
+            };
 
-        window.TCM_UI.initPanel(scripts, CATEGORIES, { 
-            getScriptsState, 
-            saveScriptState, 
-            onToggleTheme: toggleDarkTheme 
+            const infoIcon = document.createElement('span');
+            infoIcon.className = 'tw-info-icon';
+            infoIcon.innerText = 'ⓘ';
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tw-tooltip';
+            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Brak';
+            tooltip.innerHTML = `<strong>${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #c1a264; margin: 3px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+            
+            infoIcon.appendChild(tooltip);
+            item.appendChild(gameBtn);
+            item.appendChild(infoIcon);
+            contentArea.appendChild(item);
         });
-        
-        await loadActiveScripts(scripts);
-    } catch (e) {
-        console.error("TCM Menedżer Błąd:", e);
     }
-})();
+
+    categories.forEach(cat => {
+        const tab = document.createElement('div');
+        tab.className = 'tw-tab';
+        tab.innerText = cat;
+        tab.onclick = () => {
+            if (currentCategory === cat) {
+                currentCategory = null;
+                tab.classList.remove('active');
+                contentArea.innerHTML = '';
+            } else {
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCategory = cat;
+                renderScripts();
+            }
+        };
+        sidebar.appendChild(tab);
+    });
+
+    panelBody.appendChild(sidebar);
+    panelBody.appendChild(contentArea);
+    panel.appendChild(panelBody);
+
+    // Otwieranie / Zamykanie przełączaniem klasy CSS .open
+    opener.onclick = () => { 
+        panel.classList.toggle('open');
+    };
+
+    if (isPinned) {
+        const t = localStorage.getItem('tw_panel_top');
+        const l = localStorage.getItem('tw_panel_left');
+        if (t && l) { panel.style.top = t; panel.style.left = l; }
+    }
+
+    document.body.appendChild(panel);
+
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    header.onmousedown = header.ontouchstart = dragStart;
+
+    function dragStart(e) {
+        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.className === 'tw-header-btn') return;
+        const ev = e.type === 'touchstart' ? e.touches[0] : e;
+        pos3 = ev.clientX; pos4 = ev.clientY;
+        document.onmouseup = document.ontouchend = dragEnd;
+        document.onmousemove = document.ontouchmove = dragMove;
+    }
+
+    function dragMove(e) {
+        const ev = e.type === 'touchmove' ? e.touches[0] : e;
+        pos1 = pos3 - ev.clientX; pos2 = pos4 - ev.clientY;
+        pos3 = ev.clientX; pos4 = ev.clientY;
+        panel.style.top = (panel.offsetTop - pos2) + "px";
+        panel.style.left = (panel.offsetLeft - pos1) + "px";
+    }
+
+    function dragEnd() {
+        document.onmouseup = document.onmousemove = document.ontouchend = document.ontouchmove = null;
+    }
+
+    if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
+        callbacks.onToggleTheme(darkThemeConfig.url, true);
+    }
+};
