@@ -2,10 +2,10 @@
     'use strict';
 
     const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/';
-    const UI_JS = ['ui/panel.js']; // Usunięto tooltip.js!
-    const UI_CSS = 'ui/style.css';
+    const UI_JS = ['ui/panel.js'];
+    const UI_CSS_URL = `${BASE_URL}style.css`;
     
-    const CATEGORIES = ["Ogólne", "Atak/obrona", "Farma/zbieractwo", "Budowa/rekrutacja", "Surowce", "Mapa"];
+    const CATEGORIES = ["Ogólne", "Atak/obrona", "Farma/zbieractwo", "Budowa/rekrutacja", "Mapa"];
     const STORAGE_KEY = 'tw_scripts_state';
 
     function getScriptsState() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
@@ -15,12 +15,19 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
+    // Wymuszenie załadowania i wstrzyknięcia CSS przed uruchomieniem UI
     async function loadCSS() {
-        const res = await fetch(`${BASE_URL}${UI_CSS}?t=${Date.now()}`);
-        if (res.ok) {
-            const style = document.createElement('style');
-            style.textContent = await res.text();
-            document.head.appendChild(style);
+        try {
+            const res = await fetch(`${UI_CSS_URL}?t=${Date.now()}`);
+            if (res.ok) {
+                const styleText = await res.text();
+                const style = document.createElement('style');
+                style.id = 'tcm-main-css';
+                style.textContent = styleText;
+                document.head.appendChild(style);
+            }
+        } catch (e) {
+            console.error("Błąd ładowania CSS:", e);
         }
     }
 
@@ -78,7 +85,10 @@
     }
 
     try {
+        // Najpierw pobierz i wdróż style!
         await loadCSS();
+        
+        // Dopiero po załadowaniu CSS buduj UI
         for (const file of UI_JS) await loadModule(file);
         
         const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
