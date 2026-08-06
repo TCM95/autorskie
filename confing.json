@@ -21,7 +21,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
         "description": "Etykiety z filtrami.",
-        "screens": ["overview"]
+        "screens": ["mode=incomings"]
     },
     {
         "id": "tager_przychodzace",
@@ -29,7 +29,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
-        "screens": ["overview"]
+        "screens": ["mode=incomings"]
     },
     {
         "id": "tager_wychodzace",
@@ -61,7 +61,7 @@
         "category": "Ogólne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Profil_gracza.js",
         "description": "Pokazuje ranking pokonanych profilu",
-        "screens": ["*"]
+        "screens": ["info_player", "info_village"]
     },
     {
         "id": "komendy",
