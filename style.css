@@ -1,3 +1,17 @@
+/* Wyłączenie niebieskiego obramowania na telefonach */
+#tw-script-panel button,
+#tw-script-panel div,
+#tw-panel-opener {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+#tw-script-panel button:focus,
+#tw-panel-opener:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* Przycisk otwierający */
 #tw-panel-opener {
     position: fixed !important;
@@ -5,11 +19,11 @@
     left: 5px !important;
     z-index: 999999 !important;
     cursor: pointer !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
     padding: 3px 6px !important;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #e3d2ab 100%) !important;
-    border: 1px solid #7d5e3c !important;
+    background: linear-gradient(to bottom, #7d5e3c 0%, #5a4128 100%) !important;
+    border: 1px solid #3c2a17 !important;
     border-radius: 3px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
 }
 
 /* Główny słupek */
@@ -48,7 +62,7 @@
     align-items: center !important;
     cursor: move !important;
     user-select: none !important;
-    border-bottom: 1px solid #5a4128 !important;
+    border-bottom: 1px solid #3c2a17 !important;
 }
 
 .tw-header-btn {
@@ -60,11 +74,8 @@
     border: none !important;
     font-size: 12px !important;
 }
-.tw-header-btn:hover {
-    color: #fff !important;
-}
 
-/* Pasekk kategorii */
+/* Pasek kategorii */
 #tw-categories-bar {
     display: flex !important;
     flex-direction: column !important;
@@ -73,7 +84,7 @@
     gap: 4px !important;
 }
 
-/* Przyciski zakładek w stylu Plemion */
+/* Przyciski zakładek (Plemionowy ciemny brąz) */
 .tw-tab {
     cursor: pointer !important;
     font-size: 11px !important;
@@ -82,16 +93,17 @@
     display: block !important;
     width: 100% !important;
     padding: 5px 0 !important;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #d8c498 100%) !important;
-    border: 1px solid #7d5e3c !important;
+    background: linear-gradient(to bottom, #6f4e2b 0%, #4a331a 100%) !important;
+    border: 1px solid #312110 !important;
     border-radius: 3px !important;
-    color: #333 !important;
+    color: #f4e4bc !important;
+    text-shadow: 1px 1px 1px #000 !important;
 }
 
-.tw-tab:hover, .tw-tab.active-tab {
-    background: linear-gradient(to bottom, #6c9a32 0%, #44681d 100%) !important;
+.tw-tab.active-tab {
+    background: linear-gradient(to bottom, #8a1717 0%, #5c0f0f 100%) !important;
     color: #fff !important;
-    border-color: #2e4713 !important;
+    border-color: #3b0909 !important;
 }
 
 /* Wysuwany panel boczny ze skryptami */
@@ -168,10 +180,10 @@
     font-size: 11px !important;
     padding: 2px 6px !important;
     margin-left: 4px !important;
-    background: linear-gradient(to bottom, #f4e4bc 0%, #d8c498 100%) !important;
-    border: 1px solid #7d5e3c !important;
+    background: linear-gradient(to bottom, #6f4e2b 0%, #4a331a 100%) !important;
+    border: 1px solid #312110 !important;
     border-radius: 3px !important;
-    color: #333 !important;
+    color: #f4e4bc !important;
 }
 
 /* Globalny dymek informacyjny */
@@ -186,4 +198,11 @@
     line-height: 1.3 !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.7) !important;
     z-index: 999999999 !important;
+}
+
+/* NARZUCANIE STYLI ZEWNĘTRZNYM OKIENKOM SKRYPTÓW W GRZE */
+div[id*="script"], div[class*="script"], .popup_box {
+    background-color: #fff8eb !important;
+    border: 2px solid #7d5e3c !important;
+    color: #333 !important;
 }
