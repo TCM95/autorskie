@@ -2,7 +2,7 @@
 // @name         MAPA-KORDY-HYBRYDA
 // @namespace    https://viayoo.com/
 // @version      1.2
-// @description  Skanowanie z ekranu + całego świata z przełącznikiem (Shinko UI)
+// @description  Skanowanie z ekranu
 // @author       TCM
 // @match        *.plemiona.pl/game.php?*screen=map*
 // @grant        none
