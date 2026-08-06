@@ -21,7 +21,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
         "description": "Etykiety z filtrami.",
-        "screens": ["incomings", "attacks"]
+        "screens": ["overview"]
     },
     {
         "id": "tager_przychodzace",
@@ -29,7 +29,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
-        "screens": ["incomings", "info_village"]
+        "screens": ["overview"]
     },
     {
         "id": "tager_wychodzace",
@@ -37,7 +37,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
         "description": "Ataki wychodzące oraz filtry do tagera.",
-        "screens": ["commands"]
+        "screens": ["commands", "overview"]
     },
     {
         "id": "edytor_nazw",
