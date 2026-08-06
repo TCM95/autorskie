@@ -184,44 +184,55 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // Przesuwanie okienka (Drag & Drop z obsługą dotyku)
-    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    // Dynamiczna i bezbłędna obsługa przeciągania (Mouse & Touch)
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let initialLeft = 0, initialTop = 0;
 
-    header.addEventListener('mousedown', dragStart);
-    header.addEventListener('touchstart', dragStart, { passive: false });
+    function getCoords(e) {
+        return e.touches && e.touches.length > 0 ? e.touches[0] : e;
+    }
 
-    function dragStart(e) {
+    function onDragStart(e) {
         if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.classList.contains('tw-header-btn')) return;
         
-        const ev = e.type === 'touchstart' ? e.touches[0] : e;
-        pos3 = ev.clientX;
-        pos4 = ev.clientY;
+        isDragging = true;
+        const coords = getCoords(e);
+        startX = coords.clientX;
+        startY = coords.clientY;
 
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('mousemove', dragMove);
-        document.addEventListener('touchend', dragEnd);
-        document.addEventListener('touchmove', dragMove, { passive: false });
+        const rect = panel.getBoundingClientRect();
+        initialLeft = rect.left;
+        initialTop = rect.top;
+
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('touchmove', onDragMove, { passive: false });
+        document.addEventListener('mouseup', onDragEnd);
+        document.addEventListener('touchend', onDragEnd);
     }
 
-    function dragMove(e) {
-        if (e.cancelable) e.preventDefault();
+    function onDragMove(e) {
+        if (!isDragging) return;
+        if (e.cancelable) e.preventDefault(); // Blokada gestów przeglądarki podczas przeciągania
 
-        const ev = e.type === 'touchmove' ? e.touches[0] : e;
-        pos1 = pos3 - ev.clientX;
-        pos2 = pos4 - ev.clientY;
-        pos3 = ev.clientX;
-        pos4 = ev.clientY;
+        const coords = getCoords(e);
+        const deltaX = coords.clientX - startX;
+        const deltaY = coords.clientY - startY;
 
-        panel.style.top = (panel.offsetTop - pos2) + "px";
-        panel.style.left = (panel.offsetLeft - pos1) + "px";
+        panel.style.left = (initialLeft + deltaX) + 'px';
+        panel.style.top = (initialTop + deltaY) + 'px';
     }
 
-    function dragEnd() {
-        document.removeEventListener('mouseup', dragEnd);
-        document.removeEventListener('mousemove', dragMove);
-        document.removeEventListener('touchend', dragEnd);
-        document.removeEventListener('touchmove', dragMove);
+    function onDragEnd() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('touchmove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        document.removeEventListener('touchend', onDragEnd);
     }
+
+    header.addEventListener('mousedown', onDragStart);
+    header.addEventListener('touchstart', onDragStart, { passive: false });
 
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
         callbacks.onToggleTheme(darkThemeConfig.url, true);
