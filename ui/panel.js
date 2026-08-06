@@ -4,7 +4,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
-    // Tworzenie globalnego dymku na body (rozwiązuje problem braku tła i ucinania)
     let globalTooltip = document.getElementById('tw-global-tooltip');
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
