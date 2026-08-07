@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Klin_z_Cofki
+// @name         Klin_z_Cofki (Shinko UI)
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=place*
@@ -9,6 +9,57 @@
 
 (function() {
     'use strict';
+
+    // --- STYL SHINKO (CSS) ---
+    const style = document.createElement('style');
+    style.textContent = `
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+
+        .shinko-btn-snipe {
+            background: var(--btn-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            border-radius: 3px !important;
+            cursor: pointer !important;
+            font-size: 11px !important;
+            padding: 2px 6px !important;
+            margin-left: 6px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+            transition: all 0.2s;
+        }
+
+        .shinko-btn-snipe:hover {
+            background: var(--btn-hover) !important;
+            color: #ffffff !important;
+        }
+
+        .shinko-btn-active {
+            background: linear-gradient(#da3633 0%, #b62324 100%) !important;
+            border-color: #da3633 !important;
+            color: #ffffff !important;
+        }
+
+        .shinko-timer-display {
+            margin-left: 8px !important;
+            font-weight: bold !important;
+            font-family: monospace !important;
+            font-size: 11px !important;
+            padding: 2px 4px !important;
+            background-color: var(--bg-header) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 3px !important;
+        }
+    `;
+    document.head.appendChild(style);
 
     // Globalne zmienne do zarządzania stanem odliczania
     let globalAnimationFrameId = null;
@@ -41,12 +92,13 @@
             globalAnimationFrameId = null;
         }
         if (globalActiveButton) {
-            globalActiveButton.innerHTML = '⚔️';
-            globalActiveButton.style.background = "#f4e4bc";
+            globalActiveButton.innerHTML = '⚔️ Zaplanuj cofkę';
+            globalActiveButton.classList.remove('shinko-btn-active');
             globalActiveButton = null;
         }
         if (globalTimerDisplay) {
             globalTimerDisplay.textContent = "";
+            globalTimerDisplay.style.display = "none";
             globalTimerDisplay = null;
         }
     }
@@ -71,12 +123,13 @@
             if(!nameCell) return;
 
             const btn = document.createElement('button');
-            btn.innerHTML = '⚔️';
-            btn.style = "margin-left: 6px; cursor:pointer; background: #f4e4bc; border: 1px solid #7d510f; border-radius: 3px; font-size: 10px; padding: 1px 4px;";
+            btn.className = 'shinko-btn-snipe';
+            btn.innerHTML = '⚔️ Zaplanuj cofkę';
             btn.title = "Ustaw ten czas wejścia jako cel klina";
 
             const timerDisplay = document.createElement('span');
-            timerDisplay.style = "margin-left: 5px; font-weight: bold; font-family: monospace; font-size: 11px;";
+            timerDisplay.className = 'shinko-timer-display';
+            timerDisplay.style.display = "none";
             
             // Dodajemy przycisk obok nazwy rozkazu
             nameCell.appendChild(btn);
@@ -118,8 +171,9 @@
                 globalActiveButton = btn;
                 globalTimerDisplay = timerDisplay;
                 
-                btn.innerHTML = '❌';
-                btn.style.background = "#ffcccc";
+                btn.innerHTML = '❌ Anuluj';
+                btn.classList.add('shinko-btn-active');
+                timerDisplay.style.display = "inline-block";
                 UI.SuccessMessage("Klin zaplanowany!");
 
                 function checkTime() {
@@ -127,8 +181,8 @@
                     const diff = cancelTimeMs - now;
 
                     if (diff <= 0) {
-                        timerDisplay.textContent = "KLIKNIĘTO!";
-                        timerDisplay.style.color = "red";
+                        timerDisplay.textContent = "COFANIE...";
+                        timerDisplay.style.color = "#ff4444";
                         
                         const btnCancel = document.querySelector("a.command-cancel");
                         if (btnCancel) {
@@ -138,15 +192,15 @@
                         }
 
                         // Reset UI po kliknięciu
-                        btn.innerHTML = '⚔️';
-                        btn.style.background = "#f4e4bc";
+                        btn.innerHTML = '⚔️ Zaplanuj cofkę';
+                        btn.classList.remove('shinko-btn-active');
                         globalActiveButton = null;
                         globalAnimationFrameId = null;
                         return;
                     }
 
                     timerDisplay.textContent = "Cofka za: " + (diff / 1000).toFixed(3) + "s";
-                    timerDisplay.style.color = "#009900";
+                    timerDisplay.style.color = "#55ff55";
                     
                     globalAnimationFrameId = requestAnimationFrame(checkTime);
                 }
