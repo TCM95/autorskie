@@ -140,7 +140,7 @@
         "name": "Balancer",
         "category": "Surowce",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
-        "description": podgląd produkcja wyrównuje surowce w aktualnej grupie",
+        "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
         "screens": ["mode=prod"]
     }
 ]
