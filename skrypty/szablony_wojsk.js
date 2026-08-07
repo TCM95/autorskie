@@ -5,7 +5,7 @@
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=train*
 // @match        *://*.plemiona.pl/game.php*screen=am_troops*
-// @match *://*.plemiona.pl/game.php*screen=train&mode=mass_decommission*
+// @match        *://*.plemiona.pl/game.php*screen=train&mode=mass_decommission*
 // @grant        none
 // ==/UserScript==
 
@@ -14,7 +14,6 @@
 
     const urlKey = window.location.hostname.split('.')[0];
     
-    // ZMIANA: Niezawodne sprawdzanie świata z łukami na podstawie globalnych danych gry (game_data)
     const swiatZLukami = typeof game_data !== 'undefined' && game_data.units.includes('archer');
     
     const popKoszty = { spear: 1, sword: 1, axe: 1, archer: 1, spy: 2, light: 4, marcher: 5, heavy: 6, ram: 5, catapult: 8 };
@@ -23,7 +22,8 @@
         spy: 'staj', light: 'staj', marcher: 'staj', heavy: 'staj',
         ram: 'wars', catapult: 'wars'
     };
-    const koloryBudynkow = { kosz: '#8b0000', staj: '#004080', wars: '#4b2c20' };
+    // Zmodyfikowane lekko kolory pod ciemny motyw, aby były czytelne
+    const koloryBudynkow = { kosz: '#ff6666', staj: '#66b3ff', wars: '#d2a679' };
 
     const ikony = {
         spear: 'https://dspl.innogamescdn.com/asset/2fe6656b/graphic/unit/recruit/spear.webp',
@@ -39,17 +39,17 @@
     };
 
     let szablony = [
-{ nazwa: '1 LINIA FRONT DO 3 KRATEK START', typ: 'off', wojsko: { sword: 2, axe: 13000, spy: 400, heavy: 1000, ram: 200 } },
-{ nazwa: '1 LINIA FRONT DO 3 KRATEK SZYBKI', typ: 'off', wojsko: { sword: 2, axe: 7000, spy: 400, heavy: 2050, ram: 200 } },
-{ nazwa: '1 LINIA FRONT DO 3 KRATEK LK', typ: 'off', wojsko: { sword: 2, axe: 7200, light: 3150, ram: 100 } },
-{ nazwa: '1 LINIA POWYŻEJ 3 KRATEK START', typ: 'off', wojsko: { sword: 2, axe: 10700, light: 2000, ram: 300 } },
-{ nazwa: '1 LINIA POWYŻEJ 3 KRATEK SZYBKI', typ: 'off', wojsko: { sword: 2, axe: 6790, light: 3000, ram: 300 } },
-{ nazwa: '2 LINIA START', typ: 'off', wojsko: { sword: 3, axe: 10050, spy: 300, light: 2000, ram: 300, catapult: 50 } },
-{ nazwa: '2 LINIA SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6100, spy: 300, light: 2950, ram: 300, catapult: 50 } },
-{ nazwa: 'STREFA OFF OTWIERACZ START', typ: 'off', wojsko: { sword: 3, axe: 8700, spy: 400, light: 2000, ram: 500, catapult: 100 } },
-{ nazwa: 'STREFA OFF OTWIERACZ SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6050, spy: 400, light: 2675, ram: 500, catapult: 100 } },
-{ nazwa: 'STREFA OFF STANDARD START', typ: 'off', wojsko: { sword: 3, axe: 9700, spy: 400, light: 2000, ram: 300, catapult: 100 } },
-{ nazwa: 'STREFA OFF STANDARD SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6790, spy: 400, light: 2825, ram: 300, catapult: 100 } },
+        { nazwa: '1 LINIA FRONT DO 3 KRATEK START', typ: 'off', wojsko: { sword: 2, axe: 13000, spy: 400, heavy: 1000, ram: 200 } },
+        { nazwa: '1 LINIA FRONT DO 3 KRATEK SZYBKI', typ: 'off', wojsko: { sword: 2, axe: 7000, spy: 400, heavy: 2050, ram: 200 } },
+        { nazwa: '1 LINIA FRONT DO 3 KRATEK LK', typ: 'off', wojsko: { sword: 2, axe: 7200, light: 3150, ram: 100 } },
+        { nazwa: '1 LINIA POWYŻEJ 3 KRATEK START', typ: 'off', wojsko: { sword: 2, axe: 10700, light: 2000, ram: 300 } },
+        { nazwa: '1 LINIA POWYŻEJ 3 KRATEK SZYBKI', typ: 'off', wojsko: { sword: 2, axe: 6790, light: 3000, ram: 300 } },
+        { nazwa: '2 LINIA START', typ: 'off', wojsko: { sword: 3, axe: 10050, spy: 300, light: 2000, ram: 300, catapult: 50 } },
+        { nazwa: '2 LINIA SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6100, spy: 300, light: 2950, ram: 300, catapult: 50 } },
+        { nazwa: 'STREFA OFF OTWIERACZ START', typ: 'off', wojsko: { sword: 3, axe: 8700, spy: 400, light: 2000, ram: 500, catapult: 100 } },
+        { nazwa: 'STREFA OFF OTWIERACZ SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6050, spy: 400, light: 2675, ram: 500, catapult: 100 } },
+        { nazwa: 'STREFA OFF STANDARD START', typ: 'off', wojsko: { sword: 3, axe: 9700, spy: 400, light: 2000, ram: 300, catapult: 100 } },
+        { nazwa: 'STREFA OFF STANDARD SZYBKI', typ: 'off', wojsko: { sword: 3, axe: 6790, spy: 400, light: 2825, ram: 300, catapult: 100 } },
         { nazwa: 'OFF/300', typ: 'off', wojsko: { axe: 5422, spy: 10, light: 2800, ram: 300, catapult: 300 } },
         { nazwa: 'OFF/200', typ: 'off', wojsko: { axe: 6250, spy: 150, light: 2741, ram: 310, catapult: 200 } },
         { nazwa: 'OFF/100', typ: 'off', wojsko: { axe: 6400, spy: 200, light: 2842, ram: 310, catapult: 100 } },
@@ -59,10 +59,10 @@
         { nazwa: 'OFF Łucznicy', typ: 'off', wojsko: { axe: 5700, spy: 100, light: 2768, marcher: 300, ram: 450 } },
         { nazwa: 'Burzyciel Standard', typ: 'off', wojsko: { axe: 5082, spy: 100, light: 2600, ram: 1000, catapult: 5 } },
         { nazwa: 'Burzyciel Bunkry', typ: 'off', wojsko: { axe: 4082, spy: 100, light: 1850, ram: 1800, catapult: 5 } },
-{ nazwa: '1 LINIA DEFF', typ: 'deff', wojsko: { spear: 8500, sword: 20, spy: 205, heavy: 1820, ram: 12 } },
-{ nazwa: '2 LINIA DEFF', typ: 'deff', wojsko: { spear: 8500, sword: 20, spy: 528, heavy: 1700, ram: 12, catapult: 50 } },
-{ nazwa: '3 LINIA DEFF', typ: 'deff', wojsko: { spear: 8460, sword: 4, axe: 80, spy: 660, light: 50, heavy: 1650, ram: 15, catapult: 100 } },
-{ nazwa: 'ZAPLECZE STARTOWE DEFF', typ: 'deff', wojsko: { spear: 10300, sword: 10300, spy: 310 } },
+        { nazwa: '1 LINIA DEFF', typ: 'deff', wojsko: { spear: 8500, sword: 20, spy: 205, heavy: 1820, ram: 12 } },
+        { nazwa: '2 LINIA DEFF', typ: 'deff', wojsko: { spear: 8500, sword: 20, spy: 528, heavy: 1700, ram: 12, catapult: 50 } },
+        { nazwa: '3 LINIA DEFF', typ: 'deff', wojsko: { spear: 8460, sword: 4, axe: 80, spy: 660, light: 50, heavy: 1650, ram: 15, catapult: 100 } },
+        { nazwa: 'ZAPLECZE STARTOWE DEFF', typ: 'deff', wojsko: { spear: 10300, sword: 10300, spy: 310 } },
         { nazwa: 'DEFF Mobil', typ: 'deff', wojsko: { spear: 8100, sword: 125, axe: 200, spy: 500, light: 100, heavy: 1600, ram:10, catapult: 100 } },
         { nazwa: 'DEFF Agresywny', typ: 'deff', wojsko: { spear: 9034, spy: 50, heavy: 1900 } },
         { nazwa: 'DEFF CK', typ: 'deff', wojsko: { spy: 100, heavy: 3395 } },
@@ -72,8 +72,42 @@
         { nazwa: 'Burzak 50k', typ: 'burz', wojsko: { axe: 150, light: 50, ram: 10, catapult: 50 } }
     ];
 
-    let uiState = JSON.parse(localStorage.getItem(`kreator_ui_${urlKey}`)) || { pinned: false, top: '10%', left: '50%' };
+    let uiState = JSON.parse(localStorage.getItem(`kreator_ui_${urlKey}`)) || { top: '10%', left: '50%' };
     
+    // Wstrzykiwanie wzorca CSS
+    const css = `
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+        .tcm-btn {
+            background: var(--btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .tcm-btn:hover {
+            background: var(--btn-hover);
+        }
+        .tcm-input {
+            background: var(--bg-row-alt);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+    `;
+    const styleEl = document.createElement('style');
+    styleEl.innerHTML = css;
+    document.head.appendChild(styleEl);
+
     const getGameInput = (u) => document.getElementById(`${u}_0`) || document.getElementsByName(u)[0];
 
     const formatSeconds = (s) => {
@@ -149,7 +183,7 @@
 
     const stworzBlok = (kolor) => {
         const d = document.createElement('div');
-        d.style = `margin-bottom: 8px; padding: 6px; background: #e3d1b1; border: 2px solid ${kolor}; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px;`;
+        d.style = `margin-bottom: 10px; padding: 6px; background: transparent; border: 2px solid ${kolor}; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px;`;
         return d;
     };
 
@@ -161,15 +195,15 @@
         if (!glownyContainer) {
             glownyContainer = document.createElement('div');
             glownyContainer.id = 'sekcje-szablonow';
-            glownyContainer.style = "margin: 15px 0; border: 1px solid #7d510f; background: #f4e4bc; border-radius: 4px; overflow: hidden; width: 100%;";
+            glownyContainer.style = "margin: 15px 0; border: 1px solid var(--border-color); background: var(--bg-main); border-radius: 4px; overflow: hidden; width: 100%; color: var(--text-color);";
 
             const header = document.createElement('div');
-            header.style = "background: #7d510f; color: white; padding: 6px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer;";
-            header.innerHTML = `<span>SZYBKIE SZABLONY TCM</span> <span id="toggle-btn" style="font-family: monospace;">[-]</span>`;
+            header.style = "background: var(--bg-header); color: var(--title-color); border-bottom: 1px solid var(--border-color); padding: 6px 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer;";
+            header.innerHTML = `<span>SZABLONY TCM</span> <span id="toggle-btn" style="font-family: monospace;">[-]</span>`;
 
             const contentWrapper = document.createElement('div');
             contentWrapper.id = "szablony-content-main";
-            contentWrapper.style = "padding: 8px;";
+            contentWrapper.style = "padding: 10px;";
 
             let isMinimized = localStorage.getItem('szablony_minimized') === 'true';
             const updateState = () => {
@@ -188,9 +222,9 @@
         const content = document.getElementById('szablony-content-main');
         content.innerHTML = ""; 
 
-        const sOff = stworzBlok('#8b0000');
-        const sDef = stworzBlok('#004080');
-        const sBurz = stworzBlok('#4b2c20');
+        const sOff = stworzBlok('#cc0000'); // Wyraźniejsze obramowanie dla OFF
+        const sDef = stworzBlok('#3399ff'); // Wyraźniejsze obramowanie dla DEFF
+        const sBurz = stworzBlok('#b36b00'); // Wyraźniejsze obramowanie dla Burzaków
 
         let saved = JSON.parse(localStorage.getItem(`tcm_custom_templates_${urlKey}`)) || [];
         let allTemplates = [...szablony, ...saved];
@@ -205,23 +239,23 @@
             let sumaPop = 0;
             for (let u in s.wojsko) sumaPop += s.wojsko[u] * (popKoszty[u] || 1);
 
-            let target = sDef; let hCol = "#004080";
-            if (s.typ === 'off') { target = sOff; hCol = "#8b0000"; }
-            else if (s.typ === 'burz') { target = sBurz; hCol = "#4b2c20"; }
+            let target = sDef; let hCol = "#3399ff";
+            if (s.typ === 'off') { target = sOff; hCol = "#cc0000"; }
+            else if (s.typ === 'burz') { target = sBurz; hCol = "#b36b00"; }
 
-            let grid = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 6px;">`;
+            let grid = `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">`;
             for (let j in s.wojsko) {
                 grid += `<div style="display:flex; align-items:center; gap:3px; font-size:10px;"><img src="${ikony[j]}" width="12"><b>${s.wojsko[j]}</b></div>`;
             }
             grid += `</div>`;
 
-            let usunBtn = s.custom ? `<span class="del-template" data-idx="${idx - szablony.length}" style="color:red; cursor:pointer; float:right;">[x]</span>` : "";
+            let usunBtn = s.custom ? `<span class="del-template" data-idx="${idx - szablony.length}" style="color:#ff4d4d; cursor:pointer; float:right;">[x]</span>` : "";
 
             const kafel = document.createElement('div');
-            kafel.style = "background:#f4e4bc; border: 1px solid #7d510f; flex: 1; min-width: 130px; cursor: pointer; padding: 4px; border-radius: 3px; box-shadow: 1px 1px 2px rgba(0,0,0,0.1);";
+            kafel.style = `background: var(--bg-row-alt); border: 1px solid ${hCol}; flex: 1; min-width: 130px; cursor: pointer; padding: 4px; border-radius: 4px; box-shadow: 1px 1px 2px rgba(0,0,0,0.2);`;
             kafel.innerHTML = `
-                <div style="background:${hCol}; color:#fff; text-align:center; font-weight:bold; margin-bottom:4px; padding:1px; font-size:10px;">
-                    ${usunBtn} ${s.nazwa} <br> <span style="color:#ffd700; font-size:9px;">🏠 ${sumaPop.toLocaleString()}</span>
+                <div style="border-bottom: 1px solid ${hCol}; color: var(--title-color); text-align:center; font-weight:bold; margin-bottom:6px; padding-bottom:4px; font-size:11px;">
+                    ${usunBtn} ${s.nazwa} <br> <span style="color:#aaaaaa; font-size:10px; font-weight:normal;">🏠 ${sumaPop.toLocaleString()}</span>
                 </div>
                 ${grid}`;
 
@@ -248,22 +282,23 @@
 
         const openBtn = document.createElement('button');
         openBtn.innerHTML = "🛠️ Kalkulator Czasu / Kreator Szablonów";
-        openBtn.className = "btn";
-        openBtn.style = "margin: 10px 0; padding: 8px; font-weight: bold; width: 100%; max-width: 350px; background: #603000; color: #fff; border: 2px solid #3e2711; border-radius: 4px;";
+        openBtn.className = "tcm-btn";
+        openBtn.style.margin = "10px 0";
+        openBtn.style.width = "100%";
+        openBtn.style.maxWidth = "350px";
 
         let selectBox = document.getElementById('template_selection') || document.getElementById('train_form');
         if (selectBox) selectBox.parentNode.insertBefore(openBtn, selectBox);
 
         const win = document.createElement('div');
         win.id = 'tcm-kreator-wrapper';
-        win.style = `display: none; position: fixed; top: ${uiState.top}; left: ${uiState.left}; transform: ${uiState.pinned ? 'none' : 'translateX(-50%)'}; z-index: 10000; background: #e3d5b3; border: 2px solid #603000; border-radius: 6px; width: 95%; max-width: 320px; box-shadow: 0 8px 30px rgba(0,0,0,0.7); font-family: Verdana, sans-serif;`;
+        win.style = `display: none; position: fixed; top: ${uiState.top}; left: ${uiState.left}; transform: translateX(-50%); z-index: 10000; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; width: 95%; max-width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.8); font-family: Verdana, sans-serif;`;
 
         win.innerHTML = `
-            <div id="tcm-header" style="background: #3e2711; color: #fff; padding: 10px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: ${uiState.pinned ? 'default' : 'move'};">
-                <span>⏱️ KALKULATOR / KREATOR</span>
+            <div id="tcm-header" style="background: var(--bg-header); color: var(--title-color); padding: 10px; font-weight: bold; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; cursor: move;">
+                <span>⏱️ KALKULATOR</span>
                 <div>
-                    <span id="pin-btn" style="cursor: pointer; margin-right: 10px;">${uiState.pinned ? '📌' : '📍'}</span>
-                    <span id="close-calc" style="cursor: pointer; background: #8b0000; padding: 2px 8px; border-radius: 3px; font-size: 11px;">X</span>
+                    <span id="close-calc" style="cursor: pointer; background: transparent; color: #ff4d4d; font-weight: bold; padding: 2px 8px; font-size: 14px;">X</span>
                 </div>
             </div>
 
@@ -272,16 +307,16 @@
                     ${Object.keys(ikony).map(u => {
                         if (!swiatZLukami && (u === 'archer' || u === 'marcher')) return '';
                         return `
-                        <tr style="border-bottom: 1px solid #c0b090; height: 35px;">
+                        <tr style="border-bottom: 1px solid var(--border-color); height: 35px;">
                             <td width="25"><img src="${ikony[u]}" width="18"></td>
-                            <td width="80"><input type="number" id="c_in_${u}" value="0" min="0" style="width: 70px; font-size: 11px; text-align: center; border: 1px solid #7d510f;"></td>
+                            <td width="80"><input type="number" id="c_in_${u}" value="0" min="0" class="tcm-input" style="width: 70px; font-size: 11px; text-align: center; padding: 2px;"></td>
                             <td id="c_time_${u}" style="font-size: 11px; text-align: right; color: ${koloryBudynkow[budynki[u]]}; font-weight: bold;">0s</td>
                         </tr>
                     `}).join('')}
                 </table>
 
-                <div style="margin-top: 15px; background: #f4e4bc; border: 2px solid #7d510f; border-radius: 4px; padding: 8px; font-size: 12px;">
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px solid #7d510f;">
+                <div style="margin-top: 15px; background: var(--bg-row-alt); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; font-size: 12px;">
+                    <div style="display: flex; justify-content: space-between; padding-bottom: 5px; border-bottom: 1px dashed var(--border-color);">
                         <b>🏠 Populacja:</b> <span id="r-pop">0</span>
                     </div>
                     <div style="color:${koloryBudynkow.kosz}; display: flex; justify-content: space-between; margin-top: 5px;">
@@ -295,21 +330,21 @@
                     </div>
                 </div>
 
-                <div style="margin-top: 15px; border-top: 1px solid #7d510f; padding-top: 10px;">
+                <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
                     <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                        <input type="text" id="cr-name" placeholder="Nazwa Szablonu" style="flex: 2; font-size: 11px;">
-                        <select id="cr-type" style="flex: 1; font-size: 11px;">
+                        <input type="text" id="cr-name" placeholder="Nazwa Szablonu" class="tcm-input" style="flex: 2; font-size: 11px; padding: 4px;">
+                        <select id="cr-type" class="tcm-input" style="flex: 1; font-size: 11px; padding: 4px;">
                             <option value="off">OFF</option>
                             <option value="deff">DEFF</option>
                             <option value="burz">Burzak</option>
                         </select>
                     </div>
                     <div style="display: flex; gap: 5px;">
-                        <button id="cr-save" class="btn" style="flex: 2; font-size: 11px;">Zapisz jako Kafelek</button>
-                        <button id="cr-export" class="btn" style="flex: 1; font-size: 11px;">Kod</button>
+                        <button id="cr-save" class="tcm-btn" style="flex: 2; font-size: 11px;">Zapisz jako Kafelek</button>
+                        <button id="cr-export" class="tcm-btn" style="flex: 1; font-size: 11px;">Kod</button>
                     </div>
-                    <button id="cr-clear" class="btn" style="width: 100%; margin-top: 5px; font-size: 11px; background: #8b0000; color: white;">Wyczyść Kalkulator</button>
-                    <textarea id="cr-result" style="display: none; width: 95%; height: 40px; margin-top: 8px; font-size: 10px;"></textarea>
+                    <button id="cr-clear" class="tcm-btn" style="width: 100%; margin-top: 5px; font-size: 11px; color: #ff4d4d;">Wyczyść Kalkulator</button>
+                    <textarea id="cr-result" class="tcm-input" style="display: none; width: 95%; height: 40px; margin-top: 8px; font-size: 10px; padding: 4px;"></textarea>
                 </div>
             </div>
         `;
@@ -319,18 +354,9 @@
         let isDragging = false;
         let startX, startY, initialX, initialY;
         const header = document.getElementById('tcm-header');
-        const pinBtn = document.getElementById('pin-btn');
-
-        pinBtn.onclick = () => {
-            uiState.pinned = !uiState.pinned;
-            pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
-            header.style.cursor = uiState.pinned ? 'default' : 'move';
-            win.style.transform = uiState.pinned ? 'none' : 'translateX(-50%)';
-            localStorage.setItem(`kreator_ui_${urlKey}`, JSON.stringify(uiState));
-        };
 
         const startDrag = (e) => {
-            if (uiState.pinned || e.target.id === 'pin-btn' || e.target.id === 'close-calc') return;
+            if (e.target.id === 'close-calc') return;
             isDragging = true;
             let event = e.type.includes('mouse') ? e : e.touches[0];
             startX = event.clientX; startY = event.clientY;
