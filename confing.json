@@ -126,5 +126,14 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
         "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków.",
         "screens": ["map"]
+    },
+    {
+        "id": "znajomi",
+        "name": "Znajomi",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
+        "description": "dodawanie/usuwanie znajomych ",
+        "screens": ["buddies"]
     }
+
 ]
