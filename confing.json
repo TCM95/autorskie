@@ -141,6 +141,6 @@
         "category": "Surowce",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
         "description": podgląd produkcja wyrównuje surowce w aktualnej grupie",
-        "screens": ["overview_villages"]
+        "screens": ["mode=prod"]
     }
 ]
