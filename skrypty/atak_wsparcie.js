@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Atak/wsparcie (Shinko UI)
 // @version      1.0.0
-// @description  Zintegrowany system wysyłki z podglądem pingu na żywo w stylu Shinko
+// @description  Zintegrowany system wysyłki
 // @namespace    https://viayoo.com/
 // @author       tcm
 // @include      https://*/game.php?*&screen=place&try=confirm
@@ -30,7 +30,7 @@
     }
     setInterval(checkPing, 2000);
 
-    // --- STYL SHINKO (CSS) ---
+    // --- STYL (CSS) ---
     const style = document.createElement('style');
     style.textContent = `
         :root {
@@ -103,7 +103,7 @@
     const buttonsHtml = `
         <div id="tw-pro-tools">
             <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify- content: space-between; align-items: center;">
-                <span>⚡ SHINKO TIMING TOOLS</span>
+                <span>⚡TIMING TOOLS</span>
                 <span>PING: <span id="live-ping-val" style="color: #00ff00;">sprawdzam...</span></span>
             </div>
             <table>
@@ -114,8 +114,8 @@
                         <a id="delayButton" class="shinko-btn">Zapisz</a>
                     </td>
                 </tr>
-                <tr><td>Cel wejścia:</td><td id="showArrTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
-                <tr><td>Cel wysyłki:</td><td id="showSendTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
+                <tr><td>Czas wejścia:</td><td id="showArrTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
+                <tr><td>Czas wysyłki:</td><td id="showSendTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
             </table>
             <div style="margin-top: 10px; display: flex; gap: 5px;">
                 <a id="arrTime" class="shinko-btn" style="cursor:pointer; flex: 1; text-align: center;">Ustaw dotarcie</a>
