@@ -2,22 +2,22 @@
     {
         "id": "ciemny_motyw",
         "name": "ciemny motyw",
-        "category": "Ogólne",
+        "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
         "description": "Ułatwia wysyłanie farmy z poziomu placu.",
         "screens": ["*"]
     },
     {
         "id": "wybijak_monet",
-        "name": "monety",
-        "category": "Ogólne",
+        "name": "Aktywator monet",
+        "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
         "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet.",
         "screens": ["snob"]
     },
     {
         "id": "etykiety",
-        "name": "etykiety",
+        "name": "Etykiety",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
         "description": "Etykiety z filtrami.",
@@ -25,7 +25,7 @@
     },
     {
         "id": "tager_przychodzace",
-        "name": "tager przychodzące",
+        "name": "Tag(przychodzące)",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
         "description": "Ataki przychodzące.",
@@ -33,7 +33,7 @@
     },
     {
         "id": "tager_wychodzace",
-        "name": "tager wychodzące + filtry",
+        "name": "Tag(wychodzące + filtry)",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
         "description": "Ataki wychodzące oraz filtry do tagera.",
@@ -41,8 +41,8 @@
     },
     {
         "id": "edytor_nazw",
-        "name": "edytor nazw",
-        "category": "Ogólne",
+        "name": "Zmaina nazw",
+        "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
         "description": "Zmiana nazw wiosek.",
         "screens": ["overview_villages"]
@@ -50,7 +50,7 @@
     {
         "id": "komendy",
         "name": "Komendy",
-        "category": "Ogólne",
+        "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
         "description": "Udostępnianie komend",
         "screens": ["settings", "info_command"]
@@ -58,14 +58,14 @@
     {
         "id": "rank",
         "name": "Ranking",
-        "category": "Ogólne",
+        "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
         "description": "Ranking zbieractwo/farma",
         "screens": ["ranking"]
     },
     {
         "id": "farma",
-        "name": "FARMA",
+        "name": "Farma",
         "category": "Farma/zbieractwo",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
         "description": "Automatyczne wspomaganie farmienia.",
@@ -73,7 +73,7 @@
     },
     {
         "id": "szablony_wojsk",
-        "name": "Szablony wojsk",
+        "name": "Szablony wojsk(Mk)",
         "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
         "description": "Zarządzanie szablonami wojsk.",
@@ -89,7 +89,7 @@
     },
     {
         "id": "atak_wsparcie",
-        "name": "Atak/wsparcie",
+        "name": "Atak/Wsparcie",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
         "description": "Szybkie przełączanie między atakiem i wsparciem.",
@@ -97,7 +97,7 @@
     },
     {
         "id": "szablony_budowy",
-        "name": "Szablony budowy (MK)",
+        "name": "Szablony budowy(MK)",
         "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
         "description": "Zarządzanie szablonami budowy.",
