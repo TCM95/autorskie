@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name        Atak/wsparcie
+// @name        Atak/wsparcie (Shinko UI)
 // @version      1.0.0
-// @description  Zintegrowany system wysyłki z podglądem pingu na żywo
+// @description  Zintegrowany system wysyłki z podglądem pingu na żywo w stylu Shinko
 // @namespace    https://viayoo.com/
 // @author       tcm
 // @include      https://*/game.php?*&screen=place&try=confirm
@@ -30,26 +30,96 @@
     }
     setInterval(checkPing, 2000);
 
+    // --- STYL SHINKO (CSS) ---
+    const style = document.createElement('style');
+    style.textContent = `
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+
+        #tw-pro-tools {
+            background-color: var(--bg-main) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            font-family: Verdana, sans-serif !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+            font-size: 11px !important;
+            padding: 10px !important;
+            margin-top: 10px !important;
+        }
+
+        #tw-pro-tools table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        #tw-pro-tools td {
+            padding: 4px 6px;
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .shinko-btn {
+            background: var(--btn-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            border-radius: 3px !important;
+            cursor: pointer !important;
+            font-weight: bold !important;
+            padding: 4px 8px !important;
+            text-shadow: 1px 1px 2px black;
+            font-size: 11px !important;
+            display: inline-block;
+            text-decoration: none !important;
+        }
+
+        .shinko-btn:hover {
+            background: var(--btn-hover) !important;
+            color: #ffffff !important;
+        }
+
+        .shinko-input {
+            background-color: var(--bg-header) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            border-radius: 3px !important;
+            padding: 3px 5px !important;
+            font-size: 11px !important;
+            text-align: center;
+        }
+    `;
+    document.head.appendChild(style);
+
     // --- INTERFEJS (HTML) ---
     const buttonsHtml = `
-        <div id="tw-pro-tools" style="background: rgba(0,0,0,0.1); padding: 10px; border: 1px solid #804000; margin-top: 10px; border-radius: 5px;">
-            <div style="margin-bottom: 10px; font-weight: bold;">
-                AKTUALNY PING: <span id="live-ping-val" style="color: #00ff00;">sprawdzam...</span>
+        <div id="tw-pro-tools">
+            <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify- content: space-between; align-items: center;">
+                <span>⚡ SHINKO TIMING TOOLS</span>
+                <span>PING: <span id="live-ping-val" style="color: #00ff00;">sprawdzam...</span></span>
             </div>
-            <table style="width: 100%;">
+            <table>
                 <tr>
                     <td>Offset (Ping kor.):</td>
-                    <td>
-                        <input id="delayInput" value="${delayTime}" style="width:50px">
-                        <a id="delayButton" class="btn">Zapisz</a>
+                    <td style="text-align: right;">
+                        <input id="delayInput" class="shinko-input" value="${delayTime}" style="width:50px">
+                        <a id="delayButton" class="shinko-btn">Zapisz</a>
                     </td>
                 </tr>
-                <tr><td>Cel wejścia:</td><td id="showArrTime">-</td></tr>
-                <tr><td>Cel wysyłki:</td><td id="showSendTime">-</td></tr>
+                <tr><td>Cel wejścia:</td><td id="showArrTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
+                <tr><td>Cel wysyłki:</td><td id="showSendTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
             </table>
-            <div style="margin-top: 10px;">
-                <a id="arrTime" class="btn" style="cursor:pointer; margin-right: 5px;">Ustaw dotarcie</a>
-                <a id="sendTime" class="btn" style="cursor:pointer;">Ustaw wysyłkę</a>
+            <div style="margin-top: 10px; display: flex; gap: 5px;">
+                <a id="arrTime" class="shinko-btn" style="cursor:pointer; flex: 1; text-align: center;">Ustaw dotarcie</a>
+                <a id="sendTime" class="shinko-btn" style="cursor:pointer; flex: 1; text-align: center;">Ustaw wysyłkę</a>
             </div>
         </div>
     `;
