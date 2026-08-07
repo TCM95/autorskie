@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         przychodzące tagi
+// @name         przychodzące tagi (Shinko UI)
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @description  Oznaczanie ataków z mobilnym edytorem UI, rozwijanym menu tagów i pełnym kolorowaniem wierszy.
@@ -11,6 +11,64 @@
 (function() {
     'use strict';
     if (typeof $ === "undefined") return;
+
+    // --- STYL SHINKO (CSS) ---
+    const style = document.createElement('style');
+    style.textContent = `
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+
+        .shinko-btn {
+            background: var(--btn-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            border-radius: 3px !important;
+            cursor: pointer !important;
+            font-size: 11px !important;
+            padding: 4px 8px;
+            text-shadow: 1px 1px 2px black;
+            font-weight: bold;
+        }
+
+        .shinko-btn:hover {
+            background: var(--btn-hover) !important;
+            color: #ffffff !important;
+        }
+
+        .shinko-input {
+            background-color: var(--bg-header) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            border-radius: 3px !important;
+            padding: 3px 5px !important;
+            box-sizing: border-box;
+        }
+        
+        .shinko-input:focus {
+            outline: 1px solid #7b7e85;
+        }
+
+        .shinko-small-btn {
+            background: var(--bg-header) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            cursor: pointer !important;
+            border-radius: 3px !important;
+        }
+        
+        .shinko-small-btn:hover {
+            background: var(--bg-row-alt) !important;
+        }
+    `;
+    document.head.appendChild(style);
 
     const STORAGE_KEY = 'tcm_tagger_settings';
     const PIN_KEY = 'tcm_tagger_pinned';
@@ -44,10 +102,10 @@
     function buildGlobalPopover() {
         if ($('#tcm-global-popover').length) return;
         
-        let html = `<div id="tcm-global-popover" style="display:none; position:absolute; z-index:999999; background:#f4e4c1; border:2px solid #8b5a2b; padding:4px; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.6); width:200px; gap:3px; flex-wrap:wrap;">`;
+        let html = `<div id="tcm-global-popover" style="display:none; position:absolute; z-index:999999; background:var(--bg-main); border:1px solid var(--border-color); padding:6px; border-radius:4px; box-shadow:0 4px 10px rgba(0,0,0,0.6); width:200px; gap:4px; flex-wrap:wrap;">`;
         cfg.buttons.forEach(b => {
-            html += `<button type="button" class="btn tcm-tag-btn" data-tag="${b.tag}" 
-                     style="background:${b.bgColor}; color:#ffffff; font-size:${cfg.fontSize}px; font-weight:bold; padding:3px 6px; text-shadow:1px 1px 2px #000; border:1px solid rgba(0,0,0,0.5);">
+            html += `<button type="button" class="btn tcm-tag-btn shinko-btn" data-tag="${b.tag}" 
+                     style="background:${b.bgColor} !important; border-color: rgba(0,0,0,0.5) !important; font-size:${cfg.fontSize}px; padding:3px 6px; flex: 1 1 auto; text-align: center;">
                      ${b.label}</button>`;
         });
         html += `</div>`;
@@ -60,7 +118,7 @@
         targets.each(function() {
             let td = $(this).find('td').eq(0);
             if (td.find('.tcm-trigger-btn').length === 0) {
-                let triggerBtn = `<button type="button" class="btn tcm-trigger-btn" style="padding:1px 4px; font-size:11px; margin-left:5px; cursor:pointer;" title="Otwórz tagi">🏷️</button>`;
+                let triggerBtn = `<button type="button" class="btn tcm-trigger-btn shinko-btn" style="padding:1px 4px; font-size:11px; margin-left:5px; cursor:pointer;" title="Otwórz tagi">🏷️</button>`;
                 td.append(triggerBtn);
             }
         });
@@ -87,6 +145,7 @@
             // Kolorujemy wszystkie komórki <td> w danym wierszu
             if (finalColor) {
                 row.find('td').css('background-color', finalColor);
+                // Opcjonalnie: dostosowanie koloru tekstu dla bardzo ciemnych kolorów, jeśli to potrzebne w trybie nocnym.
             } else {
                 row.find('td').css('background-color', '');
             }
@@ -168,20 +227,20 @@
         if ($('#tcm-editor').length) return;
 
         let editorHTML = `
-        <div id="tcm-editor" style="display:none; position:fixed; top:${savedPos.top}; left:${savedPos.left}; width:300px; background:#e3d5b6; border:2px solid #603000; z-index:999999; border-radius:5px; box-shadow:0 5px 15px rgba(0,0,0,0.6);">
-            <div id="tcm-header" style="background:#8b5a2b; color:white; padding:6px; cursor:${isPinned ? 'default' : 'move'}; font-weight:bold; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+        <div id="tcm-editor" style="display:none; position:fixed; top:${savedPos.top}; left:${savedPos.left}; width:300px; background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-color); z-index:999999; border-radius:5px; box-shadow:0 5px 15px rgba(0,0,0,0.6);">
+            <div id="tcm-header" style="background:var(--bg-header); color:var(--title-color); padding:8px; cursor:${isPinned ? 'default' : 'move'}; font-weight:bold; display:flex; justify-content:space-between; align-items:center; user-select:none; border-bottom: 1px solid var(--border-color); border-radius: 4px 4px 0 0;">
                 <span>⚙️ Ustawienia Taggera</span>
                 <div>
                     <span id="tcm-pin" style="cursor:pointer; font-size:14px; padding:0 5px;" title="Przypnij">📌</span>
                     <span id="tcm-close-editor" style="cursor:pointer; font-size:14px; padding:0 5px; color:#ff4d4d;" title="Zamknij">✖</span>
                 </div>
             </div>
-            <div id="tcm-body" style="padding:10px; max-height:60vh; overflow-y:auto;">
-                <label style="font-size:12px; font-weight:bold;">Wielkość czcionki (px): 
-                    <input type="number" id="tcm-font" value="${cfg.fontSize}" style="width:45px; padding:2px;">
+            <div id="tcm-body" style="padding:12px; max-height:60vh; overflow-y:auto; font-family: Verdana, sans-serif;">
+                <label style="font-size:12px; font-weight:bold; display: flex; justify-content: space-between; align-items: center;">Wielkość czcionki (px): 
+                    <input type="number" id="tcm-font" class="shinko-input" value="${cfg.fontSize}" style="width:50px;">
                 </label>
-                <hr style="border-color:#603000; margin: 8px 0;">
-                <div style="display:flex; font-size:10px; font-weight:bold; margin-bottom:5px; text-align:center;">
+                <hr style="border-color:var(--border-color); margin: 12px 0;">
+                <div style="display:flex; font-size:10px; font-weight:bold; margin-bottom:6px; text-align:center; color:var(--title-color);">
                     <span style="flex:1;">Poz.</span>
                     <span style="flex:2;">Wzór/Tag</span>
                     <span style="flex:2;">Przycisk</span>
@@ -189,8 +248,8 @@
                     <span style="flex:1;">Usuń</span>
                 </div>
                 <div id="tcm-btn-list" style="overflow-x:hidden;"></div>
-                <button id="tcm-add-btn" class="btn" style="width:100%; margin-top:10px; background:#4caf50; color:white;">➕ Dodaj nowy</button>
-                <button id="tcm-save" class="btn" style="width:100%; margin-top:5px; background:#2196f3; color:white;">💾 Zapisz i Odśwież</button>
+                <button id="tcm-add-btn" class="shinko-btn" style="width:100%; margin-top:12px;">➕ Dodaj nowy</button>
+                <button id="tcm-save" class="shinko-btn" style="width:100%; margin-top:6px; color:#5cb85c !important;">💾 Zapisz i Odśwież</button>
             </div>
         </div>`;
 
@@ -247,15 +306,15 @@
 
     function createEditorRow(b) {
         return `
-        <div class="tcm-edit-row" style="display:flex; gap:2px; margin-bottom:5px; align-items:center;">
-            <div style="flex:1; display:flex; flex-direction:column; gap:1px;">
-                <button class="btn tcm-up-btn" style="padding:0px 2px; font-size:9px; background:#ccc; border:1px solid #999;">▲</button>
-                <button class="btn tcm-down-btn" style="padding:0px 2px; font-size:9px; background:#ccc; border:1px solid #999;">▼</button>
+        <div class="tcm-edit-row" style="display:flex; gap:3px; margin-bottom:5px; align-items:center;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                <button class="tcm-up-btn shinko-small-btn" style="padding:1px; font-size:9px;">▲</button>
+                <button class="tcm-down-btn shinko-small-btn" style="padding:1px; font-size:9px;">▼</button>
             </div>
-            <input type="text" class="tcm-tag-val" value="${b.tag}" placeholder="Tag" style="flex:2; width:0; padding:2px; font-size:11px;">
-            <input type="text" class="tcm-label-val" value="${b.label}" placeholder="Napis" style="flex:2; width:0; padding:2px; font-size:11px;">
-            <input type="color" class="tcm-col-bg" value="${b.bgColor}" title="Kolor tła" style="flex:1; width:22px; padding:0; border:none; height:24px; cursor:pointer;">
-            <button class="btn tcm-del-btn" style="flex:1; background:#f44336; color:white; padding:2px; font-weight:bold;">X</button>
+            <input type="text" class="tcm-tag-val shinko-input" value="${b.tag}" placeholder="Tag" style="flex:2; width:0; font-size:11px;">
+            <input type="text" class="tcm-label-val shinko-input" value="${b.label}" placeholder="Napis" style="flex:2; width:0; font-size:11px;">
+            <input type="color" class="tcm-col-bg shinko-input" value="${b.bgColor}" title="Kolor tła" style="flex:1; width:22px; padding:0; height:24px; cursor:pointer;">
+            <button class="tcm-del-btn shinko-small-btn" style="flex:1; color:#ff4444 !important; font-weight:bold; height:24px;">X</button>
         </div>`;
     }
 
@@ -325,7 +384,7 @@
         if(th.length === 0) th = $('#commands_incomings th').eq(0);
         
         if(th.length > 0 && th.find('#tcm-settings-btn').length === 0) {
-            let settingsBtn = $(`<button id="tcm-settings-btn" style="background:#ffeb3b; color:#000; font-weight:bold; border:1px solid #a3821a; padding:2px 6px; border-radius:3px; cursor:pointer; margin-left:10px; font-size:10px;">🏷️ TAGGER</button>`);
+            let settingsBtn = $(`<button id="tcm-settings-btn" class="shinko-btn" style="margin-left:10px;">🏷️ TAGGER</button>`);
             th.append(settingsBtn);
 
             settingsBtn.on('click', function(e) {
