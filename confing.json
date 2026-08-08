@@ -37,7 +37,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
         "description": "Ataki wychodzące oraz filtry do tagera.",
-        "screens": ["commands", "overview_villages"]
+        "screens": ["mode=commands", "overview_villages"]
     },
     {
         "id": "edytor_nazw",
@@ -141,6 +141,6 @@
         "category": "Surowce",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
         "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
-       "screens": ["mode_prod"]
+       "screens": ["mode=prod"]
     }
 ]
