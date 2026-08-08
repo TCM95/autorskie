@@ -62,7 +62,6 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
     display: none;
     flex-direction: column !important;
-    touch-action: none !important;
 }
 
 /* Pasek kategorii */
