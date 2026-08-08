@@ -13,42 +13,33 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-        document.addEventListener('click', (e) => {
-        // 1. Zamykanie tooltipa (jeśli kliknięto poza "i")
-        if (!e.target.classList.contains('tw-info-icon')) {
-            globalTooltip.style.display = 'none';
-            globalTooltip.dataset.activeId = '';
-        }
-
-        // 2. Zamykanie panelu/kategorii, jeśli kliknięto w tło (poza panelem i przyciskiem)
-        const clickedInsidePanel = e.target.closest('#tw-script-panel');
-        const clickedOpener = e.target.closest('#tw-panel-opener');
-        
-        if (!clickedInsidePanel && !clickedOpener) {
-            // Zamyka wysuniętą listę skryptów (odznacza kategorię)
-            if (currentCategory !== null) {
-                currentCategory = null;
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
-                contentArea.style.setProperty('display', 'none', 'important');
-            }
-            
-            // Jeśli chcesz, aby kliknięcie w tło zamykało CAŁE menu, odkomentuj poniższą linijkę:
-            // panel.style.setProperty('display', 'none', 'important');
-        }
-    });
+    // --- ODCZYT ZAPISANYCH POZYCJI Z PAMIĘCI PRZEGLĄDARKI ---
+    const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
+    const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 80%; height: 80%; pointer-events: none;">`;
+    
+    // Aplikowanie zapisanej pozycji dla ikony startowej
+    if (savedOpenerPos) {
+        opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
+        opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
+    }
 
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
 
+    // Aplikowanie zapisanej pozycji dla samego panelu
+    if (savedPanelPos) {
+        panel.style.setProperty('left', savedPanelPos.x + 'px', 'important');
+        panel.style.setProperty('top', savedPanelPos.y + 'px', 'important');
+    }
+
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
-    // Wymuszenie zachowania dotyku dla starych przeglądarek
     header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
     
     const titleSpan = document.createElement('span');
@@ -86,7 +77,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
     closeBtn.innerText = '✕';
-    closeBtn.onclick = () => { panel.style.display = 'none'; };
+    closeBtn.onclick = () => { 
+        panel.style.setProperty('display', 'none', 'important'); 
+        opener.style.setProperty('display', 'flex', 'important'); 
+    };
     
     controls.appendChild(themeBtn);
     controls.appendChild(pinBtn);
@@ -195,27 +189,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
+    document.body.appendChild(panel);
 
-        // Zmienna zapobiegająca otwarciu panelu po zakończeniu przeciągania
     let wasDragged = false; 
 
     // Otwieranie panelu
     opener.onclick = (e) => { 
-        if (wasDragged) return; // Jeśli przeciągaliśmy ikonę, zablokuj otwarcie
-        
+        if (wasDragged) return; 
         panel.style.setProperty('display', 'flex', 'important');
-        opener.style.setProperty('display', 'none', 'important'); // Ukrywa ikonkę
+        opener.style.setProperty('display', 'none', 'important'); 
     };
 
-    // Zamykanie panelu przyciskiem "X"
-    closeBtn.onclick = () => { 
-        panel.style.setProperty('display', 'none', 'important'); 
-        opener.style.setProperty('display', 'flex', 'important'); // Przywraca ikonkę
-    };
-
-    document.body.appendChild(panel);
-
-       // Zamykanie przy kliknięciu w tło i przywracanie ikony (Dwuetapowe)
+    // --- UJEDNOLICONE ZAMYKANIE KLIKNIĘCIEM W TŁO ---
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
@@ -225,25 +210,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
         const clickedOpener = e.target.closest('#tw-panel-opener');
         
+        // Zamykanie WSZYSTKIEGO za jednym kliknięciem
         if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
+            currentCategory = null;
+            document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+            contentArea.style.setProperty('display', 'none', 'important');
             
-            // KROK 1: Sprawdza, czy jest otwarta jakaś kategoria
-            if (currentCategory !== null) {
-                // Jeśli tak -> zamyka TYLKO kategorię
-                currentCategory = null;
-                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
-                contentArea.style.setProperty('display', 'none', 'important');
-            } else {
-                // KROK 2: Jeśli żadna kategoria nie jest otwarta -> zamyka CAŁY panel
-                panel.style.setProperty('display', 'none', 'important');
-                opener.style.setProperty('display', 'flex', 'important'); 
-            }
-            
+            panel.style.setProperty('display', 'none', 'important');
+            opener.style.setProperty('display', 'flex', 'important'); 
         }
     });
 
-
-    // --- BRUTALNA OBSŁUGA DRAG & DROP Z OMINIĘCIEM !IMPORTANT ---
+    // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
@@ -267,7 +245,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialX = rect.left;
         initialY = rect.top;
 
-        // Używamy setProperty z 'important', aby nadpisać zablokowany CSS
         draggedElement.style.setProperty('position', 'fixed', 'important');
         draggedElement.style.setProperty('bottom', 'auto', 'important');
         draggedElement.style.setProperty('right', 'auto', 'important');
@@ -289,7 +266,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (!isDragging || !draggedElement) return;
         
         if (e.cancelable) e.preventDefault(); 
-        window.getSelection().removeAllRanges(); // Usuwa niebieskie podświetlenie tekstu
+        window.getSelection().removeAllRanges(); 
 
         let currentX, currentY;
         if (e.type === "touchmove") {
@@ -303,18 +280,30 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        // Rozpoznajemy, czy użytkownik celowo przeciągnął, czy tylko kliknął
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             wasDragged = true; 
         }
 
-        // MUSIMY dopisać 'important', żeby CSS tego nie zablokował
         draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
         draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
     }
 
     function dragEnd() {
         if (!isDragging) return;
+        
+        // Zapisywanie pozycji po puszczeniu elementu (dla Panelu i Ikony niezależnie)
+        if (draggedElement === opener) {
+            localStorage.setItem('tw_opener_pos', JSON.stringify({
+                x: parseInt(opener.style.left) || 0,
+                y: parseInt(opener.style.top) || 0
+            }));
+        } else if (draggedElement === panel) {
+            localStorage.setItem('tw_panel_pos', JSON.stringify({
+                x: parseInt(panel.style.left) || 0,
+                y: parseInt(panel.style.top) || 0
+            }));
+        }
+
         isDragging = false;
         draggedElement = null;
 
@@ -323,7 +312,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('mouseup', dragEnd);
         document.removeEventListener('touchend', dragEnd);
         
-        // Reset wasDragged po krótkim czasie, żeby kliknięcie zadziałało po puszczeniu palca
         setTimeout(() => { wasDragged = false; }, 50);
     }
 
