@@ -196,28 +196,57 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
 
-    opener.onclick = () => { 
-        if (panel.style.display === 'none' || !panel.style.display) {
-            panel.style.setProperty('display', 'flex', 'important');
-        } else {
-            panel.style.setProperty('display', 'none', 'important');
-            globalTooltip.style.display = 'none';
-        }
+        // Zmienna zapobiegająca otwarciu panelu po zakończeniu przeciągania
+    let wasDragged = false; 
+
+    // Otwieranie panelu
+    opener.onclick = (e) => { 
+        if (wasDragged) return; // Jeśli przeciągaliśmy ikonę, zablokuj otwarcie
+        
+        panel.style.setProperty('display', 'flex', 'important');
+        opener.style.setProperty('display', 'none', 'important'); // Ukrywa ikonkę
+    };
+
+    // Zamykanie panelu przyciskiem "X"
+    closeBtn.onclick = () => { 
+        panel.style.setProperty('display', 'none', 'important'); 
+        opener.style.setProperty('display', 'flex', 'important'); // Przywraca ikonkę
     };
 
     document.body.appendChild(panel);
 
-        // --- BRUTALNA OBSŁUGA DRAG & DROP DLA URZĄDZEŃ MOBILNYCH ---
+    // Zamykanie przy kliknięciu w tło i przywracanie ikony
+    document.addEventListener('click', (e) => {
+        if (!e.target.classList.contains('tw-info-icon')) {
+            globalTooltip.style.display = 'none';
+            globalTooltip.dataset.activeId = '';
+        }
+        const clickedInsidePanel = e.target.closest('#tw-script-panel');
+        const clickedOpener = e.target.closest('#tw-panel-opener');
+        
+        if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
+            if (currentCategory !== null) {
+                currentCategory = null;
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+                contentArea.style.setProperty('display', 'none', 'important');
+            }
+            // Zamyka cały panel przy kliknięciu w mapę:
+            panel.style.setProperty('display', 'none', 'important');
+            opener.style.setProperty('display', 'flex', 'important'); 
+        }
+    });
+
+    // --- BRUTALNA OBSŁUGA DRAG & DROP Z OMINIĘCIEM !IMPORTANT ---
     let isDragging = false;
-    let draggedElement = null; // Zmienna przechowująca to, co aktualnie ciągniemy
+    let draggedElement = null;
     let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
 
     function dragStart(e) {
         if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
 
-        // Określamy, za co dokładnie chwycił użytkownik (za nagłówek czy za ikonkę otwierającą)
         draggedElement = (e.currentTarget === header) ? panel : opener;
+        wasDragged = false;
 
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
@@ -231,14 +260,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialX = rect.left;
         initialY = rect.top;
 
-        draggedElement.style.position = 'fixed';
-        draggedElement.style.bottom = 'auto';
-        draggedElement.style.right = 'auto';
-        draggedElement.style.margin = '0';
-        draggedElement.style.transform = 'none';
+        // Używamy setProperty z 'important', aby nadpisać zablokowany CSS
+        draggedElement.style.setProperty('position', 'fixed', 'important');
+        draggedElement.style.setProperty('bottom', 'auto', 'important');
+        draggedElement.style.setProperty('right', 'auto', 'important');
+        draggedElement.style.setProperty('margin', '0', 'important');
+        draggedElement.style.setProperty('transform', 'none', 'important');
         
-        draggedElement.style.left = initialX + 'px';
-        draggedElement.style.top = initialY + 'px';
+        draggedElement.style.setProperty('left', initialX + 'px', 'important');
+        draggedElement.style.setProperty('top', initialY + 'px', 'important');
 
         isDragging = true;
 
@@ -252,6 +282,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (!isDragging || !draggedElement) return;
         
         if (e.cancelable) e.preventDefault(); 
+        window.getSelection().removeAllRanges(); // Usuwa niebieskie podświetlenie tekstu
 
         let currentX, currentY;
         if (e.type === "touchmove") {
@@ -265,8 +296,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        draggedElement.style.left = (initialX + dx) + 'px';
-        draggedElement.style.top = (initialY + dy) + 'px';
+        // Rozpoznajemy, czy użytkownik celowo przeciągnął, czy tylko kliknął
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            wasDragged = true; 
+        }
+
+        // MUSIMY dopisać 'important', żeby CSS tego nie zablokował
+        draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
+        draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
     }
 
     function dragEnd() {
@@ -278,16 +315,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('touchmove', dragMove);
         document.removeEventListener('mouseup', dragEnd);
         document.removeEventListener('touchend', dragEnd);
+        
+        // Reset wasDragged po krótkim czasie, żeby kliknięcie zadziałało po puszczeniu palca
+        setTimeout(() => { wasDragged = false; }, 50);
     }
 
-    // Podpinamy przeciąganie pod nagłówek oraz pod ikonkę otwierającą
     header.addEventListener('mousedown', dragStart, { passive: false });
     header.addEventListener('touchstart', dragStart, { passive: false });
     
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
 
-    // Włączenie ciemnego motywu jeśli był wcześniej aktywny
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
         callbacks.onToggleTheme(darkThemeConfig.url, true);
     }
