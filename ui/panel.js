@@ -215,26 +215,33 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // Zamykanie przy kliknięciu w tło i przywracanie ikony
+       // Zamykanie przy kliknięciu w tło i przywracanie ikony (Dwuetapowe)
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
         }
+        
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
         const clickedOpener = e.target.closest('#tw-panel-opener');
         
         if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
+            
+            // KROK 1: Sprawdza, czy jest otwarta jakaś kategoria
             if (currentCategory !== null) {
+                // Jeśli tak -> zamyka TYLKO kategorię
                 currentCategory = null;
                 document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
                 contentArea.style.setProperty('display', 'none', 'important');
+            } else {
+                // KROK 2: Jeśli żadna kategoria nie jest otwarta -> zamyka CAŁY panel
+                panel.style.setProperty('display', 'none', 'important');
+                opener.style.setProperty('display', 'flex', 'important'); 
             }
-            // Zamyka cały panel przy kliknięciu w mapę:
-            panel.style.setProperty('display', 'none', 'important');
-            opener.style.setProperty('display', 'flex', 'important'); 
+            
         }
     });
+
 
     // --- BRUTALNA OBSŁUGA DRAG & DROP Z OMINIĘCIEM !IMPORTANT ---
     let isDragging = false;
