@@ -27,21 +27,26 @@
    UKŁAD - POZYCJONOWANIE (Przywrócone na górę)
    ========================================================= */
 
-/* Przycisk otwierający (Powiększona, stała ikona pływająca) */
+/* Przycisk otwierający (Duża, okrągła ikona na cały przycisk) */
 #tw-panel-opener {
-    position: fixed !important; /* Gwarantuje brak ruchu przy scrollowaniu */
-    top: 60px !important; /* Domyślna pozycja startowa, można dostosować */
+    position: fixed !important;
+    top: 60px !important;
     left: 10px !important;
     z-index: 999999 !important;
     cursor: pointer !important;
-    font-size: 26px !important; /* Znacznie powiększona ikona */
-    padding: 8px 12px !important; /* Większy obszar kliknięcia dla palca */
+    width: 50px !important; /* Stała szerokość */
+    height: 50px !important; /* Stała wysokość - równe width daje idealny kwadrat */
+    display: flex !important; /* Umożliwia perfekcyjne centrowanie */
+    justify-content: center !important; /* Centrowanie w poziomie */
+    align-items: center !important; /* Centrowanie w pionie */
+    font-size: 32px !important; /* Maksymalnie duża ikona wypełniająca środek */
     background-image: var(--btn-bg) !important;
     border: 2px solid var(--border-color) !important;
-    border-radius: 50% !important; /* Tworzy okrągły przycisk */
-    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important; /* Mocniejszy cień dla efektu głębi */
+    border-radius: 50% !important; /* Zaokrągla kwadrat do idealnego koła */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
     user-select: none !important;
-    touch-action: none !important; /* Zapobiega konfliktom dotyku na telefonie */
+    touch-action: none !important;
+    padding: 0 !important; /* Usunięty padding, żeby nie psuł okrągłego kształtu */
 }
 
 /* Główny słupek menu */
