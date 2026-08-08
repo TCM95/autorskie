@@ -22,7 +22,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 16px; height: 16px; pointer-events: none; vertical-align: middle;">`;
+    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 80%; height: 80%; pointer-events: none;">`;
+
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
@@ -262,8 +263,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('touchend', dragEnd);
     }
 
-    // Podpinamy start przesuwania do nagłówka. { passive: false } aby e.preventDefault() działało.
+       // Podpinamy start przesuwania do nagłówka ORAZ do ikony otwierającej
     header.addEventListener('mousedown', dragStart, { passive: false });
+    header.addEventListener('touchstart', dragStart, { passive: false });
+    
+    opener.addEventListener('mousedown', dragStart, { passive: false });
+    opener.addEventListener('touchstart', dragStart, { passive: false });
+
     header.addEventListener('touchstart', dragStart, { passive: false });
 
     // Włączenie ciemnego motywu jeśli był wcześniej aktywny
