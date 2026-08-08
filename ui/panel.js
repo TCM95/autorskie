@@ -20,31 +20,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // --- WCZYTANIE ZAPISANEJ POZYCJI IKONY ---
-    let iconPos = JSON.parse(localStorage.getItem('tw_icon_pos') || '{"t":60,"l":10}');
-
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 20px; height: 20px; pointer-events: none; vertical-align: middle;">`;
-    opener.style.cssText = `
-        position: fixed !important;
-        top: ${iconPos.t}px !important;
-        left: ${iconPos.l}px !important;
-        z-index: 999999 !important;
-        cursor: pointer !important;
-        width: 50px !important;
-        height: 50px !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        background-image: var(--btn-bg) !important;
-        border: 2px solid var(--border-color) !important;
-        border-radius: 50% !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
-        user-select: none !important;
-        touch-action: none !important;
-        padding: 0 !important;
-    `;
+    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 16px; height: 16px; pointer-events: none; vertical-align: middle;">`;
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
@@ -52,6 +30,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
+    // Wymuszenie zachowania dotyku dla starych przeglądarek
     header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
     
     const titleSpan = document.createElement('span');
@@ -198,18 +177,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
-    document.body.appendChild(panel);
 
-    // --- KLIKNIĘCIE IKONY (Otwieranie panelu bezpośrednio pod nią) ---
-    let iconMoved = false;
-    opener.onclick = (e) => {
-        if (iconMoved) return; // Zapobiega otwarciu menu zaraz po przesunięciu ikony
-        
+    opener.onclick = () => { 
         if (panel.style.display === 'none' || !panel.style.display) {
-            let iconRect = opener.getBoundingClientRect();
-            panel.style.setProperty('position', 'fixed', 'important');
-            panel.style.setProperty('top', (iconRect.bottom + 6) + 'px', 'important');
-            panel.style.setProperty('left', iconRect.left + 'px', 'important');
             panel.style.setProperty('display', 'flex', 'important');
         } else {
             panel.style.setProperty('display', 'none', 'important');
@@ -217,85 +187,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     };
 
-    // --- PRZESUWANIE IKONY (OPENERA) ---
-    let isIconDragging = false;
-    let iconStartX = 0, iconStartY = 0, iconInitX = 0, iconInitY = 0;
+    document.body.appendChild(panel);
 
-    function iconDragStart(e) {
-        isIconDragging = false;
-        iconMoved = false;
-        
-        if (e.type === "touchstart") {
-            iconStartX = e.touches[0].clientX;
-            iconStartY = e.touches[0].clientY;
-        } else {
-            iconStartX = e.clientX;
-            iconStartY = e.clientY;
-        }
-
-        iconInitX = opener.offsetLeft;
-        iconInitY = opener.offsetTop;
-
-        document.addEventListener('mousemove', iconDragMove, { passive: false });
-        document.addEventListener('touchmove', iconDragMove, { passive: false });
-        document.addEventListener('mouseup', iconDragEnd);
-        document.addEventListener('touchend', iconDragEnd);
-    }
-
-    function iconDragMove(e) {
-        let currentX, currentY;
-        if (e.type === "touchmove") {
-            currentX = e.touches[0].clientX;
-            currentY = e.touches[0].clientY;
-        } else {
-            currentX = e.clientX;
-            currentY = e.clientY;
-        }
-
-        const dx = currentX - iconStartX;
-        const dy = currentY - iconStartY;
-
-        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-            isIconDragging = true;
-            iconMoved = true;
-            if (e.cancelable) e.preventDefault();
-        }
-
-        if (isIconDragging) {
-            opener.style.left = (iconInitX + dx) + 'px';
-            opener.style.top = (iconInitY + dy) + 'px';
-        }
-    }
-
-    function iconDragEnd() {
-        if (isIconDragging) {
-            localStorage.setItem('tw_icon_pos', JSON.stringify({
-                t: parseInt(opener.style.top),
-                l: parseInt(opener.style.left)
-            }));
-        }
-        isIconDragging = false;
-        document.removeEventListener('mousemove', iconDragMove);
-        document.removeEventListener('touchmove', iconDragMove);
-        document.removeEventListener('mouseup', iconDragEnd);
-        document.removeEventListener('touchend', iconDragEnd);
-        
-        // Reset flagy ruchu po krótkiej chwili, aby kliknięcie znów działało
-        setTimeout(() => { iconMoved = false; }, 100);
-    }
-
-    opener.addEventListener('mousedown', iconDragStart, { passive: false });
-    opener.addEventListener('touchstart', iconDragStart, { passive: false });
-
-
-    // --- OBSŁUGA DRAG & DROP DLA PANELU MENU ---
+    // --- BRUTALNA OBSŁUGA DRAG & DROP DLA URZĄDZEŃ MOBILNYCH ---
     let isDragging = false;
     let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
 
     function dragStart(e) {
+        // Ignoruj, jeśli przypięto okno lub kliknięto przyciski w nagłówku
         if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
 
+        // Wyciąganie pozycji w zależności od tego, czy to dotyk, czy myszka
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -308,6 +211,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialX = rect.left;
         initialY = rect.top;
 
+        // Twarde wymuszenie swobodnego latania
         panel.style.position = 'fixed';
         panel.style.bottom = 'auto';
         panel.style.right = 'auto';
@@ -319,6 +223,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
         isDragging = true;
 
+        // Nasłuchujemy przesuwania na całym dokumencie! { passive: false } jest tu najważniejsze
         document.addEventListener('mousemove', dragMove, { passive: false });
         document.addEventListener('touchmove', dragMove, { passive: false });
         document.addEventListener('mouseup', dragEnd);
@@ -327,6 +232,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function dragMove(e) {
         if (!isDragging) return;
+        
+        // TO BLOKUJE SCROLLOWANIE STRONY W TELEFONIE!
         if (e.cancelable) e.preventDefault(); 
 
         let currentX, currentY;
@@ -355,9 +262,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('touchend', dragEnd);
     }
 
+    // Podpinamy start przesuwania do nagłówka. { passive: false } aby e.preventDefault() działało.
     header.addEventListener('mousedown', dragStart, { passive: false });
     header.addEventListener('touchstart', dragStart, { passive: false });
 
+    // Włączenie ciemnego motywu jeśli był wcześniej aktywny
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
         callbacks.onToggleTheme(darkThemeConfig.url, true);
     }
