@@ -142,5 +142,14 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
         "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
        "screens": ["mode=prod"]
+    },
+    {
+        "id": "feje",
+        "name": "Fejkomat",
+        "category": "Atak/Obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
+        "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
+       "screens": ["place"]
     }
+
 ]
