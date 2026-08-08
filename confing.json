@@ -146,7 +146,7 @@
     {
         "id": "feje",
         "name": "Fejkomat",
-        "category": "Atak/Obrona",
+        "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
         "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
        "screens": ["place"]
