@@ -13,10 +13,27 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    document.addEventListener('click', (e) => {
+        document.addEventListener('click', (e) => {
+        // 1. Zamykanie tooltipa (jeśli kliknięto poza "i")
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
+        }
+
+        // 2. Zamykanie panelu/kategorii, jeśli kliknięto w tło (poza panelem i przyciskiem)
+        const clickedInsidePanel = e.target.closest('#tw-script-panel');
+        const clickedOpener = e.target.closest('#tw-panel-opener');
+        
+        if (!clickedInsidePanel && !clickedOpener) {
+            // Zamyka wysuniętą listę skryptów (odznacza kategorię)
+            if (currentCategory !== null) {
+                currentCategory = null;
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+                contentArea.style.setProperty('display', 'none', 'important');
+            }
+            
+            // Jeśli chcesz, aby kliknięcie w tło zamykało CAŁE menu, odkomentuj poniższą linijkę:
+            // panel.style.setProperty('display', 'none', 'important');
         }
     });
 
