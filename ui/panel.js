@@ -207,16 +207,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     document.body.appendChild(panel);
 
-    // --- BRUTALNA OBSŁUGA DRAG & DROP DLA URZĄDZEŃ MOBILNYCH ---
+        // --- BRUTALNA OBSŁUGA DRAG & DROP DLA URZĄDZEŃ MOBILNYCH ---
     let isDragging = false;
+    let draggedElement = null; // Zmienna przechowująca to, co aktualnie ciągniemy
     let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
 
     function dragStart(e) {
-        // Ignoruj, jeśli przypięto okno lub kliknięto przyciski w nagłówku
         if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
 
-        // Wyciąganie pozycji w zależności od tego, czy to dotyk, czy myszka
+        // Określamy, za co dokładnie chwycił użytkownik (za nagłówek czy za ikonkę otwierającą)
+        draggedElement = (e.currentTarget === header) ? panel : opener;
+
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -225,23 +227,21 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             startY = e.clientY;
         }
 
-        const rect = panel.getBoundingClientRect();
+        const rect = draggedElement.getBoundingClientRect();
         initialX = rect.left;
         initialY = rect.top;
 
-        // Twarde wymuszenie swobodnego latania
-        panel.style.position = 'fixed';
-        panel.style.bottom = 'auto';
-        panel.style.right = 'auto';
-        panel.style.margin = '0';
-        panel.style.transform = 'none';
+        draggedElement.style.position = 'fixed';
+        draggedElement.style.bottom = 'auto';
+        draggedElement.style.right = 'auto';
+        draggedElement.style.margin = '0';
+        draggedElement.style.transform = 'none';
         
-        panel.style.left = initialX + 'px';
-        panel.style.top = initialY + 'px';
+        draggedElement.style.left = initialX + 'px';
+        draggedElement.style.top = initialY + 'px';
 
         isDragging = true;
 
-        // Nasłuchujemy przesuwania na całym dokumencie! { passive: false } jest tu najważniejsze
         document.addEventListener('mousemove', dragMove, { passive: false });
         document.addEventListener('touchmove', dragMove, { passive: false });
         document.addEventListener('mouseup', dragEnd);
@@ -249,9 +249,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     }
 
     function dragMove(e) {
-        if (!isDragging) return;
+        if (!isDragging || !draggedElement) return;
         
-        // TO BLOKUJE SCROLLOWANIE STRONY W TELEFONIE!
         if (e.cancelable) e.preventDefault(); 
 
         let currentX, currentY;
@@ -266,13 +265,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        panel.style.left = (initialX + dx) + 'px';
-        panel.style.top = (initialY + dy) + 'px';
+        draggedElement.style.left = (initialX + dx) + 'px';
+        draggedElement.style.top = (initialY + dy) + 'px';
     }
 
     function dragEnd() {
         if (!isDragging) return;
         isDragging = false;
+        draggedElement = null;
 
         document.removeEventListener('mousemove', dragMove);
         document.removeEventListener('touchmove', dragMove);
@@ -280,14 +280,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('touchend', dragEnd);
     }
 
-       // Podpinamy start przesuwania do nagłówka ORAZ do ikony otwierającej
+    // Podpinamy przeciąganie pod nagłówek oraz pod ikonkę otwierającą
     header.addEventListener('mousedown', dragStart, { passive: false });
     header.addEventListener('touchstart', dragStart, { passive: false });
     
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
-
-    header.addEventListener('touchstart', dragStart, { passive: false });
 
     // Włączenie ciemnego motywu jeśli był wcześniej aktywny
     if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
