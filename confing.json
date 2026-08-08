@@ -37,7 +37,7 @@
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
         "description": "Ataki wychodzące oraz filtry do tagera.",
-        "screens": ["commands", "overview"]
+        "screens": ["commands", "overview_villages"]
     },
     {
         "id": "edytor_nazw",
