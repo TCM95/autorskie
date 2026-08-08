@@ -27,18 +27,21 @@
    UKŁAD - POZYCJONOWANIE (Przywrócone na górę)
    ========================================================= */
 
-/* Przycisk otwierający */
+/* Przycisk otwierający (Powiększona, stała ikona pływająca) */
 #tw-panel-opener {
-    position: fixed !important;
-    top: 5px !important;
-    left: 5px !important;
+    position: fixed !important; /* Gwarantuje brak ruchu przy scrollowaniu */
+    top: 60px !important; /* Domyślna pozycja startowa, można dostosować */
+    left: 10px !important;
     z-index: 999999 !important;
     cursor: pointer !important;
-    padding: 3px 6px !important;
+    font-size: 26px !important; /* Znacznie powiększona ikona */
+    padding: 8px 12px !important; /* Większy obszar kliknięcia dla palca */
     background-image: var(--btn-bg) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 3px !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 50% !important; /* Tworzy okrągły przycisk */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important; /* Mocniejszy cień dla efektu głębi */
+    user-select: none !important;
+    touch-action: none !important; /* Zapobiega konfliktom dotyku na telefonie */
 }
 
 /* Główny słupek menu */
@@ -92,7 +95,7 @@
 }
 
 /* =========================================================
-   WYGLĄD - SHINKO THEME
+   WYGLĄD - autorskie
    ========================================================= */
 
 /* Nagłówki */
