@@ -139,7 +139,7 @@
         "id": "balancer",
         "name": "Balancer",
         "category": "Surowce",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
         "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
        "screens": ["overview_villages"]
     }
