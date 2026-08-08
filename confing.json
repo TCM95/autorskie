@@ -12,8 +12,8 @@
         "name": "Aktywator monet",
         "category": "Inne",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
-        "description": "Przegląd kombinowany aktywuje klepanie monet, uruchamiamy w grupie, w której chcemy włączyć tryb wybijania monet.",
-        "screens": ["snob"]
+        "description": "aktywuje automatyczne wybijanie monet wchodzimy w pałac/wybijanie monet działa w aktualnie przeglądanej grupie.",
+        "screens": ["mode=coin"]
     },
     {
         "id": "etykiety",
@@ -148,7 +148,7 @@
         "name": "Fejkomat",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
-        "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
+        "description": "...",
        "screens": ["place"]
     }
 
