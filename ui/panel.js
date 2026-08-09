@@ -200,7 +200,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
-    // --- UJEDNOLICONE ZAMYKANIE KLIKNIĘCIEM W TŁO ---
+        // Dwuetapowe zamykanie przy kliknięciu w tło
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
@@ -210,16 +210,23 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
         const clickedOpener = e.target.closest('#tw-panel-opener');
         
-        // Zamykanie WSZYSTKIEGO za jednym kliknięciem
         if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
-            currentCategory = null;
-            document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
-            contentArea.style.setProperty('display', 'none', 'important');
             
-            panel.style.setProperty('display', 'none', 'important');
-            opener.style.setProperty('display', 'flex', 'important'); 
+            // KROK 1: Sprawdzamy fizycznie, czy rozwinięta jest lista skryptów (contentArea)
+            if (contentArea.style.display === 'block') {
+                // Jeśli tak -> zamykamy TYLKO kategorię
+                currentCategory = null;
+                document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+                contentArea.style.setProperty('display', 'none', 'important');
+            } else {
+                // KROK 2: Jeśli lista skryptów jest już schowana -> zamykamy CAŁY panel do małej ikony
+                panel.style.setProperty('display', 'none', 'important');
+                opener.style.setProperty('display', 'flex', 'important'); 
+            }
+            
         }
     });
+
 
     // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
     let isDragging = false;
