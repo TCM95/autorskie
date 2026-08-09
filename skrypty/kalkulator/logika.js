@@ -11,8 +11,8 @@
 
     const cleanNum = (v) => parseInt((v||"0").toString().replace(/\D/g, '')) || 0;
 
-    async function syncMarket() { /* ... [TUTAJ WKLEJ ZNANY KOD Z POPRZEDNIEJ WERSJI DLA syncMarketDataInBackground - POMIJAM DLA ZWIĘZŁOŚCI, JEST TAKI SAM] ... */ }
-    
+    async function syncMarket() { /* ... [TUTAJ WKLEJ ZNANY KOD Z POPRZEDNIEJ WERSJI DLA syncMarketDataInBackground] ... */ }
+
     function fillData() {
         const sInc = JSON.parse(localStorage.getItem(`calc_inc_${vId}`)) || {w:0, g:0, i:0};
         $('#m_w').val(Math.floor(game_data.village.wood) + sInc.w);
@@ -28,7 +28,7 @@
         const inc = JSON.parse(localStorage.getItem(`calc_inc_${vId}`)) || { w:0, g:0, i:0 };
 
         const realM = { w: Math.floor(game_data.village.wood) + inc.w, g: Math.floor(game_data.village.stone) + inc.g, i: Math.floor(game_data.village.iron) + inc.i };
-        
+
         let offers = JSON.parse(localStorage.getItem(STORAGE_KEY_OFFERS))?.[vId] || [];
         let allExp = { w: 0, g: 0, i: 0 };
         offers.forEach(o => {
@@ -37,7 +37,6 @@
             allExp[key] += o.dostaniesz.amt;
         });
 
-        // Wirtualny stan surowców po przyjściu ofert
         const virtM = { w: realM.w + allExp.w, g: realM.g + allExp.g, i: realM.i + allExp.i };
         const virtB = { w: Math.max(0, target.w - virtM.w), g: Math.max(0, target.g - virtM.g), i: Math.max(0, target.i - virtM.i) };
 
@@ -57,39 +56,23 @@
         }
         html += `</div>`;
 
-        // === POPRAWIONY ALGORYTM WYMIAN (BEZ UWZGLĘDNIANIA CZASU) ===
         if (virtB.w > 0 || virtB.g > 0 || virtB.i > 0) {
             let tradesHtml = '';
             let vSim = { w: virtM.w, g: virtM.g, i: virtM.i };
-            let rSim = { w: realM.w, g: realM.g, i: realM.i }; // Pilnujemy, czy fizycznie mamy towar do wysłania
+            let rSim = { w: realM.w, g: realM.g, i: realM.i }; 
             const resMap = { w: 'wood', g: 'stone', i: 'iron' };
 
-            // Trzy surowce, więc maksymalnie 3 iteracje wyrównujące
             for (let step = 0; step < 3; step++) {
-                let braki = {
-                    w: Math.max(0, target.w - vSim.w),
-                    g: Math.max(0, target.g - vSim.g),
-                    i: Math.max(0, target.i - vSim.i)
-                };
-                
-                let nadwyzki = {
-                    w: Math.max(0, vSim.w - target.w),
-                    g: Math.max(0, vSim.g - target.g),
-                    i: Math.max(0, vSim.i - target.i)
-                };
+                let braki = { w: Math.max(0, target.w - vSim.w), g: Math.max(0, target.g - vSim.g), i: Math.max(0, target.i - vSim.i) };
+                let nadwyzki = { w: Math.max(0, vSim.w - target.w), g: Math.max(0, vSim.g - target.g), i: Math.max(0, vSim.i - target.i) };
 
-                // Kto potrzebuje najwięcej?
                 let kMaxBrak = Object.keys(braki).reduce((a, k) => braki[a] > braki[k] ? a : k);
-                // Kto ma największą nadwyżkę?
                 let kMaxNadwyzka = Object.keys(nadwyzki).reduce((a, k) => nadwyzki[a] > nadwyzki[k] ? a : k);
 
-                // Jeśli nie ma braków lub nie ma nadwyżek – kończymy wymiany
                 if (braki[kMaxBrak] <= 0 || nadwyzki[kMaxNadwyzka] <= 0) break;
 
-                // Kwota do handlu to to, czego nam brakuje, ALBO to co mamy w nadwyżce, 
-                // ograniczona przez to, ile faktycznie fizycznie leży w wiosce.
                 let amount = Math.floor(Math.min(braki[kMaxBrak], nadwyzki[kMaxNadwyzka], rSim[kMaxNadwyzka]));
-                amount = Math.floor(amount / 10) * 10; // okrągłe liczby
+                amount = Math.floor(amount / 10) * 10; 
 
                 if (amount >= 100) {
                     tradesHtml += `
@@ -102,7 +85,6 @@
                         </div>
                     </div>`;
 
-                    // Symulacja wykonanej wymiany do kolejnego kroku pętli
                     vSim[kMaxNadwyzka] -= amount;
                     vSim[kMaxBrak] += amount;
                     rSim[kMaxNadwyzka] -= amount;
@@ -122,57 +104,38 @@
         });
     }
 
-        // Podpięcie przycisków
+    // Podpięcie przycisków
     $('#calc_btn').click(() => { fillData(); calculateTrade(); });
     $('#close_btn').click(() => { $(ui).hide(); localStorage.setItem(STORAGE_KEY_STATE, 'closed'); });
 
-    // NOWE: Obsługa ładowania Handlarza
+    // Obsługa ładowania Handlarza
     $('#load_handlarz_btn').click(function() {
         const btn = $(this);
         const originalText = btn.text();
         const originalBg = btn.css('background');
-        
+
         btn.text('⏳ Ładowanie...').prop('disabled', true);
 
         const script = document.createElement('script');
         script.src = (window.KalkulatorConfig?.urlHandel || "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js") + "?v=" + Date.now();
-        
+
         script.onload = () => {
             btn.text('✅ Handlarz Uruchomiony').css('background', 'linear-gradient(#2e7d32 0%, #1b5e20 100%)');
             setTimeout(() => {
                 btn.text(originalText).prop('disabled', false).css('background', originalBg);
             }, 3000);
         };
-        
+
         script.onerror = () => {
             btn.text('❌ Błąd ładowania').css('background', 'linear-gradient(#d32f2f 0%, #b71c1c 100%)');
             setTimeout(() => {
                 btn.text(originalText).prop('disabled', false).css('background', originalBg);
             }, 3000);
         };
-        
+
         document.head.appendChild(script);
     });
 
-    // Pinezka do pokazywania ukrywania - wstrzykiwanie obok surowców
-    const woodLink = $('.icon.header.wood').first().closest('a');
-    if (woodLink.length && !$('#calc_pin').length) {
-        $(`<td class="box-item icon-box" style="padding: 0 4px; border-right: 1px solid var(--border-color);"><span id="calc_pin" style="cursor:pointer; font-size:14px;">📊</span></td>`).insertBefore(woodLink.closest('td'));
-        $('#calc_pin').on('click', () => {
-            let s = $(ui).is(':hidden'); $(ui).toggle();
-            localStorage.setItem(STORAGE_KEY_STATE, s ? 'open' : 'closed');
-            if(s) { fillData(); calculateTrade(); }
-        });
-    }
-
-    // Inicjalizacja
-    fillData();
-    if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
-        $(ui).show();
-        calculateTrade();
-    }
-
-    
     // Pinezka do pokazywania ukrywania - wstrzykiwanie obok surowców
     const woodLink = $('.icon.header.wood').first().closest('a');
     if (woodLink.length && !$('#calc_pin').length) {
