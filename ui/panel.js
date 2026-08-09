@@ -22,7 +22,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 80%; height: 80%; pointer-events: none;">`;
     
     // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
-    opener.style.cssText = 'position: fixed !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
+    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
     
     document.body.appendChild(opener);
 
