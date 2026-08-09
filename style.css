@@ -13,10 +13,10 @@
     --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
 }
 
-/* Resetowanie obramowań i podświetleń mobilnych */
+/* Resetowanie obramowań i podświetleń mobilnych TYLKO dla panelu Menedżera */
 #tw-script-panel *, 
-[id*="-ui"] *, 
-[id*="-container"] * {
+#tw-panel-opener *,
+#tw-global-tooltip * {
     box-sizing: border-box !important;
     font-family: Verdana, Arial, sans-serif !important;
     color: var(--text-color) !important;
@@ -36,19 +36,28 @@
     left: 10px !important;
     z-index: 999999 !important;
     cursor: pointer !important;
-    width: 50px !important; /* Stała szerokość */
-    height: 50px !important; /* Stała wysokość - równe width daje idealny kwadrat */
-    display: flex !important; /* Umożliwia perfekcyjne centrowanie */
-    justify-content: center !important; /* Centrowanie w poziomie */
-    align-items: center !important; /* Centrowanie w pionie */
-    font-size: 32px !important; /* Maksymalnie duża ikona wypełniająca środek */
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 32px !important;
     background-image: var(--btn-bg) !important;
     border: 2px solid var(--border-color) !important;
-    border-radius: 50% !important; /* Zaokrągla kwadrat do idealnego koła */
+    border-radius: 50% !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
     user-select: none !important;
     touch-action: none !important;
-    padding: 0 !important; /* Usunięty padding, żeby nie psuł okrągłego kształtu */
+    padding: 0 !important;
+}
+
+#tw-panel-opener img {
+    width: 65% !important;
+    height: 65% !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+    display: block !important;
+    margin: 0 auto !important;
 }
 
 /* Główny słupek menu */
@@ -103,13 +112,11 @@
 
 /* =========================================================
 
-         WYGLĄD - autorskie
+         WYGLĄD - autorskie elementy menedżera
    ========================================================= */
 
-/* Nagłówki */
-#tw-script-panel-header,
-[id*="-header"],
-.fm-header {
+/* Nagłówek panelu */
+#tw-script-panel-header {
     background-color: var(--bg-header) !important;
     color: var(--title-color) !important;
     padding: 8px !important;
@@ -124,12 +131,9 @@
     align-items: center !important;
 }
 
-/* Przyciski (Z gradientami) */
+/* Przyciski zakładek i interfejsu menu */
 .tw-tab,
-.fm-btn,
-.tw-info-icon,
-[id*="-ui"] button,
-[id*="-container"] button {
+.tw-info-icon {
     background-image: var(--btn-bg) !important;
     background-color: transparent !important;
     color: var(--text-color) !important;
@@ -152,14 +156,11 @@
     margin-left: 4px !important;
 }
 
-.tw-tab:hover,
-.fm-btn:hover,
-[id*="-ui"] button:hover,
-[id*="-container"] button:hover {
+.tw-tab:hover {
     background-image: var(--btn-hover) !important;
 }
 
-/* Przyciski specjalne - Menu */
+/* Przyciski specjalne - Menu (Zmień motyw, Pinned, Zamknij) */
 .tw-header-btn {
     background: transparent !important;
     border: none !important;
@@ -221,50 +222,6 @@
 }
 .tw-status-on { background: #2ecc71 !important; box-shadow: 0 0 4px #2ecc71 !important; }
 .tw-status-off { background: #e74c3c !important; }
-
-/* Dedykowane kontenery innych skryptów - tylko tło i ramki, żeby nie zepsuć ich fixed position */
-[id*="-ui"],
-[id*="-container"],
-#results,
-#massScavengeFinal {
-    background-color: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-}
-
-/* Tabele w skryptach */
-[id*="-ui"] table, 
-[id*="-container"] table {
-    width: 100% !important;
-    background-color: var(--bg-main) !important;
-    border-color: var(--border-color) !important;
-    border-collapse: collapse !important;
-}
-
-[id*="-ui"] th, [id*="-container"] th {
-    background-color: var(--bg-header) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important;
-    padding: 5px !important;
-}
-
-[id*="-ui"] td, [id*="-container"] td {
-    background-color: var(--bg-main) !important;
-    border: 1px solid var(--border-color) !important;
-    padding: 5px !important;
-}
-
-[id*="-ui"] input[type="text"], 
-[id*="-ui"] input[type="number"],
-[id*="-container"] input[type="text"] {
-    background-color: var(--bg-row-alt) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important;
-    padding: 4px !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
 
 /* Dymek z informacjami (Tooltip) */
 #tw-global-tooltip {
