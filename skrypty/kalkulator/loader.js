@@ -14,8 +14,8 @@
     'use strict';
     
     // Wklej tutaj linki "RAW" ze swojego GitHuba
-    const urlUI = "https://raw.githubusercontent.com/TWOJ_PROFIL/REPO/main/kalk_ui.js";
-    const urlLogika = "https://raw.githubusercontent.com/TWOJ_PROFIL/REPO/main/kalk_logika.js";
+    const urlUI = "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/ui.js";
+    const urlLogika = "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/logika.js";
 
     function wczytajSkrypt(url) {
         return new Promise((resolve) => {
