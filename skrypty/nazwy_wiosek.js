@@ -57,7 +57,7 @@
     
     header.innerHTML = `
         <b style="padding-left: 5px; font-size: 12px;">TCM RENAMER</b>
-        <button class="tcm-shinko-btn" id="tcm-pin-btn" style="font-size: 12px; padding: 2px 6px; opacity: ${isPinned ? '1' : '0.4'};">${isPinned ? '📌 Odepnij' : '📌 Przypnij'}</button>
+        <button class="tcm-shinko-btn" id="tcm-pin-btn" style="font-size: 12px; padding: 2px 6px; opacity: ${isPinned ? '1' : '0.4'};">${isPinned ? '📌' : '📌'}</button>
     `;
     container.appendChild(header);
 
