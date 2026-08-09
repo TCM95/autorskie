@@ -150,6 +150,14 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
         "description": "...",
        "screens": ["place"]
+    },
+    {
+        "id": "kalk_surowce",
+        "name": "Kalkulator",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
+        "description": "...",
+       "screens": ["main", "snob", "market"]
     }
 
 ]
