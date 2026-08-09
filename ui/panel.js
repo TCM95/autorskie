@@ -17,9 +17,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
     const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
-    const opener = document.createElement('button');
+        const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 80%; height: 80%; pointer-events: none;">`;
+    
+    // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
+    opener.style.cssText = 'position: fixed !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
+    
+    document.body.appendChild(opener);
+
     
     // Aplikowanie zapisanej pozycji dla ikony startowej
     if (savedOpenerPos) {
