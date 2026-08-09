@@ -42,6 +42,11 @@
         <div style="display:flex; align-items:center; gap:5px; margin-bottom:4px;"><span class="icon header wood"></span><input id="m_w" type="number" class="kalk-input" style="width:85px;"><input id="p_w" type="number" readonly class="kalk-input" style="width:75px;"></div>
         <div style="display:flex; align-items:center; gap:5px; margin-bottom:4px;"><span class="icon header stone"></span><input id="m_g" type="number" class="kalk-input" style="width:85px;"><input id="p_g" type="number" readonly class="kalk-input" style="width:75px;"></div>
         <div style="display:flex; align-items:center; gap:5px; margin-bottom:4px;"><span class="icon header iron"></span><input id="m_i" type="number" class="kalk-input" style="width:85px;"><input id="p_i" type="number" readonly class="kalk-input" style="width:75px;"></div>
+
+<button id="load_handlarz_btn" class="kalk-btn" style="width:100%; margin-top:5px; background: linear-gradient(#4caf50 0%, #2e7d32 100%); font-weight:bold;">
+    🚀 Uruchom Handlarza (GitHub)
+</button>
+
         
         <div style="margin-top:8px; border-top:1px solid var(--border-color); padding-top:8px;">
             <b>CEL: <span id="target_label" style="font-weight:normal; color:#4caf50;">Brak</span></b>
