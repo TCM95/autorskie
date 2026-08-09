@@ -84,11 +84,8 @@
         }
     }
 
-    try {
-        // Najpierw pobierz i wdróż style!
-        await loadCSS();
-        
-        // Dopiero po załadowaniu CSS buduj UI
+  
+    // Dopiero po załadowaniu CSS buduj UI
         for (const file of UI_JS) await loadModule(file);
         
         const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
