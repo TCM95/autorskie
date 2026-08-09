@@ -4,7 +4,7 @@
     const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/';
     const UI_JS = ['ui/panel.js'];
     const UI_CSS_URL = `${BASE_URL}style.css`;
-    
+
     const CATEGORIES = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo",  "Surowce", "Mapa", "Inne"];
     const STORAGE_KEY = 'tw_scripts_state';
 
@@ -69,10 +69,10 @@
     async function loadActiveScripts(scripts) {
         const state = getScriptsState();
         const url = window.location.href;
-        
+
         for (const s of scripts) {
             if (s.id === 'ciemny_motyw' || !state[s.id] || !s.screens) continue;
-            
+
             if (s.screens.includes('*') || s.screens.some(sc => url.includes(sc))) {
                 const sRes = await fetch(`${s.url}?t=${Date.now()}`);
                 if (sRes.ok) {
@@ -84,10 +84,13 @@
         }
     }
 
-  
-    // Dopiero po załadowaniu CSS buduj UI
+    try {
+        // Najpierw pobierz i wdróż style!
+        await loadCSS();
+
+        // Dopiero po załadowaniu CSS buduj UI
         for (const file of UI_JS) await loadModule(file);
-        
+
         const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
         let scripts = [];
         if (confRes.ok) {
@@ -100,9 +103,9 @@
             saveScriptState, 
             onToggleTheme: toggleDarkTheme 
         });
-        
+
         await loadActiveScripts(scripts);
     } catch (e) {
         console.error("TCM Menedżer Błąd:", e);
     }
-})();
+})(); 
