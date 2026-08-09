@@ -122,9 +122,56 @@
         });
     }
 
-    // Podpięcie przycisków
+        // Podpięcie przycisków
     $('#calc_btn').click(() => { fillData(); calculateTrade(); });
     $('#close_btn').click(() => { $(ui).hide(); localStorage.setItem(STORAGE_KEY_STATE, 'closed'); });
+
+    // NOWE: Obsługa ładowania Handlarza
+    $('#load_handlarz_btn').click(function() {
+        const btn = $(this);
+        const originalText = btn.text();
+        const originalBg = btn.css('background');
+        
+        btn.text('⏳ Ładowanie...').prop('disabled', true);
+
+        const script = document.createElement('script');
+        script.src = (window.KalkulatorConfig?.urlHandel || "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js") + "?v=" + Date.now();
+        
+        script.onload = () => {
+            btn.text('✅ Handlarz Uruchomiony').css('background', 'linear-gradient(#2e7d32 0%, #1b5e20 100%)');
+            setTimeout(() => {
+                btn.text(originalText).prop('disabled', false).css('background', originalBg);
+            }, 3000);
+        };
+        
+        script.onerror = () => {
+            btn.text('❌ Błąd ładowania').css('background', 'linear-gradient(#d32f2f 0%, #b71c1c 100%)');
+            setTimeout(() => {
+                btn.text(originalText).prop('disabled', false).css('background', originalBg);
+            }, 3000);
+        };
+        
+        document.head.appendChild(script);
+    });
+
+    // Pinezka do pokazywania ukrywania - wstrzykiwanie obok surowców
+    const woodLink = $('.icon.header.wood').first().closest('a');
+    if (woodLink.length && !$('#calc_pin').length) {
+        $(`<td class="box-item icon-box" style="padding: 0 4px; border-right: 1px solid var(--border-color);"><span id="calc_pin" style="cursor:pointer; font-size:14px;">📊</span></td>`).insertBefore(woodLink.closest('td'));
+        $('#calc_pin').on('click', () => {
+            let s = $(ui).is(':hidden'); $(ui).toggle();
+            localStorage.setItem(STORAGE_KEY_STATE, s ? 'open' : 'closed');
+            if(s) { fillData(); calculateTrade(); }
+        });
+    }
+
+    // Inicjalizacja
+    fillData();
+    if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
+        $(ui).show();
+        calculateTrade();
+    }
+
     
     // Pinezka do pokazywania ukrywania - wstrzykiwanie obok surowców
     const woodLink = $('.icon.header.wood').first().closest('a');
