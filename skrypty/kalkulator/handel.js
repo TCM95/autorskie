@@ -1,4 +1,15 @@
-// Ten plik będzie wczytywany dynamicznie przez Kalkulator.
+// ==UserScript==
+// @name         Ekspresowy Handlar
+// @version      1.7.7
+// @description  handel i Hermit (Dyskretny).
+// @author       Gal Anonim
+// @namespace    https://viayoo.com/
+// @match        *://*.plemiona.pl/game.php?*screen=market*
+// @match        *://*.plemiona.pl/game.php?*screen=main*
+// @match        *://*.plemiona.pl/game.php?*screen=snob*
+// @grant        none
+// ==/UserScript==
+
 (function() {
     'use strict';
     if (typeof game_data === 'undefined') return;
@@ -9,21 +20,27 @@
         if (el.length) el.prop('disabled', false).prop('checked', true).trigger('change');
     };
 
-    // --- MODUŁ 2: WEZWIJ (Z ręcznym przyciskiem) ---
+    // --- MODUŁ 1: MONITOR KOSZTU CELU ---
+    setInterval(() => {
+        const targetW = parseInt($('#c_w').val()) || 0;
+        const targetG = parseInt($('#c_g').val()) || 0;
+        const targetI = parseInt($('#c_i').val()) || 0;
+
+        if (targetW > 0 || targetG > 0 || targetI > 0) {
+            localStorage.setItem('Etykiety_Hermit_Dynamic', JSON.stringify({
+                'wood': targetW, 'stone': targetG, 'iron': targetI
+            }));
+        }
+    }, 1000);
+
+    // --- MODUŁ 2: WEZWIJ (Hermit - Cichy start) ---
     if (window.location.href.includes('mode=call')) {
-        const saved = localStorage.getItem('Etykiety_Hermit_Dynamic');
-        if (saved) {
-            // Zamiast od razu startować, dodajemy przycisk
-            const btnHtml = `<button id="btn_reczne_wezwanie" class="btn" style="margin-bottom: 10px; background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%); color: white; border: 1px solid #3e4147; padding: 8px 12px; font-weight: bold;">🚀 Wezwij Surowce (Kalkulator)</button>`;
-
-            // Wstrzykujemy przycisk na górze strony (nad tabelą wzywania)
-            $('#content_value').prepend(btnHtml);
-
-            // Po kliknięciu uruchamiamy logikę Hermita
-            $('#btn_reczne_wezwanie').click(function(e) {
-                e.preventDefault();
-                $(this).text("Ładowanie...").prop("disabled", true);
-
+        let attempts = 0;
+        const checkAndInject = setInterval(() => {
+            attempts++;
+            const saved = localStorage.getItem('Etykiety_Hermit_Dynamic');
+            if (saved) {
+                clearInterval(checkAndInject);
                 window.HermitowskieSurki = {
                     target_resources: JSON.parse(saved),
                     storage_percentage_limit: { 'wood': 98, 'stone': 98, 'iron': 98 },
@@ -33,12 +50,12 @@
                     idle_time: 5,
                     trader_capacity_threshold: 0
                 };
-
                 const script = document.createElement('script');
                 script.src = 'https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieSurki.js?_=' + Date.now();
                 document.head.appendChild(script);
-            });
-        }
+            }
+            if (attempts > 30) clearInterval(checkAndInject);
+        }, 1000);
     }
 
     // --- MODUŁ 3: HANDEL (Inni gracze / Kupno) ---
@@ -87,7 +104,7 @@
                 }, 300);
             }, 1200);
         } else {
-            $('#submit_offer').val("BRAKI < 100 - POMINIĘTO").prop('disabled', true);
+            $('#submit_offer').val("BRAKI < 600 - POMINIĘTO").prop('disabled', true);
         }
     }
 })();
