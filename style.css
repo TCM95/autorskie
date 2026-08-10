@@ -62,8 +62,8 @@
 }
 
 #tw-panel-opener img {
-    width: 65% !important;
-    height: 65% !important;
+    width: 95% !important;
+    height: 95% !important;
     object-fit: contain !important;
     pointer-events: none !important;
     display: block !important;
