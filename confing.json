@@ -156,8 +156,16 @@
         "name": "Kalkulator",
         "category": "Surowce",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
-        "description": "...",
+        "description": "oblicza zapotrzebowanie budynki/monety/szlachta",
        "screens": ["main", "snob", "market"]
+    },
+    {
+        "id": "kalk_surowce_w",
+        "name": "Kalkulator(handlarz)",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
+        "description": "wypełnia formularze i wysyłki na rynku",
+       "screens": ["market"]
     }
 
 ]
