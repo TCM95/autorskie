@@ -32,13 +32,7 @@
         UKŁAD - POZYCJONOWANIE
    ========================================================= */
 
-/* Przycisk otwierający (Duża, okrągła ikona na cały przycisk) */
-#tw-panel-opener {
-    position: absolute !important;
-    top: 60px !important;
-    left: 10px !important;
-    z-index: 999999 !important;
-    cursor: pointer !important;
+  cursor: pointer !important;
     width: 50px !important;
     height: 50px !important;
     display: flex !important;
