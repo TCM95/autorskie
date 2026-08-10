@@ -3,14 +3,23 @@
    GŁÓWNE ZMIENNE (Styl: ciemny)
    ========================================================= */
 :root {
-    --bg-main: #36393f;
-    --bg-row-alt: #32353b;
-    --bg-header: #202225;
-    --border-color: #3e4147;
-    --text-color: white;
-    --title-color: #ffffdf;
-    --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-    --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+    /* Przyciemnione tła dla lepszego kontrastu z neonem */
+    --bg-main: #18191c;
+    --bg-row-alt: #131416;
+    --bg-header: #0d0e10;
+    
+    /* Neonowa paleta na podstawie logo */
+    --neon-green: #74ff00;
+    --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
+    --border-color: #2b2d31; 
+    
+    /* Tekst */
+    --text-color: #d1d1d1;
+    --title-color: var(--neon-green); /* Tytuły od teraz są neonowe */
+    
+    /* Przyciski */
+    --btn-bg: linear-gradient(#2b2d31 0%, #18191c 100%);
+    --btn-hover: linear-gradient(#3a3d42 0%, #2b2d31 100%);
 }
 
 /* Resetowanie obramowań i podświetleń mobilnych TYLKO dla panelu Menedżera */
@@ -25,11 +34,9 @@
 }
 
 /* =========================================================
-
-        UKŁAD - POZYCJONOWANIE
+        UKŁAD - POZYCJONOWANIE I PINEZKA
    ========================================================= */
 
-/* Przycisk otwierający (Duża, okrągła ikona na cały przycisk) */
 #tw-panel-opener {
     position: absolute !important;
     top: 60px !important;
@@ -42,13 +49,20 @@
     justify-content: center !important;
     align-items: center !important;
     font-size: 32px !important;
-    background-image: var(--btn-bg) !important;
-    border: 2px solid var(--border-color) !important;
+    background: #000 !important; /* Głębsza czerń pod logo */
+    border: 2px solid var(--neon-green) !important; /* Neonowa ramka wokół loga */
     border-radius: 50% !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
     user-select: none !important;
     touch-action: none !important;
     padding: 0 !important;
+    transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out !important;
+}
+
+/* Podświetlenie neonowe W MOMENCIE KLIKNIĘCIA / DOTKNIĘCIA */
+#tw-panel-opener:active {
+    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.9) !important;
+    border-color: #93ff33 !important; /* Jaśniejszy rozbłysk ramki */
 }
 
 #tw-panel-opener img {
@@ -68,9 +82,9 @@
     z-index: 999998 !important;
     width: 140px !important;
     background-color: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
+    border: 2px solid var(--neon-green) !important; /* Neonowe obramowanie panelu */
     border-radius: 4px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.9), inset 0 0 10px rgba(116, 255, 0, 0.05) !important;
     display: none;
     flex-direction: column !important;
 }
@@ -93,9 +107,9 @@
     margin-left: 5px !important;
     width: 270px !important;
     background-color: var(--bg-row-alt) !important;
-    border: 2px solid var(--border-color) !important;
+    border: 2px solid var(--neon-green) !important;
     border-radius: 4px !important;
-    box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
+    box-shadow: 4px 4px 15px rgba(0,0,0,0.9) !important;
     z-index: 999997 !important;
 }
 
@@ -109,9 +123,7 @@
     background-color: var(--bg-row-alt) !important;
 }
 
-
 /* =========================================================
-
          WYGLĄD - autorskie elementy menedżera
    ========================================================= */
 
@@ -122,13 +134,14 @@
     padding: 8px !important;
     font-weight: bold !important;
     font-size: 12px !important;
-    border-bottom: 2px solid var(--border-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     cursor: move !important;
     user-select: none !important;
     text-align: center !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
+    text-shadow: 0 0 5px rgba(116, 255, 0, 0.4) !important; /* Świecenie tekstu */
 }
 
 /* Przyciski zakładek i interfejsu menu */
@@ -147,6 +160,7 @@
     display: block !important;
     width: 100% !important;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
+    transition: 0.2s !important;
 }
 
 .tw-info-icon {
@@ -158,6 +172,7 @@
 
 .tw-tab:hover {
     background-image: var(--btn-hover) !important;
+    border-color: var(--neon-green) !important;
 }
 
 /* Przyciski specjalne - Menu (Zmień motyw, Pinned, Zamknij) */
@@ -170,13 +185,15 @@
     padding: 0 3px !important;
     cursor: pointer !important;
     font-weight: bold !important;
+    text-shadow: 0 0 5px rgba(116, 255, 0, 0.6) !important;
 }
 
 /* Aktywna zakładka w Menu */
 .tw-tab.active-tab {
-    background-image: linear-gradient(#40444a 0%, #36393f 100%) !important;
-    border-color: var(--title-color) !important;
+    background-image: linear-gradient(#1a1c1e 0%, #131416 100%) !important;
+    border-color: var(--neon-green) !important;
     color: var(--title-color) !important;
+    box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.15) !important; /* Delikatny glow wewnątrz wciśniętej kategorii */
 }
 
 /* Wiersz z pojedynczym skryptem w menu */
@@ -209,10 +226,10 @@
     text-overflow: ellipsis !important;
     font-size: 11px !important;
     font-weight: bold !important;
-    color: var(--title-color) !important;
+    color: #e0e0e0 !important;
 }
 
-/* Kontrolki statusu (ON/OFF) */
+/* Kontrolki statusu (ON/OFF) - Nowe kolory */
 .tw-status-icon {
     width: 10px !important;
     height: 10px !important;
@@ -220,18 +237,31 @@
     flex-shrink: 0 !important;
     display: inline-block !important;
 }
-.tw-status-on { background: #2ecc71 !important; box-shadow: 0 0 4px #2ecc71 !important; }
-.tw-status-off { background: #e74c3c !important; }
+
+/* Włączony - Agresywny Neon */
+.tw-status-on { 
+    background: var(--neon-green) !important; 
+    box-shadow: var(--neon-glow) !important; 
+    border: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+/* Wyłączony - Zgaszona, delikatna czerwień */
+.tw-status-off { 
+    background: #5c1616 !important; 
+    border: 1px solid #360a0a !important;
+    box-shadow: none !important;
+}
 
 /* Dymek z informacjami (Tooltip) */
 #tw-global-tooltip {
     background-color: var(--bg-main) !important;
     color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important;
+    border: 1px solid var(--neon-green) !important;
     border-radius: 4px !important;
     padding: 8px !important;
     width: 200px !important;
     font-size: 10px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
     z-index: 999999999 !important;
+    text-shadow: 0 0 2px rgba(116, 255, 0, 0.3) !important;
 }
