@@ -32,6 +32,54 @@
         UKŁAD - POZYCJONOWANIE
    ========================================================= */
 
+/* Przycisk otwierający (Duża, okrągła ikona na cały przycisk) */
+#tw-panel-opener {
+    position: absolute !important;
+    top: 60px !important;
+    left: 10px !important;
+    z-index: 999999 !important;
+    cursor: pointer !important;
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 32px !important;
+    background-image: var(--btn-bg) !important;
+    
+    /* Zmiana: Neonowa obramówka przypisana na stałe */
+    border: 2px solid var(--neon-green) !important;
+    border-radius: 50% !important;
+    
+    /* Zmiana: Neonowy blask połączony z klasycznym, ciemnym cieniem pod przyciskiem */
+    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
+    
+    user-select: none !important;
+    touch-action: none !important;
+    padding: 0 !important;
+    transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.1s !important;
+    
+    /* Opcjonalnie: animacja pulsowania (możesz usunąć tę linijkę, jeśli wolisz stałe świecenie) */
+    animation: neon-pulse 2s infinite alternate ease-in-out !important;
+}
+
+/* Animacja pulsowania dla mobilnych graczy */
+@keyframes neon-pulse {
+    0% {
+        box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8);
+    }
+    100% {
+        box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8);
+    }
+}
+
+/* Rozbłysk (i lekkie wciśnięcie) przy kliknięciu w pinezkę */
+#tw-panel-opener:active {
+    box-shadow: 0 0 20px rgba(116, 255, 0, 0.9), 0 4px 12px rgba(0,0,0,0.8) !important;
+    border-color: #9dff4d !important; /* Jaśniejszy odcień przy wciśnięciu */
+    transform: scale(0.95) !important;
+}
+
   cursor: pointer !important;
     width: 50px !important;
     height: 50px !important;
