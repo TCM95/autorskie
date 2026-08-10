@@ -18,8 +18,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
         const opener = document.createElement('button');
-    opener.id = 'tw-panel-opener';
-    opener.innerHTML = `<img src="${window.location.origin}/favicon.ico" style="width: 80%; height: 80%; pointer-events: none;">`;
+opener.id = 'tw-panel-opener';
+opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw.png" alt="ikona">`;
     
     // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
