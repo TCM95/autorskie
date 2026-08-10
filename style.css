@@ -1,25 +1,21 @@
-/* =========================================================
-
-   GŁÓWNE ZMIENNE (Styl: ciemny)
-   ========================================================= */
 :root {
-    /* Przyciemnione tła dla lepszego kontrastu z neonem */
-    --bg-main: #18191c;
-    --bg-row-alt: #131416;
-    --bg-header: #0d0e10;
+    /* Grawitacja w stronę ciemnego stealth */
+    --bg-main: #141517;
+    --bg-row-alt: #101113;
+    --bg-header: #0a0b0c;
     
-    /* Neonowa paleta na podstawie logo */
+    /* Neonowa paleta z logo */
     --neon-green: #74ff00;
     --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-    --border-color: #2b2d31; 
+    --border-color: #26282c; 
     
     /* Tekst */
     --text-color: #d1d1d1;
-    --title-color: var(--neon-green); /* Tytuły od teraz są neonowe */
+    --title-color: #ffffff;
     
     /* Przyciski */
-    --btn-bg: linear-gradient(#2b2d31 0%, #18191c 100%);
-    --btn-hover: linear-gradient(#3a3d42 0%, #2b2d31 100%);
+    --btn-bg: linear-gradient(#26282c 0%, #141517 100%);
+    --btn-hover: linear-gradient(#32353a 0%, #26282c 100%);
 }
 
 /* Resetowanie obramowań i podświetleń mobilnych TYLKO dla panelu Menedżera */
@@ -34,9 +30,10 @@
 }
 
 /* =========================================================
-        UKŁAD - POZYCJONOWANIE I PINEZKA
+        UKŁAD - POZYCJONOWANIE I PINEZKA (OPENER)
    ========================================================= */
 
+/* Przycisk otwierający - BEZ OBRAMOWANIA W STANIE SPOCZYNKU */
 #tw-panel-opener {
     position: absolute !important;
     top: 60px !important;
@@ -49,8 +46,8 @@
     justify-content: center !important;
     align-items: center !important;
     font-size: 32px !important;
-    background: #000 !important; /* Głębsza czerń pod logo */
-    border: 2px solid var(--neon-green) !important; /* Neonowa ramka wokół loga */
+    background: #000 !important;
+    border: 2px solid transparent !important; /* Brak obramowania na co dzień */
     border-radius: 50% !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
     user-select: none !important;
@@ -59,10 +56,10 @@
     transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out !important;
 }
 
-/* Podświetlenie neonowe W MOMENCIE KLIKNIĘCIA / DOTKNIĘCIA */
+/* Neonowy rozbłysk ramki TYLKO podczas wciśnięcia / dotknięcia */
 #tw-panel-opener:active {
     box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.9) !important;
-    border-color: #93ff33 !important; /* Jaśniejszy rozbłysk ramki */
+    border-color: var(--neon-green) !important;
 }
 
 #tw-panel-opener img {
@@ -74,7 +71,7 @@
     margin: 0 auto !important;
 }
 
-/* Główny słupek menu */
+/* Główny słupek menu - bez neonowej ramki */
 #tw-script-panel {
     position: absolute !important;
     top: 40px !important;
@@ -82,9 +79,9 @@
     z-index: 999998 !important;
     width: 140px !important;
     background-color: var(--bg-main) !important;
-    border: 2px solid var(--neon-green) !important; /* Neonowe obramowanie panelu */
+    border: 1px solid var(--border-color) !important; /* Dyskretna, ciemna ramka */
     border-radius: 4px !important;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.9), inset 0 0 10px rgba(116, 255, 0, 0.05) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.9) !important;
     display: none;
     flex-direction: column !important;
 }
@@ -98,16 +95,16 @@
     background-color: var(--bg-main) !important;
 }
 
-/* Wysuwany panel ze skryptami */
+/* Wysuwany panel ze skryptami - bez neonowej ramki */
 #tw-content-area {
     display: none;
     position: absolute !important;
-    top: -2px !important;
+    top: -1px !important;
     left: 100% !important;
     margin-left: 5px !important;
     width: 270px !important;
     background-color: var(--bg-row-alt) !important;
-    border: 2px solid var(--neon-green) !important;
+    border: 1px solid var(--border-color) !important; /* Dyskretna ramka */
     border-radius: 4px !important;
     box-shadow: 4px 4px 15px rgba(0,0,0,0.9) !important;
     z-index: 999997 !important;
@@ -141,12 +138,10 @@
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    text-shadow: 0 0 5px rgba(116, 255, 0, 0.4) !important; /* Świecenie tekstu */
 }
 
-/* Przyciski zakładek i interfejsu menu */
-.tw-tab,
-.tw-info-icon {
+/* Przyciski zakładek */
+.tw-tab {
     background-image: var(--btn-bg) !important;
     background-color: transparent !important;
     color: var(--text-color) !important;
@@ -160,22 +155,46 @@
     display: block !important;
     width: 100% !important;
     text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-    transition: 0.2s !important;
-}
-
-.tw-info-icon {
-    width: auto !important;
-    display: inline-block !important;
-    padding: 2px 6px !important;
-    margin-left: 4px !important;
+    transition: 0.15s !important;
 }
 
 .tw-tab:hover {
     background-image: var(--btn-hover) !important;
-    border-color: var(--neon-green) !important;
 }
 
-/* Przyciski specjalne - Menu (Zmień motyw, Pinned, Zamknij) */
+/* Wciśnięta kategoria / aktywna zakładka */
+.tw-tab.active-tab {
+    background-image: linear-gradient(#1a1c1e 0%, #101113 100%) !important;
+    border-color: var(--neon-green) !important; /* Neonowe obramowanie aktywnej zakładki */
+    color: var(--neon-green) !important;
+}
+
+/* IKONA INFORMACJI "i" - DOMYŚLNIE ZAPALONA */
+.tw-info-icon {
+    background-color: transparent !important;
+    color: var(--neon-green) !important; /* Zapalony neon */
+    border: 1px solid var(--neon-green) !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    display: inline-block !important;
+    padding: 2px 6px !important;
+    margin-left: 4px !important;
+    box-shadow: var(--neon-glow) !important; /* Świeci domyślnie */
+    text-shadow: 0 0 4px rgba(116, 255, 0, 0.8) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* IKONA INFORMACJI "i" - ZGASZONA PO KLIKNIĘCIU (Dodaj klasę 'tw-info-off' w JS po kliknięciu) */
+.tw-info-icon.tw-info-off {
+    color: #5c1616 !important; /* Wyłączony czerwony */
+    border-color: #360a0a !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* Przyciski specjalne - Menu */
 .tw-header-btn {
     background: transparent !important;
     border: none !important;
@@ -185,18 +204,9 @@
     padding: 0 3px !important;
     cursor: pointer !important;
     font-weight: bold !important;
-    text-shadow: 0 0 5px rgba(116, 255, 0, 0.6) !important;
 }
 
-/* Aktywna zakładka w Menu */
-.tw-tab.active-tab {
-    background-image: linear-gradient(#1a1c1e 0%, #131416 100%) !important;
-    border-color: var(--neon-green) !important;
-    color: var(--title-color) !important;
-    box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.15) !important; /* Delikatny glow wewnątrz wciśniętej kategorii */
-}
-
-/* Wiersz z pojedynczym skryptem w menu */
+/* Wiersz z pojedynczym skryptem */
 .tw-script-item {
     background-color: var(--bg-main) !important;
     border: 1px solid var(--border-color) !important;
@@ -229,7 +239,7 @@
     color: #e0e0e0 !important;
 }
 
-/* Kontrolki statusu (ON/OFF) - Nowe kolory */
+/* KONTROLKI STATUSU (ON/OFF) */
 .tw-status-icon {
     width: 10px !important;
     height: 10px !important;
@@ -238,30 +248,29 @@
     display: inline-block !important;
 }
 
-/* Włączony - Agresywny Neon */
+/* ON - Świecący neon */
 .tw-status-on { 
     background: var(--neon-green) !important; 
     box-shadow: var(--neon-glow) !important; 
-    border: 1px solid rgba(255,255,255,0.3) !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
 }
 
-/* Wyłączony - Zgaszona, delikatna czerwień */
+/* OFF - Wyłączony, wygaszony czerwony */
 .tw-status-off { 
     background: #5c1616 !important; 
     border: 1px solid #360a0a !important;
     box-shadow: none !important;
 }
 
-/* Dymek z informacjami (Tooltip) */
+/* Dymek (Tooltip) */
 #tw-global-tooltip {
     background-color: var(--bg-main) !important;
     color: var(--title-color) !important;
-    border: 1px solid var(--neon-green) !important;
+    border: 1px solid var(--border-color) !important;
     border-radius: 4px !important;
     padding: 8px !important;
     width: 200px !important;
     font-size: 10px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
     z-index: 999999999 !important;
-    text-shadow: 0 0 2px rgba(116, 255, 0, 0.3) !important;
 }
