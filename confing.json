@@ -166,6 +166,14 @@
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
         "description": "wypełnia formularze i wysyłki na rynku",
        "screens": ["market"]
+    },
+    {
+        "id": "bob",
+        "name": "Budowlaniec",
+        "category": "Budowa/rekrutacja",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/bob.js",
+        "description": "budowa wioski gotwe szablony mozliwosc wrzucenia wlasnego",
+       "screens": ["main"]
     }
 
 ]
