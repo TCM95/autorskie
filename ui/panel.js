@@ -75,9 +75,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     const pinImg = document.createElement('img');
     pinImg.src = pinImgUrl;
-    pinImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+    pinImg.className = 'tw-pin-icon'; // Dedykowana klasa dla kontroli w CSS
+    
     if (isPinned) {
-        pinImg.style.opacity = '0.5'; // Opcjonalny wskaźnik przypięcia
+        pinImg.style.opacity = '0.5';
     }
     pinBtn.appendChild(pinImg);
 
@@ -93,7 +94,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     
     const closeImg = document.createElement('img');
     closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+    closeImg.className = 'tw-close-icon'; // Dedykowana klasa dla kontroli w CSS
     closeBtn.appendChild(closeImg);
 
     closeBtn.onclick = () => { 
