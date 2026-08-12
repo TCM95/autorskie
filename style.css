@@ -255,8 +255,8 @@
 
 /* Osobna zmiana rozmiaru ikony zamknięcia (X) */
 .tw-close-icon {
-    width: 19px !important;
-    height: 19px !important;
+    width: 20px !important;
+    height: 20px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
