@@ -17,16 +17,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
     const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
-        const opener = document.createElement('button');
-opener.id = 'tw-panel-opener';
-opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona">`;
-    
+    const opener = document.createElement('button');
+    opener.id = 'tw-panel-opener';
+    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
+
     // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
-    
-    document.body.appendChild(opener);
 
-    
     // Aplikowanie zapisanej pozycji dla ikony startowej
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
@@ -47,10 +44,10 @@ opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
     header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
-    
+
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
-    
+
     const controls = document.createElement('div');
     controls.style.display = 'flex';
     controls.style.gap = '4px';
@@ -70,27 +67,40 @@ opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/
         }
     };
 
+    // --- PRZYCISK PINEZKI Z IKONĄ ---
     const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-    pinBtn.innerText = isPinned ? '📍' : '📌';
+    
+    const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
+    const pinImg = document.createElement('img');
+    pinImg.src = pinImgUrl;
+    pinImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+    if (isPinned) {
+        pinImg.style.opacity = '0.5'; // Opcjonalny wskaźnik przypięcia
+    }
+    pinBtn.appendChild(pinImg);
+
     pinBtn.onclick = () => {
         isPinned = !isPinned;
         localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
-        pinBtn.innerText = isPinned ? '📍' : '📌';
+        pinImg.style.opacity = isPinned ? '0.5' : '1.0';
     };
 
+    // --- PRZYCISK ZAMKNIĘCIA Z IKONĄ ---
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
-    closeBtn.innerText = '✕';
+    
+    const closeImg = document.createElement('img');
+    closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
+    closeImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+    closeBtn.appendChild(closeImg);
+
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
         opener.style.setProperty('display', 'flex', 'important'); 
-    }
-
-opener.style.setProperty('display', 'flex', 'important'); 
     };
-    
+
     controls.appendChild(themeBtn);
     controls.appendChild(pinBtn);
     controls.appendChild(closeBtn);
@@ -128,10 +138,10 @@ opener.style.setProperty('display', 'flex', 'important');
 
             const gameBtn = document.createElement('div');
             gameBtn.className = 'tw-game-btn';
-            
+
             const statusIcon = document.createElement('span');
             statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
-            
+
             const nameLabel = document.createElement('span');
             nameLabel.className = 'tw-script-name';
             nameLabel.innerText = script.name;
@@ -148,7 +158,7 @@ opener.style.setProperty('display', 'flex', 'important');
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'i';
-            
+
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
@@ -157,16 +167,16 @@ opener.style.setProperty('display', 'flex', 'important');
                 } else {
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
-                    
+
                     globalTooltip.innerHTML = `<strong style="color: #ffffdf;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #3e4147; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
-                    
+
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
                 }
             };
-            
+
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
             contentInner.appendChild(item);
@@ -180,7 +190,7 @@ opener.style.setProperty('display', 'flex', 'important');
         tab.onclick = () => {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
-            
+
             if (currentCategory === cat) {
                 currentCategory = null;
                 tab.classList.remove('active-tab');
@@ -209,33 +219,27 @@ opener.style.setProperty('display', 'flex', 'important');
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
-        // Dwuetapowe zamykanie przy kliknięciu w tło
+    // Dwuetapowe zamykanie przy kliknięciu w tło
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
         }
-        
+
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
         const clickedOpener = e.target.closest('#tw-panel-opener');
-        
+
         if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
-            
-            // KROK 1: Sprawdzamy fizycznie, czy rozwinięta jest lista skryptów (contentArea)
             if (contentArea.style.display === 'block') {
-                // Jeśli tak -> zamykamy TYLKO kategorię
                 currentCategory = null;
                 document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
                 contentArea.style.setProperty('display', 'none', 'important');
             } else {
-                // KROK 2: Jeśli lista skryptów jest już schowana -> zamykamy CAŁY panel do małej ikony
                 panel.style.setProperty('display', 'none', 'important');
                 opener.style.setProperty('display', 'flex', 'important'); 
             }
-            
         }
     });
-
 
     // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
     let isDragging = false;
@@ -266,7 +270,7 @@ opener.style.setProperty('display', 'flex', 'important');
         draggedElement.style.setProperty('right', 'auto', 'important');
         draggedElement.style.setProperty('margin', '0', 'important');
         draggedElement.style.setProperty('transform', 'none', 'important');
-        
+
         draggedElement.style.setProperty('left', initialX + 'px', 'important');
         draggedElement.style.setProperty('top', initialY + 'px', 'important');
 
@@ -280,7 +284,7 @@ opener.style.setProperty('display', 'flex', 'important');
 
     function dragMove(e) {
         if (!isDragging || !draggedElement) return;
-        
+
         if (e.cancelable) e.preventDefault(); 
         window.getSelection().removeAllRanges(); 
 
@@ -306,8 +310,7 @@ opener.style.setProperty('display', 'flex', 'important');
 
     function dragEnd() {
         if (!isDragging) return;
-        
-        // Zapisywanie pozycji po puszczeniu elementu (dla Panelu i Ikony niezależnie)
+
         if (draggedElement === opener) {
             localStorage.setItem('tw_opener_pos', JSON.stringify({
                 x: parseInt(opener.style.left) || 0,
@@ -327,13 +330,13 @@ opener.style.setProperty('display', 'flex', 'important');
         document.removeEventListener('touchmove', dragMove);
         document.removeEventListener('mouseup', dragEnd);
         document.removeEventListener('touchend', dragEnd);
-        
+
         setTimeout(() => { wasDragged = false; }, 50);
     }
 
     header.addEventListener('mousedown', dragStart, { passive: false });
     header.addEventListener('touchstart', dragStart, { passive: false });
-    
+
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
 
