@@ -234,9 +234,32 @@
     color: var(--title-color) !important;
     font-size: 12px !important;
     box-shadow: none !important;
-    padding: 0 3px !important;
+    padding: 0 2px !important;
     cursor: pointer !important;
     font-weight: bold !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Osobna zmiana rozmiaru ikony pinezki */
+.tw-pin-icon {
+    width: 14px !important;
+    height: 14px !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: auto !important;
+}
+
+/* Osobna zmiana rozmiaru ikony zamknięcia (X) */
+.tw-close-icon {
+    width: 12px !important;
+    height: 12px !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: auto !important;
 }
 
 /* Wiersz z pojedynczym skryptem w menu */
