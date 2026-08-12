@@ -1,20 +1,18 @@
 :root {
-    /* Twoja klasyczna paleta kolorów */
+    /* Klasyczna paleta kolorów */
     --bg-main: #36393f;
     --bg-row-alt: #32353b;
     --bg-header: #202225;
     --border-color: #3e4147;
     --text-color: white;
     --title-color: #ffffdf;
+    --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+    --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
 
-    /* Tła graficzne wczytywane z repozytorium GitHub */
-    --btn-bg: url('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/btn.png') no-repeat center center / 100% 100%;
-    --btn-hover: url('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/btn_green.png') no-repeat center center / 100% 100%;
-
-    /* Dodane kolory NEONOWE */
+    /* Kolory NEONOWE */
     --neon-green: #74ff00;
     --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-
+    
     --neon-red: #ff003c;
     --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
 }
@@ -46,19 +44,19 @@
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    background: var(--btn-bg) !important; /* Poprawiono na background */
-
+    background-image: var(--btn-bg) !important;
+    
     /* Neonowa obramówka na stałe */
     border: 2px solid var(--neon-green) !important;
     border-radius: 50% !important;
     box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
-
+    
     user-select: none !important;
     touch-action: none !important;
     padding: 0 !important;
     overflow: hidden !important;
     transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.1s !important;
-
+    
     /* Subtelne pulsowanie w spoczynku */
     animation: neon-pulse 2s infinite alternate ease-in-out !important;
 }
@@ -101,10 +99,12 @@
     width: 140px !important;
     background-color: var(--bg-main) !important;
     border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important; /* Jednolite zaokrąglenie całości */
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
     display: none;
     flex-direction: column !important;
+    overflow: hidden !important; /* Odcina rogi nagłówka równo z panelem */
+    padding: 0 !important;
 }
 
 /* Pasek kategorii */
@@ -145,25 +145,30 @@
          WYGLĄD - autorskie elementy menedżera
    ========================================================= */
 
-/* Nagłówek panelu z dedykowanym obrazkiem z GitHuba */
+/* Nagłówek panelu - scalony z całością */
 #tw-script-panel-header {
-    background: url('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/header.png') no-repeat center center / 100% 100% !important;
+    background-color: var(--bg-header) !important;
+    background-image: none !important; /* Brak tekstur przycisku */
     color: var(--title-color) !important;
-    padding: 20px !important;
+    padding: 6px 8px !important;
     font-weight: bold !important;
-    font-size: 15px !important;
-    border-bottom: 2px solid var(--border-color) !important;
+    font-size: 12px !important;
+    border: none !important;
+    border-bottom: 2px solid var(--border-color) !important; /* Tylko dolna linia oddzielająca */
+    border-radius: 0 !important; /* Usunięcie zaokrągleń przycisku */
     cursor: move !important;
     user-select: none !important;
-    text-align: center !important;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
+    width: 100% !important;
+    box-shadow: none !important;
 }
 
 /* Przyciski zakładek */
 .tw-tab {
-    background: var(--btn-bg) !important; /* Poprawiono na background */
+    background-image: var(--btn-bg) !important;
+    background-color: transparent !important;
     color: var(--text-color) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 3px !important;
@@ -179,7 +184,7 @@
 }
 
 .tw-tab:hover {
-    background: var(--btn-hover) !important; /* Poprawiono na background */
+    background-image: var(--btn-hover) !important;
 }
 
 /* Rozbłysk przy kliknięciu w zakładkę */
@@ -190,7 +195,7 @@
 
 /* Aktywna zakładka w Menu (Zaznaczona) */
 .tw-tab.active-tab {
-    background: url('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/btn_green.png') no-repeat center center / 100% 100% !important; /* Wymuszenie podświetlonego przycisku dla aktywnej */
+    background-image: linear-gradient(#40444a 0%, #36393f 100%) !important;
     border-color: var(--neon-green) !important;
     color: var(--neon-green) !important;
     text-shadow: 0 0 4px rgba(116, 255, 0, 0.4) !important;
@@ -200,7 +205,7 @@
          IKONA INFORMACJI "i" - NEONOWE STANY
    ========================================================= */
 .tw-info-icon {
-    background: var(--btn-bg) !important; /* Poprawiono na background */
+    background-image: var(--btn-bg) !important;
     color: var(--neon-green) !important; 
     border: 1px solid var(--neon-green) !important;
     border-radius: 3px !important;
@@ -217,10 +222,10 @@
 }
 
 .tw-info-icon:hover {
-    background: var(--btn-hover) !important; /* Poprawiono na background */
+    background-image: var(--btn-hover) !important;
 }
 
-/* Zgaszony (czerwony) po kliknięciu. JS przełącza klasę 'tw-info-off' */
+/* Zgaszony (czerwony) po kliknięciu. Użyj JS do przełączania klasy 'tw-info-off' */
 .tw-info-icon.tw-info-off {
     color: var(--neon-red) !important; 
     border-color: var(--neon-red) !important;
@@ -247,8 +252,8 @@
 
 /* Osobna zmiana rozmiaru ikony pinezki */
 .tw-pin-icon {
-    width: 17px !important;
-    height: 17px !important;
+    width: 14px !important;
+    height: 14px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
@@ -256,8 +261,8 @@
 
 /* Osobna zmiana rozmiaru ikony zamknięcia (X) */
 .tw-close-icon {
-    width: 20px !important;
-    height: 20px !important;
+    width: 12px !important;
+    height: 12px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
