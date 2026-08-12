@@ -1,6 +1,16 @@
-window.TCM_UI = window.TCM_UI || {};
+Window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
+    // --- SŁOWNIK ZASOBÓW (ASSETS) ---
+    const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/';
+    const ASSETS = {
+        logo: BASE_URL + 'logo_tcm_tw1.png',
+        pin: BASE_URL + 'pin1.png',
+        close: BASE_URL + 'krzyzyk.png',
+        sun1: BASE_URL + 'sun1.png', // Jasny motyw
+        sun2: BASE_URL + 'sun2.png'  // Ciemny motyw
+    };
+
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
@@ -13,29 +23,24 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // --- ODCZYT ZAPISANYCH POZYCJI Z PAMIĘCI PRZEGLĄDARKI ---
+    // --- ODCZYT ZAPISANYCH POZYCJI Z PAMIĘCI ---
     const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
     const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-
-    // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
+    opener.innerHTML = `<img src="${ASSETS.logo}" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
-    // Aplikowanie zapisanej pozycji dla ikony startowej
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
         opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
     }
-
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
 
-    // Aplikowanie zapisanej pozycji dla samego panelu
     if (savedPanelPos) {
         panel.style.setProperty('left', savedPanelPos.x + 'px', 'important');
         panel.style.setProperty('top', savedPanelPos.y + 'px', 'important');
@@ -52,34 +57,33 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    const iconDark = '☾';
-    const iconLight = '☼';
-
+    // --- PRZYCISK MOTYWU (Księżyc / Słońce) ---
     const themeBtn = document.createElement('button');
     themeBtn.className = 'tw-header-btn';
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    themeBtn.innerText = isDark ? iconDark : iconLight;
+    
+    const themeImg = document.createElement('img');
+    themeImg.className = 'tw-pin-icon'; // Re-use rozmiarówki z CSS (17x17)
+    themeImg.src = isDark ? ASSETS.sun2 : ASSETS.sun1;
+    themeBtn.appendChild(themeImg);
+
     themeBtn.onclick = async () => {
         isDark = !isDark;
-        themeBtn.innerText = isDark ? iconDark : iconLight;
+        themeImg.src = isDark ? ASSETS.sun2 : ASSETS.sun1;
         if (darkThemeConfig && callbacks.onToggleTheme) {
             await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
         }
     };
 
-    // --- PRZYCISK PINEZKI Z IKONĄ ---
+    // --- PRZYCISK PINEZKI ---
     const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
     
-    const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     const pinImg = document.createElement('img');
-    pinImg.src = pinImgUrl;
-    pinImg.className = 'tw-pin-icon'; // Dedykowana klasa dla kontroli w CSS
-    
-    if (isPinned) {
-        pinImg.style.opacity = '0.5';
-    }
+    pinImg.src = ASSETS.pin;
+    pinImg.className = 'tw-pin-icon'; 
+    pinImg.style.opacity = isPinned ? '0.5' : '1.0';
     pinBtn.appendChild(pinImg);
 
     pinBtn.onclick = () => {
@@ -88,18 +92,21 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         pinImg.style.opacity = isPinned ? '0.5' : '1.0';
     };
 
-    // --- PRZYCISK ZAMKNIĘCIA Z IKONĄ ---
+    // --- PRZYCISK ZAMKNIĘCIA (X) ---
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
     
     const closeImg = document.createElement('img');
-    closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.className = 'tw-close-icon'; // Dedykowana klasa dla kontroli w CSS
+    closeImg.src = ASSETS.close;
+    closeImg.className = 'tw-close-icon'; 
     closeBtn.appendChild(closeImg);
 
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
         opener.style.setProperty('display', 'flex', 'important'); 
+        // Reset dymka informacyjnego przy zamykaniu
+        globalTooltip.style.display = 'none';
+        document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
     };
 
     controls.appendChild(themeBtn);
@@ -162,10 +169,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
+                // Usunięcie ewentualnego stanu (neonu) z innych ikon 'i'
+                document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
+
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
                     globalTooltip.dataset.activeId = '';
                 } else {
+                    infoIcon.classList.add('tw-info-off'); // Zapalenie neonu dla klikniętego tooltipa
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
 
@@ -191,6 +202,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.onclick = () => {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
+            document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
 
             if (currentCategory === cat) {
                 currentCategory = null;
@@ -213,18 +225,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     let wasDragged = false; 
 
-    // Otwieranie panelu
     opener.onclick = (e) => { 
         if (wasDragged) return; 
         panel.style.setProperty('display', 'flex', 'important');
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
-    // Dwuetapowe zamykanie przy kliknięciu w tło
     document.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('tw-info-icon')) {
+        if (!e.target.closest('.tw-info-icon')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
+            document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
         }
 
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
@@ -242,7 +253,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
+    // --- OBSŁUGA DRAG & DROP ---
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
@@ -285,7 +296,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function dragMove(e) {
         if (!isDragging || !draggedElement) return;
-
         if (e.cancelable) e.preventDefault(); 
         window.getSelection().removeAllRanges(); 
 
