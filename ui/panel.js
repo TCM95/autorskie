@@ -1,4 +1,4 @@
-Window.TCM_UI = window.TCM_UI || {};
+window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     // --- SŁOWNIK ZASOBÓW (ASSETS) ---
@@ -30,7 +30,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="${ASSETS.logo}" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
+    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important; display: flex !important;';
 
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
@@ -40,6 +40,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
+    panel.style.setProperty('display', 'none', 'important'); // Domyślnie schowany startowo
 
     if (savedPanelPos) {
         panel.style.setProperty('left', savedPanelPos.x + 'px', 'important');
@@ -57,13 +58,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    // --- PRZYCISK MOTYWU (Księżyc / Słońce) ---
+    // --- PRZYCISK MOTYWU ---
     const themeBtn = document.createElement('button');
     themeBtn.className = 'tw-header-btn';
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    
+
     const themeImg = document.createElement('img');
-    themeImg.className = 'tw-pin-icon'; // Re-use rozmiarówki z CSS (17x17)
+    themeImg.className = 'tw-pin-icon'; 
     themeImg.src = isDark ? ASSETS.sun2 : ASSETS.sun1;
     themeBtn.appendChild(themeImg);
 
@@ -79,7 +80,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-    
+
     const pinImg = document.createElement('img');
     pinImg.src = ASSETS.pin;
     pinImg.className = 'tw-pin-icon'; 
@@ -95,7 +96,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     // --- PRZYCISK ZAMKNIĘCIA (X) ---
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
-    
+
     const closeImg = document.createElement('img');
     closeImg.src = ASSETS.close;
     closeImg.className = 'tw-close-icon'; 
@@ -104,7 +105,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
         opener.style.setProperty('display', 'flex', 'important'); 
-        // Reset dymka informacyjnego przy zamykaniu
         globalTooltip.style.display = 'none';
         document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
     };
@@ -169,14 +169,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
-                // Usunięcie ewentualnego stanu (neonu) z innych ikon 'i'
                 document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
 
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
                     globalTooltip.dataset.activeId = '';
                 } else {
-                    infoIcon.classList.add('tw-info-off'); // Zapalenie neonu dla klikniętego tooltipa
+                    infoIcon.classList.add('tw-info-off');
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
 
