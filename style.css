@@ -149,7 +149,7 @@
 #tw-script-panel-header {
     background: url('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/header.png') no-repeat center center / 100% 100% !important;
     color: var(--title-color) !important;
-    padding: 8px !important;
+    padding: 15px !important;
     font-weight: bold !important;
     font-size: 12px !important;
     border-bottom: 2px solid var(--border-color) !important;
