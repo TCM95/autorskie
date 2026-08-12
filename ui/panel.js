@@ -70,46 +70,25 @@ opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/
         }
     };
 
-        // Przycisk Przypięcia (Pin)
     const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-
-    const pinImg = document.createElement('img');
-    pinImg.src = isPinned 
-        ? 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png' 
-        : 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png'; // Możesz podmienić na drugi stan, jeśli masz oddzielną ikonę
-    pinImg.style.width = '14px';
-    pinImg.style.height = '14px';
-    pinImg.style.verticalAlign = 'middle';
-    
-    // Jeśli stan wpływa na przezroczystość lub wygląd w stanie odpiętym:
-    pinBtn.style.opacity = isPinned ? '1' : '0.6';
-
-    pinBtn.appendChild(pinImg);
+    pinBtn.innerText = isPinned ? '📍' : '📌';
     pinBtn.onclick = () => {
         isPinned = !isPinned;
         localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
-        pinBtn.style.opacity = isPinned ? '1' : '0.6';
+        pinBtn.innerText = isPinned ? '📍' : '📌';
     };
 
-    // Przycisk Zamknięcia (X / Krzyżyk)
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
-
-    const closeImg = document.createElement('img');
-    closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.style.width = '14px';
-    closeImg.style.height = '14px';
-    closeImg.style.verticalAlign = 'middle';
-
-    closeBtn.appendChild(closeImg);
+    closeBtn.innerText = '✕';
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
         opener.style.setProperty('display', 'flex', 'important'); 
-    };
+    }
 
-        opener.style.setProperty('display', 'flex', 'important'); 
+opener.style.setProperty('display', 'flex', 'important'); 
     };
     
     controls.appendChild(themeBtn);
