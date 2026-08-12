@@ -75,7 +75,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     const pinImg = document.createElement('img');
     pinImg.src = pinImgUrl;
-    pinImg.style.cssText = 'width: 200%; height: 200%; object-fit: contain;';
+    pinImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
     if (isPinned) {
         pinImg.style.opacity = '0.5'; // Opcjonalny wskaźnik przypięcia
     }
@@ -93,7 +93,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     
     const closeImg = document.createElement('img');
     closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.style.cssText = 'width: 90%; height: 90%; object-fit: contain;';
+    closeImg.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
     closeBtn.appendChild(closeImg);
 
     closeBtn.onclick = () => { 
