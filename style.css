@@ -39,8 +39,8 @@
     left: 10px !important;
     z-index: 999999 !important;
     cursor: pointer !important;
-    width: 50px !important;
-    height: 50px !important;
+    width: 100px !important;
+    height: 100px !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
