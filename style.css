@@ -246,8 +246,8 @@
 
 /* Osobna zmiana rozmiaru ikony pinezki */
 .tw-pin-icon {
-    width: 16px !important;
-    height: 16px !important;
+    width: 17px !important;
+    height: 17px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
