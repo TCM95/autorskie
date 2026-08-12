@@ -80,8 +80,8 @@
 
 /* Obrazek ikony wewnątrz przycisku */
 #tw-panel-opener img {
-    width: 200% !important;
-    height: 200% !important;
+    width: 100% !important;
+    height: 100% !important;
     max-width: 48px !important;
     max-height: 48px !important;
     object-fit: contain !important;
