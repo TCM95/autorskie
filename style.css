@@ -246,8 +246,8 @@
 
 /* Osobna zmiana rozmiaru ikony pinezki */
 .tw-pin-icon {
-    width: 14px !important;
-    height: 14px !important;
+    width: 16px !important;
+    height: 16px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
@@ -255,8 +255,8 @@
 
 /* Osobna zmiana rozmiaru ikony zamknięcia (X) */
 .tw-close-icon {
-    width: 12px !important;
-    height: 12px !important;
+    width: 17px !important;
+    height: 17px !important;
     object-fit: contain !important;
     display: block !important;
     margin: auto !important;
