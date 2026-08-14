@@ -1,23 +1,23 @@
 :root {
-    /* Twoja klasyczna paleta kolorów */
+    /* Paleta bazowa */
     --bg-main: #36393f;
     --bg-row-alt: #32353b;
     --bg-header: #202225;
     --border-color: #3e4147;
-    --text-color: white;
+    --text-color: #ffffff;
     --title-color: #ffffdf;
     --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
     --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
 
-    /* Dodane kolory NEONOWE */
+    /* Akcenty NEONOWE */
     --neon-green: #74ff00;
     --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-    
+
     --neon-red: #ff003c;
     --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
 }
 
-/* Resetowanie obramowań i podświetleń mobilnych TYLKO dla panelu Menedżera */
+/* Resetowanie obramowań i podświetleń mobilnych */
 #tw-script-panel *, 
 #tw-panel-opener *,
 #tw-global-tooltip * {
@@ -29,10 +29,10 @@
 }
 
 /* =========================================================
-        UKŁAD - POZYCJONOWANIE
+        UKŁAD - POZYCJONOWANIE I PANEL GŁÓWNY
    ========================================================= */
 
-/* Przycisk otwierający (Pinezka z neonową obramówką) */
+/* Przycisk otwierający (Okrągły Przycisk Neonowy) */
 #tw-panel-opener {
     position: absolute !important;
     top: 60px !important;
@@ -44,41 +44,29 @@
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    background-image: var(--btn-bg) !important;
-    
-    /* Neonowa obramówka na stałe */
+    background: var(--bg-header) !important;
     border: 2px solid var(--neon-green) !important;
     border-radius: 50% !important;
     box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
-    
     user-select: none !important;
     touch-action: none !important;
     padding: 0 !important;
     overflow: hidden !important;
     transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.1s !important;
-    
-    /* Subtelne pulsowanie w spoczynku */
     animation: neon-pulse 2s infinite alternate ease-in-out !important;
 }
 
-/* Animacja pulsowania */
 @keyframes neon-pulse {
-    0% {
-        box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8);
-    }
-    100% {
-        box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8);
-    }
+    0% { box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8); }
+    100% { box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8); }
 }
 
-/* Rozbłysk przy wciśnięciu palcem */
 #tw-panel-opener:active {
     box-shadow: 0 0 20px rgba(116, 255, 0, 0.9), 0 4px 12px rgba(0,0,0,0.8) !important;
     border-color: #9dff4d !important;
     transform: scale(0.95) !important;
 }
 
-/* Obrazek ikony wewnątrz przycisku */
 #tw-panel-opener img {
     width: 100% !important;
     height: 100% !important;
@@ -87,7 +75,6 @@
     object-fit: contain !important;
     pointer-events: none !important;
     display: block !important;
-    margin: 0 auto !important;
 }
 
 /* Główny słupek menu */
@@ -96,21 +83,37 @@
     top: 40px !important;
     left: 10px !important;
     z-index: 999998 !important;
-    width: 140px !important;
+    width: 150px !important;
     background-color: var(--bg-main) !important;
     border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
     display: none;
     flex-direction: column !important;
+    overflow: hidden !important;
 }
 
-/* Pasek kategorii */
+/* Nagłówek panelu */
+#tw-script-panel-header {
+    background-color: var(--bg-header) !important;
+    color: var(--title-color) !important;
+    padding: 8px 10px !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    cursor: move !important;
+    user-select: none !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+/* Pasek zakładek */
 #tw-categories-bar {
     display: flex !important;
     flex-direction: column !important;
-    padding: 4px !important;
-    gap: 4px !important;
+    padding: 6px !important;
+    gap: 6px !important;
     background-color: var(--bg-main) !important;
 }
 
@@ -120,157 +123,80 @@
     position: absolute !important;
     top: -2px !important;
     left: 100% !important;
-    margin-left: 5px !important;
-    width: 270px !important;
-    background-color: var(--bg-row-alt) !important;
+    margin-left: 6px !important;
+    width: 290px !important;
+    background-color: var(--bg-main) !important;
     border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
-    box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
+    border-radius: 8px !important;
+    box-shadow: 4px 4px 15px rgba(0,0,0,0.8) !important;
     z-index: 999997 !important;
 }
 
 .tw-content-inner {
-    max-height: 280px !important;
+    max-height: 320px !important;
     overflow-y: auto !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
-    padding: 5px !important;
-    background-color: var(--bg-row-alt) !important;
+    gap: 8px !important;
+    padding: 8px !important;
 }
 
 /* =========================================================
-         WYGLĄD - autorskie elementy menedżera
+         PRZYCISKI NEONOWE (Zainspirowane Uiverse)
    ========================================================= */
 
-/* Nagłówek panelu */
-#tw-script-panel-header {
-    background-color: var(--bg-header) !important;
-    color: var(--title-color) !important;
-    padding: 8px !important;
-    font-weight: bold !important;
-    font-size: 12px !important;
-    border-bottom: 2px solid var(--border-color) !important;
-    cursor: move !important;
-    user-select: none !important;
-    text-align: center !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-}
-
-/* Przyciski zakładek */
 .tw-tab {
-    background-image: var(--btn-bg) !important;
-    background-color: transparent !important;
+    position: relative !important;
+    background: var(--bg-header) !important;
     color: var(--text-color) !important;
     border: 1px solid var(--border-color) !important;
-    border-radius: 3px !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
     font-size: 11px !important;
     font-weight: bold !important;
-    padding: 5px !important;
+    padding: 8px 10px !important;
     text-align: center !important;
     display: block !important;
     width: 100% !important;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-    transition: 0.15s !important;
+    transition: all 0.2s ease-in-out !important;
+    overflow: hidden !important;
 }
 
-.tw-tab:hover {
-    background-image: var(--btn-hover) !important;
-}
-
-/* Rozbłysk przy kliknięciu w zakładkę */
 .tw-tab:active {
     border-color: var(--neon-green) !important;
-    box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
+    box-shadow: var(--neon-glow) !important;
+    color: var(--neon-green) !important;
 }
 
-/* Aktywna zakładka w Menu (Zaznaczona) */
+/* Aktywna zakładka z poświatą */
 .tw-tab.active-tab {
-    background-image: linear-gradient(#40444a 0%, #36393f 100%) !important;
-    border-color: var(--neon-green) !important;
+    background: var(--bg-row-alt) !important;
+    border: 1px solid var(--neon-green) !important;
     color: var(--neon-green) !important;
-    text-shadow: 0 0 4px rgba(116, 255, 0, 0.4) !important;
+    box-shadow: var(--neon-glow) !important;
+    text-shadow: 0 0 5px rgba(116, 255, 0, 0.7) !important;
 }
 
 /* =========================================================
-         IKONA INFORMACJI "i" - NEONOWE STANY
+         KARTY SKRYPTÓW (Nowa struktura z Uiverse)
    ========================================================= */
-.tw-info-icon {
-    background-image: var(--btn-bg) !important;
-    color: var(--neon-green) !important; 
-    border: 1px solid var(--neon-green) !important;
-    border-radius: 3px !important;
-    cursor: pointer !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    display: inline-block !important;
-    width: auto !important;
-    padding: 2px 6px !important;
-    margin-left: 4px !important;
-    box-shadow: var(--neon-glow) !important;
-    text-shadow: 0 0 4px rgba(116, 255, 0, 0.8) !important;
-    transition: all 0.2s ease-in-out !important;
-}
 
-.tw-info-icon:hover {
-    background-image: var(--btn-hover) !important;
-}
-
-/* Zgaszony (czerwony) po kliknięciu. Użyj JS do przełączania klasy 'tw-info-off' */
-.tw-info-icon.tw-info-off {
-    color: var(--neon-red) !important; 
-    border-color: var(--neon-red) !important;
-    box-shadow: var(--neon-red-glow) !important;
-    text-shadow: 0 0 4px rgba(255, 0, 60, 0.8) !important;
-}
-
-/* Przyciski specjalne - Menu (Zmień motyw, Pinned, Zamknij) */
-.tw-header-btn {
-    background: transparent !important;
-    border: none !important;
-    color: var(--title-color) !important;
-    font-size: 12px !important;
-    box-shadow: none !important;
-    padding: 0 2px !important;
-    cursor: pointer !important;
-    font-weight: bold !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 20px !important;
-    height: 20px !important;
-}
-
-/* Osobna zmiana rozmiaru ikony pinezki */
-.tw-pin-icon {
-    width: 17px !important;
-    height: 17px !important;
-    object-fit: contain !important;
-    display: block !important;
-    margin: auto !important;
-}
-
-/* Osobna zmiana rozmiaru ikony zamknięcia (X) */
-.tw-close-icon {
-    width: 20px !important;
-    height: 20px !important;
-    object-fit: contain !important;
-    display: block !important;
-    margin: auto !important;
-}
-
-/* Wiersz z pojedynczym skryptem w menu */
 .tw-script-item {
-    background-color: var(--bg-main) !important;
+    position: relative !important;
+    background: var(--bg-row-alt) !important;
     border: 1px solid var(--border-color) !important;
-    border-radius: 3px !important;
-    padding: 5px 8px !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
+    gap: 8px !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.tw-script-item:active {
+    border-color: var(--neon-green) !important;
+    box-shadow: inset 0 0 6px rgba(116, 255, 0, 0.2) !important;
 }
 
 .tw-game-btn {
@@ -283,7 +209,6 @@
     border: none !important;
     padding: 0 !important;
     text-align: left !important;
-    box-shadow: none !important;
 }
 
 .tw-script-name {
@@ -293,49 +218,111 @@
     font-size: 11px !important;
     font-weight: bold !important;
     color: var(--title-color) !important;
-    transition: color 0.15s, text-shadow 0.15s !important;
-}
-
-/* Rozbłysk nazwy skryptu podczas kliknięcia (dla mobilek) */
-.tw-game-btn:active .tw-script-name {
-    color: var(--neon-green) !important;
-    text-shadow: 0 0 5px rgba(116, 255, 0, 0.5) !important;
 }
 
 /* =========================================================
-         KONTROLKI STATUSU - DIODY LED
+         WŁĄCZNIK POWER (Zamiast ikony zielono-czerwonej)
    ========================================================= */
-.tw-status-icon {
-    width: 10px !important;
-    height: 10px !important;
+
+.tw-power-checkbox {
+    display: none !important;
+}
+
+.tw-power-switch {
+    position: relative !important;
+    width: 30px !important;
+    height: 30px !important;
+    background-color: var(--bg-header) !important;
     border-radius: 50% !important;
-    flex-shrink: 0 !important;
-    display: inline-block !important;
-}
-
-/* WŁĄCZONY - Dioda zielona */
-.tw-status-on { 
-    background: var(--neon-green) !important; 
-    box-shadow: var(--neon-glow) !important; 
-    border: 1px solid rgba(255,255,255,0.4) !important;
-}
-
-/* WYŁĄCZONY - Dioda czerwona */
-.tw-status-off { 
-    background: var(--neon-red) !important; 
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid var(--neon-red) !important;
     box-shadow: var(--neon-red-glow) !important;
-    border: 1px solid rgba(255,255,255,0.4) !important;
+    flex-shrink: 0 !important;
+    transition: all 0.3s ease !important;
 }
 
-/* Dymek z informacjami (Tooltip) */
-#tw-global-tooltip {
+.tw-power-switch svg {
+    width: 14px !important;
+    height: 14px !important;
+    transition: all 0.3s ease !important;
+}
+
+.tw-power-switch svg path {
+    fill: var(--neon-red) !important;
+    transition: fill 0.3s ease !important;
+}
+
+/* Stan WŁĄCZONY (Checked) -> Zmiana koloru na Neon Green */
+.tw-power-checkbox:checked + .tw-power-switch {
+    border: 1px solid var(--neon-green) !important;
+    box-shadow: var(--neon-glow) !important;
     background-color: var(--bg-main) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important;
+}
+
+.tw-power-checkbox:checked + .tw-power-switch svg {
+    filter: drop-shadow(0px 0px 4px var(--neon-green)) !important;
+}
+
+.tw-power-checkbox:checked + .tw-power-switch svg path {
+    fill: var(--neon-green) !important;
+}
+
+/* =========================================================
+         IKONA INFORMACJI "i" ORAZ ELEMENTY NAGŁÓWKA
+   ========================================================= */
+
+.tw-info-icon {
+    background: var(--bg-header) !important;
+    color: var(--neon-green) !important; 
+    border: 1px solid var(--neon-green) !important;
     border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    padding: 3px 6px !important;
+    margin-left: 4px !important;
+    box-shadow: var(--neon-glow) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.tw-info-icon.tw-info-off {
+    color: var(--neon-red) !important; 
+    border-color: var(--neon-red) !important;
+    box-shadow: var(--neon-red-glow) !important;
+}
+
+.tw-header-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--title-color) !important;
+    font-size: 12px !important;
+    padding: 0 2px !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+}
+
+.tw-pin-icon, .tw-close-icon {
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
+}
+
+/* Dymek podpowiedzi */
+#tw-global-tooltip {
+    background-color: var(--bg-header) !important;
+    color: var(--title-color) !important;
+    border: 1px solid var(--neon-green) !important;
+    border-radius: 6px !important;
     padding: 8px !important;
     width: 200px !important;
     font-size: 10px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.9) !important;
+    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.9) !important;
     z-index: 999999999 !important;
 }
