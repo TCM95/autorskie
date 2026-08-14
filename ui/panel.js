@@ -1,6 +1,212 @@
 Window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
+    // --- 1. WSTRZYKIWANIE CSS BEZPOŚREDNIO DO STRONY ---
+    if (!document.getElementById('tcm-ui-styles')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'tcm-ui-styles';
+        styleEl.textContent = `
+            :root {
+                --bg-main: #36393f;
+                --bg-row-alt: #32353b;
+                --bg-header: #202225;
+                --border-color: #3e4147;
+                --text-color: #ffffff;
+                --title-color: #ffffdf;
+                --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+                --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+                --neon-green: #00ff66;
+                --neon-glow: 0 0 10px rgba(0, 255, 102, 0.8), 0 0 20px rgba(0, 255, 102, 0.4);
+            }
+
+            #tw-panel-opener {
+                width: 48px !important;
+                height: 48px !important;
+                background: var(--bg-header) !important;
+                border: 2px solid var(--border-color) !important;
+                border-radius: 50% !important;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+                cursor: pointer !important;
+                padding: 4px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                z-index: 999999 !important;
+                touch-action: none !important;
+            }
+
+            #tw-script-panel {
+                position: fixed !important;
+                top: 70px !important;
+                left: 10px !important;
+                width: 310px !important;
+                background-color: var(--bg-main) !important;
+                border: 2px solid var(--border-color) !important;
+                border-radius: 8px !important;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.7) !important;
+                z-index: 999999 !important;
+                font-family: Verdana, Arial, sans-serif !important;
+                color: var(--text-color) !important;
+                display: none;
+                overflow: hidden !important;
+            }
+
+            #tw-script-panel-header {
+                background: var(--bg-header) !important;
+                color: var(--title-color) !important;
+                padding: 10px 12px !important;
+                font-weight: bold !important;
+                font-size: 14px !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                border-bottom: 1px solid var(--border-color) !important;
+                cursor: move !important;
+            }
+
+            .tw-header-btn {
+                background: var(--btn-bg) !important;
+                border: 1px solid var(--border-color) !important;
+                color: var(--text-color) !important;
+                border-radius: 4px !important;
+                width: 28px !important;
+                height: 28px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                cursor: pointer !important;
+                font-size: 12px !important;
+            }
+
+            .tw-header-btn:hover { background: var(--btn-hover) !important; }
+
+            .tw-pin-icon, .tw-close-icon {
+                width: 14px !important;
+                height: 14px !important;
+                object-fit: contain !important;
+            }
+
+            #tw-categories-bar {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                gap: 4px !important;
+                padding: 8px !important;
+                background-color: var(--bg-row-alt) !important;
+                border-bottom: 1px solid var(--border-color) !important;
+            }
+
+            .tw-tab {
+                background: var(--btn-bg) !important;
+                border: 1px solid var(--border-color) !important;
+                color: var(--text-color) !important;
+                padding: 6px 10px !important;
+                font-size: 11px !important;
+                border-radius: 4px !important;
+                cursor: pointer !important;
+                flex: 1 1 calc(33.33% - 4px) !important;
+                text-align: center !important;
+                box-sizing: border-box !important;
+            }
+
+            .tw-tab.active-tab {
+                border-color: var(--neon-green) !important;
+                box-shadow: var(--neon-glow) !important;
+                color: var(--neon-green) !important;
+                font-weight: bold !important;
+            }
+
+            #tw-content-area {
+                max-height: 280px !important;
+                overflow-y: auto !important;
+                padding: 8px !important;
+                display: none;
+            }
+
+            .tw-script-item {
+                background-color: var(--bg-row-alt) !important;
+                border: 1px solid var(--border-color) !important;
+                border-radius: 6px !important;
+                margin-bottom: 6px !important;
+                padding: 6px 8px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 6px !important;
+            }
+
+            .tw-game-btn {
+                background: var(--btn-bg) !important;
+                border: 1px solid var(--border-color) !important;
+                color: var(--text-color) !important;
+                padding: 6px 10px !important;
+                font-size: 12px !important;
+                border-radius: 4px !important;
+                cursor: pointer !important;
+                flex-grow: 1 !important;
+                text-align: left !important;
+            }
+
+            .tw-game-btn:active { background: var(--btn-hover) !important; }
+
+            /* WŁĄCZNIK NEON POWER */
+            .tw-power-checkbox { display: none !important; }
+
+            .tw-power-switch {
+                width: 30px !important;
+                height: 30px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                cursor: pointer !important;
+            }
+
+            .tw-power-switch svg {
+                width: 22px !important;
+                height: 22px !important;
+                fill: #555555 !important;
+                transition: all 0.2s ease-in-out !important;
+            }
+
+            .tw-power-checkbox:checked + .tw-power-switch svg {
+                fill: var(--neon-green) !important;
+                filter: drop-shadow(0px 0px 6px rgba(0, 255, 102, 0.9)) !important;
+            }
+
+            .tw-info-icon {
+                background: transparent !important;
+                border: 1px solid var(--border-color) !important;
+                color: #aaa !important;
+                border-radius: 50% !important;
+                width: 22px !important;
+                height: 22px !important;
+                font-size: 11px !important;
+                font-weight: bold !important;
+                cursor: pointer !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+
+            .tw-info-icon.tw-info-off {
+                color: var(--neon-green) !important;
+                border-color: var(--neon-green) !important;
+            }
+
+            #tw-global-tooltip {
+                background-color: var(--bg-header) !important;
+                border: 1px solid var(--border-color) !important;
+                color: var(--text-color) !important;
+                padding: 8px 12px !important;
+                font-size: 11px !important;
+                border-radius: 6px !important;
+                max-width: 220px !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
+    // --- 2. LOGIKA PANELU ---
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
@@ -14,15 +220,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // --- ODCZYT ZAPISANYCH POZYCJI Z PAMIĘCI PRZEGLĄDARKI ---
     const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
     const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-
-    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
+    opener.style.cssText = 'position: fixed !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
@@ -44,22 +248,19 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
 
     const titleSpan = document.createElement('span');
-    titleSpan.innerText = 'Menu';
+    titleSpan.innerText = 'Menu TCM';
 
     const controls = document.createElement('div');
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    const iconDark = '☾';
-    const iconLight = '☼';
-
     const themeBtn = document.createElement('button');
     themeBtn.className = 'tw-header-btn';
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    themeBtn.innerText = isDark ? iconDark : iconLight;
+    themeBtn.innerText = isDark ? '☾' : '☼';
     themeBtn.onclick = async () => {
         isDark = !isDark;
-        themeBtn.innerText = isDark ? iconDark : iconLight;
+        themeBtn.innerText = isDark ? '☾' : '☼';
         if (darkThemeConfig && callbacks.onToggleTheme) {
             await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
         }
@@ -69,14 +270,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
 
-    const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     const pinImg = document.createElement('img');
-    pinImg.src = pinImgUrl;
+    pinImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     pinImg.className = 'tw-pin-icon'; 
-
-    if (isPinned) {
-        pinImg.style.opacity = '0.5';
-    }
+    if (isPinned) pinImg.style.opacity = '0.5';
     pinBtn.appendChild(pinImg);
 
     pinBtn.onclick = () => {
@@ -87,7 +284,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
-
     const closeImg = document.createElement('img');
     closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
     closeImg.className = 'tw-close-icon'; 
@@ -115,17 +311,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     contentInner.className = 'tw-content-inner';
     contentArea.appendChild(contentInner);
 
-    // =========================================================
-    // RENDEROWANIE SKRYPTÓW - GŁÓWNA LOGIKA
-    // =========================================================
     function renderScripts() {
         contentInner.innerHTML = '';
-        const state = callbacks.getScriptsState();
-        let filtered = scriptsArray.filter(s => s.id !== 'ciemny_motyw' && (s.category || "Ogólne") === currentCategory);
+        const state = callbacks.getScriptsState ? callbacks.getScriptsState() : {};
+        let filtered = scriptsArray.filter(s => s.id !== 'ciemny_motyw' && (s.category || "Inne") === currentCategory);
 
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.style.cssText = 'text-align: center; color: var(--text-color, #fff); font-style: italic; padding: 8px;';
+            emptyMsg.style.cssText = 'text-align: center; color: #888; font-style: italic; padding: 8px; font-size: 11px;';
             emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
             contentInner.appendChild(emptyMsg);
             return;
@@ -137,27 +330,20 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             const item = document.createElement('div');
             item.className = 'tw-script-item';
 
-            // PRZYCISK URUCHAMIAJĄCY SKRYPT
             const gameBtn = document.createElement('button');
             gameBtn.className = 'tw-game-btn';
+            gameBtn.innerText = script.name;
 
-            const nameLabel = document.createElement('span');
-            nameLabel.className = 'tw-script-name';
-            nameLabel.innerText = script.name;
-            gameBtn.appendChild(nameLabel);
-
-            // Akcja uruchomienia skryptu w grze
             gameBtn.onclick = () => {
                 if (callbacks && typeof callbacks.runScript === 'function') {
                     callbacks.runScript(script.id);
                 } else if (callbacks && typeof callbacks.execute === 'function') {
                     callbacks.execute(script.id);
                 } else {
-                    console.warn('Brak funkcji uruchamiającej skrypt dla:', script.id);
+                    console.warn('Brak wywołania runScript dla:', script.id);
                 }
             };
 
-            // WŁĄCZNIK POWER (Zapisywanie stanu / autostart)
             const uniqueId = `tw-power-toggle-${script.id}-${index}`;
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -183,7 +369,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 state[script.id] = newState;
             });
 
-            // IKONA INFORMACJI 'i'
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'i';
@@ -202,7 +387,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
 
                     globalTooltip.innerHTML = `<strong style="color: var(--neon-green); text-shadow: var(--neon-glow);">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 4px 0;"><strong style="color: white;">Opis:</strong> ${script.description || 'Brak.'}<br><strong style="color: white;">Strony:</strong> ${screensInfo}`;
-
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
                     globalTooltip.style.display = 'block';
@@ -248,10 +432,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     let wasDragged = false; 
 
-    // Otwieranie panelu
     opener.onclick = (e) => { 
         if (wasDragged) return; 
-        panel.style.setProperty('display', 'block', 'important'); // Poprawiono z flex na block
+        panel.style.setProperty('display', 'block', 'important');
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
@@ -277,7 +460,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
+    // --- 3. PRZECIĄGANIE (DRAG & DROP) ---
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
@@ -302,11 +485,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialY = rect.top;
 
         draggedElement.style.setProperty('position', 'fixed', 'important');
-        draggedElement.style.setProperty('bottom', 'auto', 'important');
-        draggedElement.style.setProperty('right', 'auto', 'important');
-        draggedElement.style.setProperty('margin', '0', 'important');
-        draggedElement.style.setProperty('transform', 'none', 'important');
-
         draggedElement.style.setProperty('left', initialX + 'px', 'important');
         draggedElement.style.setProperty('top', initialY + 'px', 'important');
 
@@ -336,9 +514,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-            wasDragged = true; 
-        }
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) wasDragged = true; 
 
         draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
         draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
