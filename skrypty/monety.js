@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Wybijak_Monet
 // @namespace    https://viayoo.com/
+// @version      1.3
+// @description  Skrypt do masowego sterowania wybijaniem monet (Mini UI)
 // @author       TCM
-// @match        *://*.plemiona.pl/game.php*screen=overview_villages*
 // @match        *://*.plemiona.pl/game.php*screen=snob*
 // @grant        none
 // ==/UserScript==
@@ -10,113 +11,83 @@
 (function() {
     'use strict';
 
-    // Dodanie stylów Shinko
     const style = document.createElement('style');
     style.textContent = `
-        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 8px 30px rgba(0,0,0,0.7) !important; overflow: hidden !important; z-index: 10000; }
-        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 10px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; }
-        .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 8px; width: 100%; box-sizing: border-box; }
-        .tcm-shinko-btn:hover { background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+        }
+        .tcm-mini-panel { background-color: var(--bg-main); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px; width: 130px; margin: 10px auto; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .tcm-btn-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+        .tcm-mini-btn { background: var(--btn-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 3px; cursor: pointer; font-weight: bold; font-size: 16px; padding: 8px 0; flex: 1; display: flex; align-items: center; justify-content: center; }
+        .tcm-mini-btn:active { background: var(--btn-hover); }
+        .tcm-btn-start { color: #00ff00; }
+        .tcm-btn-stop { color: #ff4444; }
+        .tcm-status { font-size: 11px; font-weight: bold; color: var(--title-color); }
     `;
     document.head.appendChild(style);
 
-    const urlKey = window.location.hostname.split('.')[0];
-    let uiState = JSON.parse(localStorage.getItem(`wybijak_ui_${urlKey}`)) || { pinned: false, top: '10%', left: '50%' };
-    
     const stworzUI = () => {
-        if (document.getElementById('tcm-wybijak-wrapper')) return;
+        const tabela = document.getElementById('coin_overview_table');
+        if (!tabela || document.getElementById('tcm-wybijak-mini')) return;
 
-        const win = document.createElement('div');
-        win.id = 'tcm-wybijak-wrapper';
-        win.className = 'tcm-shinko-panel';
-        win.style = `position: fixed; top: ${uiState.top}; left: ${uiState.left}; transform: ${uiState.pinned ? 'none' : 'translateX(-50%)'}; width: 95%; max-width: 320px;`;
-
-        win.innerHTML = `
-            <div id="tcm-header-w" class="tcm-shinko-header" style="cursor: ${uiState.pinned ? 'default' : 'move'};">
-                <span>🪙 MASOWE WYBIJANIE</span>
-                <div>
-                    <span id="pin-btn-w" style="cursor: pointer; margin-right: 10px;" title="Przypnij pozycję">📌</span>
-                    <span id="close-wybijak" style="cursor: pointer; color: #ff4444; font-size: 14px;" title="Zamknij">✖</span>
-                </div>
+        const container = document.createElement('div');
+        container.id = 'tcm-wybijak-mini';
+        container.className = 'tcm-mini-panel';
+        container.innerHTML = `
+            <div class="tcm-btn-row">
+                <button id="tcm-start" class="tcm-mini-btn tcm-btn-start">✓</button>
+                <button id="tcm-stop" class="tcm-mini-btn tcm-btn-stop">✖</button>
             </div>
-            <div style="padding: 15px; text-align: center; background-color: #2f3136;">
-                <button id="start-wybijak" class="tcm-shinko-btn">Uruchom Wybijanie</button>
-                <div id="wybijak-status" style="margin-top: 10px; font-size: 12px; font-weight: bold; color: #ffffdf;"></div>
-            </div>
+            <div id="tcm-status" class="tcm-status">- / -</div>
         `;
-        document.body.appendChild(win);
 
-        // Obsługa Drag & Drop oraz Pin
-        const header = document.getElementById('tcm-header-w');
-        const pinBtn = document.getElementById('pin-btn-w');
-        
-        pinBtn.style.opacity = uiState.pinned ? '1' : '0.4';
+        tabela.parentNode.insertBefore(container, tabela);
 
-        pinBtn.onclick = () => {
-            uiState.pinned = !uiState.pinned;
-            pinBtn.style.opacity = uiState.pinned ? '1' : '0.4';
-            header.style.cursor = uiState.pinned ? 'default' : 'move';
-            win.style.transform = uiState.pinned ? 'none' : 'translateX(-50%)';
-            localStorage.setItem(`wybijak_ui_${urlKey}`, JSON.stringify(uiState));
-        };
-        
-        document.getElementById('close-wybijak').onclick = () => win.style.display = 'none';
+        const statusLabel = document.getElementById('tcm-status');
+        let shouldStop = false;
 
-        // Logika aktywacji
-        document.getElementById('start-wybijak').onclick = async () => {
-            const status = document.getElementById('wybijak-status');
+        const akcja = async (typ) => {
+            shouldStop = (typ === 'stop');
+            const wiersze = document.querySelectorAll('tr[id^="village_"]');
+            const token = window.game_data.csrf;
             
-            // --- KOMPLEKSOWE ZBIERANIE ID WIOSEK Z RÓŻNYCH WIDOKÓW ---
-            let wioski = [];
-            
-            // 1. Sprawdzamy Przegląd dla graczy z KP (Konto Premium)
-            const spanWiosek = document.querySelectorAll('span.quickedit-vn[data-id]');
-            
-            // 2. Sprawdzamy widok Masowego Wybijania w Pałacu
-            const wierszePalacu = document.querySelectorAll('tr[id^="village_"]');
-            
-            if (spanWiosek.length > 0) {
-                wioski = Array.from(spanWiosek).map(el => el.getAttribute('data-id'));
-            } 
-            else if (wierszePalacu.length > 0) {
-                wioski = Array.from(wierszePalacu).map(tr => tr.id.replace('village_', ''));
-            } 
-            else {
-                // 3. Widok Przeglądu bez KP (wyciąganie ID z linków w głównej tabeli)
-                const tabelaPrzegladu = document.getElementById('production_table') || document.getElementById('combined_table');
-                if (tabelaPrzegladu) {
-                    const linki = tabelaPrzegladu.querySelectorAll('a[href*="village="]');
-                    linki.forEach(a => {
-                        const match = a.href.match(/[?&]village=(\d+)/);
-                        if (match && match[1]) wioski.push(match[1]);
-                    });
-                } 
-                // 4. Pojedynczy widok Pałacu (pobieramy ID obecnej wioski z pamięci gry)
-                else if (window.game_data && window.game_data.village && window.game_data.village.id) {
-                    wioski.push(window.game_data.village.id);
-                }
-            }
-            
-            // Usuwamy duplikaty
-            wioski = [...new Set(wioski)];
-            
-            if (wioski.length === 0) {
-                status.innerHTML = "Nie znaleziono wiosek! Otwórz Pałac lub Przegląd.";
-                status.style.color = "#ff4444";
+            if (wiersze.length === 0) {
+                statusLabel.innerHTML = "Brak";
+                statusLabel.style.color = "#ff4444";
                 return;
             }
 
-            status.style.color = "#ffffdf";
-            const token = window.game_data.csrf;
-            for (let i = 0; i < wioski.length; i++) {
-                status.innerHTML = `Przetwarzanie: ${i + 1} / ${wioski.length}`;
-                await fetch(`/game.php?village=${wioski[i]}&screen=snob&action=start_auto_minting_session&h=${token}`, { method: 'POST' });
-                await new Promise(r => setTimeout(r, 300));
+            statusLabel.style.color = "var(--title-color)";
+            
+            for (let i = 0; i < wiersze.length; i++) {
+                if (shouldStop && typ === 'start') {
+                    statusLabel.innerHTML = "Stop";
+                    statusLabel.style.color = "#ffaa00";
+                    return;
+                }
+                
+                statusLabel.innerHTML = `${i + 1} / ${wiersze.length}`;
+                const vid = wiersze[i].id.replace('village_', '');
+                const actionUrl = typ === 'start' ? 'start_auto_minting_session' : 'stop_auto_minting_session';
+                
+                await fetch(`/game.php?village=${vid}&screen=snob&action=${actionUrl}&h=${token}`, { method: 'POST' });
+                await new Promise(r => setTimeout(r, 1100));
             }
-            status.innerHTML = "Gotowe!";
-            status.style.color = "#00ff00";
+            
+            statusLabel.innerHTML = "OK!";
+            statusLabel.style.color = "#00ff00";
         };
+
+        document.getElementById('tcm-start').onclick = () => akcja('start');
+        document.getElementById('tcm-stop').onclick = () => akcja('stop');
     };
 
-    setTimeout(stworzUI, 500);
+    setTimeout(stworzUI, 1000);
 })();
