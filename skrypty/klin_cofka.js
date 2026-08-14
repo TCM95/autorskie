@@ -192,7 +192,7 @@
                         }
 
                         // Reset UI po kliknięciu
-                        btn.innerHTML = '⚔️ Zaplanuj cofkę';
+                        btn.innerHTML = '⚔️ ';
                         btn.classList.remove('shinko-btn-active');
                         globalActiveButton = null;
                         globalAnimationFrameId = null;
