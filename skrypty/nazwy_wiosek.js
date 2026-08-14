@@ -1,8 +1,9 @@
 // ==UserScript==
 // @name         Nazwy wiosek
+// @namespace    https://viayoo.com/
+// @version      1.1
 // @description  Zmiana nazw wiosek - inteligentne przedrostki i sortowanie
 // @author       TCM
-// @namespace    https://viayoo.com/
 // @match        *://*.plemiona.pl/game.php?*screen=overview_villages*mode=combined*
 // @grant        none
 // ==/UserScript==
@@ -15,15 +16,14 @@
     const parentThingie = document.getElementById("inner-border");
     if (!parentThingie) return;
 
-    // Wstrzyknięcie dedykowanych stylów Shinko
     const style = document.createElement('style');
     style.textContent = `
-        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; font-size: 11px; }
-        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 6px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: move; user-select: none; border-radius: 3px 3px 0 0; }
-        .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 4px 8px; text-shadow: 1px 1px 2px black; }
+        .tcm-shinko-panel { background-color: #36393f !important; border: 1px solid #3e4147 !important; color: #ffffff !important; font-family: Verdana, sans-serif !important; border-radius: 4px !important; box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important; font-size: 10px; }
+        .tcm-shinko-header { background-color: #202225 !important; border-bottom: 1px solid #3e4147 !important; color: #ffffdf !important; padding: 4px 6px !important; font-weight: bold !important; display: flex !important; justify-content: space-between !important; align-items: center !important; cursor: move; user-select: none; border-radius: 3px 3px 0 0; }
+        .tcm-shinko-btn { background: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%) !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; cursor: pointer !important; font-weight: bold !important; transition: background 0.2s !important; padding: 3px 6px; text-shadow: 1px 1px 2px black; font-size: 10px; }
         .tcm-shinko-btn:hover { background: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%) !important; }
-        .tcm-shinko-input { background-color: #202225 !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; padding: 4px !important; box-sizing: border-box; }
-        .tcm-shinko-inner { background-color: #2f3136; border: 1px solid #3e4147; padding: 6px; border-radius: 3px; margin-bottom: 6px; }
+        .tcm-shinko-input { background-color: #202225 !important; border: 1px solid #3e4147 !important; color: #ffffff !important; border-radius: 3px !important; padding: 3px !important; box-sizing: border-box; font-size: 10px; }
+        .tcm-shinko-inner { background-color: #2f3136; border: 1px solid #3e4147; padding: 5px; border-radius: 3px; margin-bottom: 5px; }
     `;
     document.head.appendChild(style);
 
@@ -41,8 +41,8 @@
     container.style = `position: ${isPinned ? 'fixed' : 'relative'}; 
                        top: ${isPinned ? initTop : '0'}; 
                        left: ${isPinned ? initLeft : '0'}; 
-                       z-index: 9999; padding: 8px; margin: 10px 0; 
-                       width: 320px; max-width: 95vw;`;
+                       z-index: 9999; padding: 6px; margin: 5px 0; 
+                       width: 280px; max-width: 95vw;`;
     
     if(isPinned) {
         document.body.appendChild(container);
@@ -53,11 +53,11 @@
     const header = document.createElement("div");
     header.id = "tcm-drag-handle";
     header.className = "tcm-shinko-header";
-    header.style.marginBottom = "8px";
+    header.style.marginBottom = "6px";
     
     header.innerHTML = `
-        <b style="padding-left: 5px; font-size: 12px;">(TCM)RENAMER</b>
-        <button class="tcm-shinko-btn" id="tcm-pin-btn" style="font-size: 12px; padding: 2px 6px; opacity: ${isPinned ? '1' : '0.4'};">${isPinned ? '📌' : '📌'}</button>
+        <b style="padding-left: 3px; font-size: 11px;">(TCM)RENAMER</b>
+        <button class="tcm-shinko-btn" id="tcm-pin-btn" style="font-size: 10px; padding: 1px 5px; opacity: ${isPinned ? '1' : '0.4'};">📌</button>
     `;
     container.appendChild(header);
 
@@ -127,14 +127,14 @@
     };
 
     const controlPanel = document.createElement("div");
-    controlPanel.style = "display: flex; flex-direction: column; gap: 8px;";
+    controlPanel.style = "display: flex; flex-direction: column; gap: 6px;";
     container.appendChild(controlPanel);
 
     const selectPanel = document.createElement("div");
     selectPanel.style = "display: flex; gap: 4px; justify-content: center;";
     selectPanel.innerHTML = `
-        <button class="tcm-shinko-btn" id="tcm-select-all" style="flex:1; font-size: 10px;">ZAZNACZ</button>
-        <button class="tcm-shinko-btn" id="tcm-select-none" style="flex:1; font-size: 10px;">ODZNACZ</button>
+        <button class="tcm-shinko-btn" id="tcm-select-all" style="flex:1; font-size: 9px;">ZAZNACZ</button>
+        <button class="tcm-shinko-btn" id="tcm-select-none" style="flex:1; font-size: 9px;">ODZNACZ</button>
     `;
     controlPanel.appendChild(selectPanel);
 
@@ -143,22 +143,22 @@
     sortRow.className = "tcm-shinko-inner";
     sortRow.style.display = "flex";
     sortRow.style.flexDirection = "column";
-    sortRow.style.gap = "5px";
+    sortRow.style.gap = "4px";
     sortRow.innerHTML = `
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <span style="font-weight: bold; font-size: 10px; width: 85px; color: #ffffdf;">Wioska Startowa:</span>
-            <input type="text" id="tcm-sort-start-coords" class="tcm-shinko-input" placeholder="np. 500|500" value="${getFromStorage('startCoords') || ''}" style="flex: 1; font-size: 10px; text-align: center;">
+        <div style="display: flex; gap: 4px; align-items: center;">
+            <span style="font-weight: bold; font-size: 9px; width: 75px; color: #ffffdf;">Wioska Start:</span>
+            <input type="text" id="tcm-sort-start-coords" class="tcm-shinko-input" placeholder="500|500" value="${getFromStorage('startCoords') || ''}" style="flex: 1; font-size: 9px; text-align: center;">
         </div>
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <span style="font-weight: bold; font-size: 10px; width: 85px; color: #ffffdf;">Kierunek:</span>
-            <select id="tcm-sort-type" class="tcm-shinko-input" style="flex: 1; height: 24px; font-size: 10px; padding: 2px !important;">
-                <option value="dist">Promień(Najbliższe)</option>
-                <option value="ltr">Prawo(Wschód)</option>
-                <option value="rtl">Lewo(Zachód)</option>
-                <option value="ttb">Dół(Południe)</option>
+        <div style="display: flex; gap: 4px; align-items: center;">
+            <span style="font-weight: bold; font-size: 9px; width: 75px; color: #ffffdf;">Kierunek:</span>
+            <select id="tcm-sort-type" class="tcm-shinko-input" style="flex: 1; height: 21px; font-size: 9px; padding: 1px !important;">
+                <option value="dist">Najbliższe</option>
+                <option value="ltr">Wschód</option>
+                <option value="rtl">Zachód</option>
+                <option value="ttb">Południe</option>
             </select>
         </div>
-        <button id="tcm-apply-sort" class="tcm-shinko-btn" style="font-size: 10px; width: 100%;">SORTUJ</button>
+        <button id="tcm-apply-sort" class="tcm-shinko-btn" style="font-size: 9px; width: 100%;">SORTUJ</button>
     `;
     controlPanel.appendChild(sortRow);
 
@@ -167,13 +167,13 @@
     controlPanel.appendChild(smartPanel);
 
     const smartRow1 = document.createElement("div");
-    smartRow1.style = "display: flex; gap: 5px; align-items: center; margin-bottom: 5px;";
+    smartRow1.style = "display: flex; gap: 4px; align-items: center; margin-bottom: 4px;";
     smartRow1.innerHTML = `
-        <span style="font-weight: bold; width: 40px; color: #ffffdf;">Nazwa:</span>
-        <input type="text" id="tcm-base-name" class="tcm-shinko-input" placeholder="np. Xxx-x" value="${getFromStorage('baseName') || ''}" style="flex: 1; font-size: 11px;">
-        <select id="tcm-pos" class="tcm-shinko-input" style="height: 24px; font-size: 10px; padding: 2px !important;">
-            <option value="after" ${getFromStorage('pos') === 'after' ? 'selected' : ''}>[Nazwa/Numer]</option>
-            <option value="before" ${getFromStorage('pos') === 'before' ? 'selected' : ''}>[Numer/Nazwa]</option>
+        <span style="font-weight: bold; width: 35px; color: #ffffdf; font-size: 9px;">Nazwa:</span>
+        <input type="text" id="tcm-base-name" class="tcm-shinko-input" placeholder="np. Xxx" value="${getFromStorage('baseName') || ''}" style="flex: 1; font-size: 9px;">
+        <select id="tcm-pos" class="tcm-shinko-input" style="width: 85px; height: 21px; font-size: 9px; padding: 1px !important;">
+            <option value="after" ${getFromStorage('pos') === 'after' ? 'selected' : ''}>[Nazwa/Nr]</option>
+            <option value="before" ${getFromStorage('pos') === 'before' ? 'selected' : ''}>[Nr/Nazwa]</option>
         </select>
     `;
     smartPanel.appendChild(smartRow1);
@@ -181,26 +181,26 @@
     const smartRow2 = document.createElement("div");
     smartRow2.style = "display: flex; gap: 3px; align-items: center;";
     smartRow2.innerHTML = `
-        <span style="font-weight: bold; width: 40px; color: #ffffdf;">Numer:</span>
-        <input type="text" id="tcm-num-pre" class="tcm-shinko-input" placeholder="[" value="${getFromStorage('numPre') || ''}" style="width: 25px; text-align:center;">
-        <input type="text" id="tcm-start-num" class="tcm-shinko-input" placeholder="01" value="${getFromStorage('startNum') || ''}" style="width: 35px; text-align: center;">
-        <input type="text" id="tcm-num-suf" class="tcm-shinko-input" placeholder="]" value="${getFromStorage('numSuf') || ''}" style="width: 25px; text-align:center;">
-        <button id="tcm-smart-start" class="tcm-shinko-btn" style="flex: 1; background: linear-gradient(#2ea043 0%, #238636 100%) !important; margin-left: 5px;">Zmień</button>
+        <span style="font-weight: bold; width: 35px; color: #ffffdf; font-size: 9px;">Numer:</span>
+        <input type="text" id="tcm-num-pre" class="tcm-shinko-input" placeholder="[" value="${getFromStorage('numPre') || ''}" style="width: 22px; text-align:center; font-size: 9px;">
+        <input type="text" id="tcm-start-num" class="tcm-shinko-input" placeholder="01" value="${getFromStorage('startNum') || ''}" style="width: 30px; text-align: center; font-size: 9px;">
+        <input type="text" id="tcm-num-suf" class="tcm-shinko-input" placeholder="]" value="${getFromStorage('numSuf') || ''}" style="width: 22px; text-align:center; font-size: 9px;">
+        <button id="tcm-smart-start" class="tcm-shinko-btn" style="flex: 1; background: linear-gradient(#2ea043 0%, #238636 100%) !important; margin-left: 2px; font-size: 9px;">Zmień</button>
     `;
     smartPanel.appendChild(smartRow2);
 
     const listToggleContainer = document.createElement("div");
-    listToggleContainer.style = "border-top: 1px solid #3e4147; margin-top: 5px; padding-top: 5px;";
-    listToggleContainer.innerHTML = `<button id="tcm-toggle-list" class="tcm-shinko-btn" style="width: 100%; margin-bottom: 5px;">POKAŻ LISTĘ</button>`;
+    listToggleContainer.style = "border-top: 1px solid #3e4147; margin-top: 4px; padding-top: 4px;";
+    listToggleContainer.innerHTML = `<button id="tcm-toggle-list" class="tcm-shinko-btn" style="width: 100%; margin-bottom: 4px; font-size: 9px;">POKAŻ LISTĘ</button>`;
     container.appendChild(listToggleContainer);
 
     const listPanel = document.createElement("div");
-    listPanel.style = "display: none; flex-direction: column; gap: 5px;";
+    listPanel.style = "display: none; flex-direction: column; gap: 4px;";
     listToggleContainer.appendChild(listPanel);
 
     listPanel.innerHTML = `
-        <textarea id="tcm-vill-names" class="tcm-shinko-input" rows="4" style="width: 100%; font-family: monospace; font-size: 10px; resize: vertical;"></textarea>
-        <button id="tcm-start-list" class="tcm-shinko-btn" style="width: 100%; background: linear-gradient(#da3633 0%, #b62324 100%) !important;">Z LISTY</button>
+        <textarea id="tcm-vill-names" class="tcm-shinko-input" rows="3" style="width: 100%; font-family: monospace; font-size: 9px; resize: vertical;"></textarea>
+        <button id="tcm-start-list" class="tcm-shinko-btn" style="width: 100%; background: linear-gradient(#da3633 0%, #b62324 100%) !important; font-size: 9px;">Z LISTY</button>
     `;
 
     const injectChecks = () => {
@@ -211,7 +211,7 @@
                 chk.type = 'checkbox';
                 chk.className = 'tcm-village-check';
                 chk.checked = true;
-                chk.style = "width: 18px; height: 18px; margin-right: 8px; vertical-align: middle; cursor: pointer; accent-color: #2ea043;";
+                chk.style = "width: 16px; height: 16px; margin-right: 6px; vertical-align: middle; cursor: pointer; accent-color: #2ea043;";
                 renameIcon.parentNode.insertBefore(chk, renameIcon);
             }
         });
@@ -299,7 +299,7 @@
             tableBody.appendChild(r);
         });
         
-        alert("Wioski zostały posortowane(" + startX + "|" + startY + ")!");
+        alert("Wioski zostały posortowane (" + startX + "|" + startY + ")!");
     };
 
     const runRenamer = (mode, smartConfig = null) => {
