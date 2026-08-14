@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Klin z Cofki Ręczny
+// @name         Klin z Cofki Ręczny (Minimal UI)
 // @namespace    https://viayoo.com/
-// @version      1.1
-// @description  Planowanie klina z cofki z opcją ręcznego wpisania godziny (Mobile UI)
+// @version      1.2
+// @description  Planowanie klina z cofki z minimalistycznymi przyciskami (dostosowane pod ekrany dotykowe)
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=place*
 // @run-at       document-end
@@ -26,19 +26,24 @@
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
         }
 
-        /* Istniejące style przycisków w tabeli */
+        /* Przyciski zoptymalizowane pod dotyk i same ikony */
         .shinko-btn-snipe {
             background: var(--btn-bg) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
-            border-radius: 3px !important;
+            border-radius: 4px !important;
             cursor: pointer !important;
-            font-size: 11px !important;
-            padding: 4px 8px !important; /* Powiększone pod dotyk */
+            font-size: 16px !important; /* Powiększona ikona */
+            padding: 6px 14px !important; /* Zwiększony obszar dotyku */
             margin-left: 6px !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
             transition: all 0.2s;
             touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px; /* Minimalna szerokość pod standardy mobilne */
+            min-height: 36px;
         }
 
         .shinko-btn-snipe:hover {
@@ -57,10 +62,11 @@
             font-weight: bold !important;
             font-family: monospace !important;
             font-size: 12px !important;
-            padding: 2px 4px !important;
+            padding: 4px 6px !important;
             background-color: var(--bg-header) !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 3px !important;
+            vertical-align: middle;
         }
 
         /* Nowe style dla RĘCZNEGO PANELU */
@@ -75,12 +81,13 @@
             align-items: center;
             justify-content: flex-start;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 12px;
         }
 
         .tcm-manual-panel span.tcm-label {
             font-weight: bold;
             color: var(--title-color);
+            font-size: 13px;
         }
 
         .tcm-manual-input {
@@ -97,7 +104,6 @@
     `;
     document.head.appendChild(style);
 
-    // Globalne zmienne stanu odliczania
     let globalAnimationFrameId = null;
     let globalActiveButton = null;
     let globalTimerDisplay = null;
@@ -126,7 +132,7 @@
             globalAnimationFrameId = null;
         }
         if (globalActiveButton) {
-            globalActiveButton.innerHTML = globalActiveButton.dataset.originalText || '⚔️ ';
+            globalActiveButton.innerHTML = globalActiveButton.dataset.originalText || '⚔️';
             globalActiveButton.classList.remove('shinko-btn-active');
             globalActiveButton = null;
         }
@@ -137,7 +143,6 @@
         }
     }
 
-    // GŁÓWNY SILNIK ODLICZANIA I ANULOWANIA
     function startSnipeEngine(btnElement, timerElement, targetMs) {
         const savedStart = sessionStorage.getItem("snip_start_time");
 
@@ -158,16 +163,16 @@
              return;
         }
 
-        // Zapis oryginalnego tekstu na przycisku do resetu
         btnElement.dataset.originalText = btnElement.innerHTML;
         
         globalActiveButton = btnElement;
         globalTimerDisplay = timerElement;
         
-        btnElement.innerHTML = '❌ Anuluj';
+        // Zmiana na sam "X"
+        btnElement.innerHTML = '❌';
         btnElement.classList.add('shinko-btn-active');
         timerElement.style.display = "inline-block";
-        UI.SuccessMessage("pomyślnie zaplanowany!");
+        UI.SuccessMessage("Klin z cofki pomyślnie zaplanowany!");
 
         function checkTime() {
             const now = Timing.getCurrentServerTime();
@@ -200,8 +205,6 @@
         globalAnimationFrameId = requestAnimationFrame(checkTime);
     }
 
-
-    // 1. ZAPIS CZASU STARTU NA EKRANIE POTWIERDZENIA
     if (window.location.href.includes("try=confirm")) {
         const confirmBtn = document.querySelector("#troop_confirm_submit");
         if (confirmBtn) {
@@ -212,9 +215,7 @@
         return;
     }
 
-    // 2. TWORZENIE PANELU RĘCZNEGO NA PLACU
     function setupManualUI() {
-        // Szukamy odpowiedniego miejsca nad rozkazami wychodzącymi
         const targetContainer = document.querySelector('#paged_view_content') || document.querySelector('.maincolumn');
         if(!targetContainer) return;
 
@@ -222,9 +223,9 @@
         manualPanel.className = 'tcm-manual-panel';
         
         manualPanel.innerHTML = `
-            <span class="tcm-label">czas wejścia (Cel):</span>
-            <input type="text" id="tcm_manual_time" class="tcm-manual-input" placeholder="14:30:15">
-            <button id="tcm_manual_btn" class="shinko-btn-snipe">Cofnij</button>
+            <span class="tcm-label">Wejście (Cel):</span>
+            <input type="text" id="tcm_manual_time" class="tcm-manual-input" placeholder="np. 14:30:15:123">
+            <button id="tcm_manual_btn" class="shinko-btn-snipe">⚔️</button>
             <span id="tcm_manual_timer" class="shinko-timer-display" style="display:none;"></span>
         `;
 
@@ -248,7 +249,6 @@
         });
     }
 
-    // 3. INICJALIZACJA PRZYCISKÓW W TABELACH ROZKAZÓW
     function setupRowButtons() {
         const commandRows = document.querySelectorAll('tr.command-row');
         
@@ -258,7 +258,8 @@
 
             const btn = document.createElement('button');
             btn.className = 'shinko-btn-snipe';
-            btn.innerHTML = '⚔️ Zaplanuj cofkę';
+            // Zmiana na same miecze
+            btn.innerHTML = '⚔️';
             
             const timerDisplay = document.createElement('span');
             timerDisplay.className = 'shinko-timer-display';
