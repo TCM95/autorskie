@@ -1,11 +1,3 @@
-// ==UserScript==
-// @name         Menedżer Skryptów TCM
-// @namespace    https://viayoo.com/
-// @version      1.0
-// @description  Ładowanie i zarządzanie skryptami w panelu TCM
-// @author       TCM
-// ==/UserScript==
-
 (async function() {
     'style strict';
 
