@@ -1,6 +1,8 @@
 // ==UserScript==
-// @name         Klin_z_Cofki (Shinko UI)
+// @name         Klin z Cofki Ręczny
 // @namespace    https://viayoo.com/
+// @version      1.1
+// @description  Planowanie klina z cofki z opcją ręcznego wpisania godziny (Mobile UI)
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=place*
 // @run-at       document-end
@@ -24,6 +26,7 @@
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
         }
 
+        /* Istniejące style przycisków w tabeli */
         .shinko-btn-snipe {
             background: var(--btn-bg) !important;
             border: 1px solid var(--border-color) !important;
@@ -31,10 +34,11 @@
             border-radius: 3px !important;
             cursor: pointer !important;
             font-size: 11px !important;
-            padding: 2px 6px !important;
+            padding: 4px 8px !important; /* Powiększone pod dotyk */
             margin-left: 6px !important;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
             transition: all 0.2s;
+            touch-action: manipulation;
         }
 
         .shinko-btn-snipe:hover {
@@ -52,22 +56,53 @@
             margin-left: 8px !important;
             font-weight: bold !important;
             font-family: monospace !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
             padding: 2px 4px !important;
             background-color: var(--bg-header) !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 3px !important;
         }
+
+        /* Nowe style dla RĘCZNEGO PANELU */
+        .tcm-manual-panel {
+            background: var(--bg-main);
+            border: 1px solid var(--border-color);
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 6px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tcm-manual-panel span.tcm-label {
+            font-weight: bold;
+            color: var(--title-color);
+        }
+
+        .tcm-manual-input {
+            background: var(--bg-row-alt);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 4px;
+            width: 140px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 14px;
+        }
     `;
     document.head.appendChild(style);
 
-    // Globalne zmienne do zarządzania stanem odliczania
+    // Globalne zmienne stanu odliczania
     let globalAnimationFrameId = null;
     let globalActiveButton = null;
     let globalTimerDisplay = null;
 
     function parseTimeFromText(text) {
-        // Szuka czasu w formacie HH:MM:SS oraz opcjonalnie milisekund HH:MM:SS:ms lub HH:MM:SS.ms
         const match = text.match(/(\d{1,2}):(\d{2}):(\d{2})(?:[:.](\d{1,3}))?/);
         if (!match) return null;
         
@@ -79,7 +114,6 @@
         const d = new Date(Timing.getCurrentServerTime());
         d.setHours(h, m, s, ms);
 
-        // Jeśli czas z wiersza jest z przeszłości, dodajemy 24h
         if (d.getTime() < Timing.getCurrentServerTime() - 3600000) {
             d.setDate(d.getDate() + 1);
         }
@@ -92,7 +126,7 @@
             globalAnimationFrameId = null;
         }
         if (globalActiveButton) {
-            globalActiveButton.innerHTML = '⚔️ Zaplanuj cofkę';
+            globalActiveButton.innerHTML = globalActiveButton.dataset.originalText || '⚔️ ';
             globalActiveButton.classList.remove('shinko-btn-active');
             globalActiveButton = null;
         }
@@ -103,7 +137,71 @@
         }
     }
 
-    // ZAPIS CZASU STARTU NA EKRANIE POTWIERDZENIA
+    // GŁÓWNY SILNIK ODLICZANIA I ANULOWANIA
+    function startSnipeEngine(btnElement, timerElement, targetMs) {
+        const savedStart = sessionStorage.getItem("snip_start_time");
+
+        if (!targetMs) {
+            UI.ErrorMessage("Nie udało się odczytać czasu. Format: HH:MM:SS:ms");
+            return;
+        }
+        if (!savedStart) {
+            UI.ErrorMessage("Brak czasu wysłania wojska. Wyślij wojsko z ekranu potwierdzenia!");
+            return;
+        }
+
+        const startMs = Number(savedStart);
+        const cancelTimeMs = startMs + (targetMs - startMs) / 2;
+
+        if (cancelTimeMs <= Timing.getCurrentServerTime()) {
+             UI.ErrorMessage("Czas na anulowanie już minął!");
+             return;
+        }
+
+        // Zapis oryginalnego tekstu na przycisku do resetu
+        btnElement.dataset.originalText = btnElement.innerHTML;
+        
+        globalActiveButton = btnElement;
+        globalTimerDisplay = timerElement;
+        
+        btnElement.innerHTML = '❌ Anuluj';
+        btnElement.classList.add('shinko-btn-active');
+        timerElement.style.display = "inline-block";
+        UI.SuccessMessage("pomyślnie zaplanowany!");
+
+        function checkTime() {
+            const now = Timing.getCurrentServerTime();
+            const diff = cancelTimeMs - now;
+
+            if (diff <= 0) {
+                timerElement.textContent = "COFANIE...";
+                timerElement.style.color = "#ff4444";
+                
+                const btnCancel = document.querySelector("a.command-cancel");
+                if (btnCancel) {
+                    btnCancel.click();
+                } else {
+                    UI.ErrorMessage("Nie znaleziono przycisku anulowania!");
+                }
+
+                btnElement.innerHTML = btnElement.dataset.originalText;
+                btnElement.classList.remove('shinko-btn-active');
+                globalActiveButton = null;
+                globalAnimationFrameId = null;
+                return;
+            }
+
+            timerElement.textContent = "Cofka za: " + (diff / 1000).toFixed(3) + "s";
+            timerElement.style.color = "#55ff55";
+            
+            globalAnimationFrameId = requestAnimationFrame(checkTime);
+        }
+
+        globalAnimationFrameId = requestAnimationFrame(checkTime);
+    }
+
+
+    // 1. ZAPIS CZASU STARTU NA EKRANIE POTWIERDZENIA
     if (window.location.href.includes("try=confirm")) {
         const confirmBtn = document.querySelector("#troop_confirm_submit");
         if (confirmBtn) {
@@ -114,7 +212,43 @@
         return;
     }
 
-    // INICJALIZACJA PRZYCISKÓW W TABELACH ROZKAZÓW NA PLACU
+    // 2. TWORZENIE PANELU RĘCZNEGO NA PLACU
+    function setupManualUI() {
+        // Szukamy odpowiedniego miejsca nad rozkazami wychodzącymi
+        const targetContainer = document.querySelector('#paged_view_content') || document.querySelector('.maincolumn');
+        if(!targetContainer) return;
+
+        const manualPanel = document.createElement('div');
+        manualPanel.className = 'tcm-manual-panel';
+        
+        manualPanel.innerHTML = `
+            <span class="tcm-label">czas wejścia (Cel):</span>
+            <input type="text" id="tcm_manual_time" class="tcm-manual-input" placeholder="14:30:15">
+            <button id="tcm_manual_btn" class="shinko-btn-snipe">Cofnij</button>
+            <span id="tcm_manual_timer" class="shinko-timer-display" style="display:none;"></span>
+        `;
+
+        targetContainer.insertBefore(manualPanel, targetContainer.firstChild);
+
+        const btn = document.getElementById('tcm_manual_btn');
+        const input = document.getElementById('tcm_manual_time');
+        const timer = document.getElementById('tcm_manual_timer');
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            if (globalActiveButton === btn) {
+                stopCurrentSnipe();
+                return;
+            }
+
+            stopCurrentSnipe();
+            const targetMs = parseTimeFromText(input.value);
+            startSnipeEngine(btn, timer, targetMs);
+        });
+    }
+
+    // 3. INICJALIZACJA PRZYCISKÓW W TABELACH ROZKAZÓW
     function setupRowButtons() {
         const commandRows = document.querySelectorAll('tr.command-row');
         
@@ -125,92 +259,31 @@
             const btn = document.createElement('button');
             btn.className = 'shinko-btn-snipe';
             btn.innerHTML = '⚔️ Zaplanuj cofkę';
-            btn.title = "Ustaw ten czas wejścia jako cel klina";
-
+            
             const timerDisplay = document.createElement('span');
             timerDisplay.className = 'shinko-timer-display';
             timerDisplay.style.display = "none";
             
-            // Dodajemy przycisk obok nazwy rozkazu
             nameCell.appendChild(btn);
             nameCell.appendChild(timerDisplay);
 
             btn.onclick = (e) => {
                 e.preventDefault();
                 
-                // Jeśli ten konkretny przycisk jest aktywny, to go wyłączamy (Anulowanie)
                 if (globalActiveButton === btn) {
                     stopCurrentSnipe();
                     return;
                 }
 
-                // Włączanie nowego odliczania (zatrzymując ew. poprzednie)
                 stopCurrentSnipe();
-
                 const targetMs = parseTimeFromText(row.innerText);
-                const savedStart = sessionStorage.getItem("snip_start_time");
-
-                if (!targetMs) {
-                    UI.ErrorMessage("Nie udało się odczytać czasu wejścia z tego rozkazu.");
-                    return;
-                }
-                if (!savedStart) {
-                    UI.ErrorMessage("Najpierw wyślij wojsko z ekranu potwierdzenia (brak czasu wysłania).");
-                    return;
-                }
-
-                const startMs = Number(savedStart);
-                const cancelTimeMs = startMs + (targetMs - startMs) / 2;
-
-                if (cancelTimeMs <= Timing.getCurrentServerTime()) {
-                     UI.ErrorMessage("Czas anulowania klina dla tego ataku już minął!");
-                     return;
-                }
-
-                // Uruchamianie UI odliczania dla klikniętego wiersza
-                globalActiveButton = btn;
-                globalTimerDisplay = timerDisplay;
-                
-                btn.innerHTML = '❌ Anuluj';
-                btn.classList.add('shinko-btn-active');
-                timerDisplay.style.display = "inline-block";
-                UI.SuccessMessage("Klin zaplanowany!");
-
-                function checkTime() {
-                    const now = Timing.getCurrentServerTime();
-                    const diff = cancelTimeMs - now;
-
-                    if (diff <= 0) {
-                        timerDisplay.textContent = "COFANIE...";
-                        timerDisplay.style.color = "#ff4444";
-                        
-                        const btnCancel = document.querySelector("a.command-cancel");
-                        if (btnCancel) {
-                            btnCancel.click();
-                        } else {
-                            UI.ErrorMessage("Zabrakło przycisku 'Anuluj'! Zbyt późno lub rozkaz nie istnieje.");
-                        }
-
-                        // Reset UI po kliknięciu
-                        btn.innerHTML = '⚔️ ';
-                        btn.classList.remove('shinko-btn-active');
-                        globalActiveButton = null;
-                        globalAnimationFrameId = null;
-                        return;
-                    }
-
-                    timerDisplay.textContent = "Cofka za: " + (diff / 1000).toFixed(3) + "s";
-                    timerDisplay.style.color = "#55ff55";
-                    
-                    globalAnimationFrameId = requestAnimationFrame(checkTime);
-                }
-
-                globalAnimationFrameId = requestAnimationFrame(checkTime);
+                startSnipeEngine(btn, timerDisplay, targetMs);
             };
         });
     }
 
     if (window.location.href.includes("screen=place")) {
+        setupManualUI();
         setupRowButtons();
     }
 })();
