@@ -1,328 +1,178 @@
-:root {
-    /* Paleta bazowa */
-    --bg-main: #36393f;
-    --bg-row-alt: #32353b;
-    --bg-header: #202225;
-    --border-color: #3e4147;
-    --text-color: #ffffff;
-    --title-color: #ffffdf;
-    --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-    --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-
-    /* Akcenty NEONOWE */
-    --neon-green: #74ff00;
-    --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-
-    --neon-red: #ff003c;
-    --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
-}
-
-/* Resetowanie obramowań i podświetleń mobilnych */
-#tw-script-panel *, 
-#tw-panel-opener *,
-#tw-global-tooltip * {
-    box-sizing: border-box !important;
-    font-family: Verdana, Arial, sans-serif !important;
-    color: var(--text-color) !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-}
-
-/* =========================================================
-        UKŁAD - POZYCJONOWANIE I PANEL GŁÓWNY
-   ========================================================= */
-
-/* Przycisk otwierający (Okrągły Przycisk Neonowy) */
-#tw-panel-opener {
-    position: absolute !important;
-    top: 60px !important;
-    left: 10px !important;
-    z-index: 999999 !important;
-    cursor: pointer !important;
-    width: 50px !important;
-    height: 50px !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    background: var(--bg-header) !important;
-    border: 2px solid var(--neon-green) !important;
-    border-radius: 50% !important;
-    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
-    user-select: none !important;
-    touch-action: none !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out, transform 0.1s !important;
-    animation: neon-pulse 2s infinite alternate ease-in-out !important;
-}
-
-@keyframes neon-pulse {
-    0% { box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8); }
-    100% { box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8); }
-}
-
-#tw-panel-opener:active {
-    box-shadow: 0 0 20px rgba(116, 255, 0, 0.9), 0 4px 12px rgba(0,0,0,0.8) !important;
-    border-color: #9dff4d !important;
-    transform: scale(0.95) !important;
-}
-
-#tw-panel-opener img {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 50px !important;
-    max-height: 50px !important;
-    object-fit: contain !important;
-    pointer-events: none !important;
-    display: block !important;
-}
-
-/* Główny słupek menu */
-#tw-script-panel {
-    position: absolute !important;
-    top: 40px !important;
-    left: 10px !important;
-    z-index: 999998 !important;
-    width: 150px !important;
-    background-color: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-    display: none;
-    flex-direction: column !important;
-    overflow: hidden !important;
-}
-
-/* Nagłówek panelu */
-#tw-script-panel-header {
-    background-color: var(--bg-header) !important;
-    color: var(--title-color) !important;
-    padding: 8px 10px !important;
-    font-weight: bold !important;
-    font-size: 12px !important;
-    border-bottom: 2px solid var(--border-color) !important;
-    cursor: move !important;
-    user-select: none !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-}
-
-/* Pasek zakładek */
-#tw-categories-bar {
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 6px !important;
-    gap: 6px !important;
-    background-color: var(--bg-main) !important;
-}
-
-/* Wysuwany panel ze skryptami */
-#tw-content-area {
-    display: none;
-    position: absolute !important;
-    top: -2px !important;
-    left: 100% !important;
-    margin-left: 6px !important;
-    width: 290px !important;
-    background-color: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: 8px !important;
-    box-shadow: 4px 4px 15px rgba(0,0,0,0.8) !important;
-    z-index: 999997 !important;
-}
-
-.tw-content-inner {
-    max-height: 320px !important;
-    overflow-y: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    padding: 8px !important;
-}
-
-/* =========================================================
-         PRZYCISKI NEONOWE (Zainspirowane Uiverse)
-   ========================================================= */
-
-.tw-tab {
-    position: relative !important;
-    background: var(--bg-header) !important;
-    color: var(--text-color) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 6px !important;
-    cursor: pointer !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    padding: 8px 10px !important;
-    text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-    transition: all 0.2s ease-in-out !important;
-    overflow: hidden !important;
-}
-
-.tw-tab:active {
-    border-color: var(--neon-green) !important;
-    box-shadow: var(--neon-glow) !important;
-    color: var(--neon-green) !important;
-}
-
-/* Aktywna zakładka z poświatą */
-.tw-tab.active-tab {
-    background: var(--bg-row-alt) !important;
-    border: 1px solid var(--neon-green) !important;
-    color: var(--neon-green) !important;
-    box-shadow: var(--neon-glow) !important;
-    text-shadow: 0 0 5px rgba(116, 255, 0, 0.7) !important;
-}
-
-/* =========================================================
-         KARTY SKRYPTÓW (Nowa struktura z Uiverse)
-   ========================================================= */
-
-.tw-script-item {
-    position: relative !important;
-    background: var(--bg-row-alt) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 8px !important;
-    padding: 8px 10px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 8px !important;
-    transition: border-color 0.2s, box-shadow 0.2s !important;
-}
-
-.tw-script-item:active {
-    border-color: var(--neon-green) !important;
-    box-shadow: inset 0 0 6px rgba(116, 255, 0, 0.2) !important;
-}
-
-.tw-game-btn {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    cursor: pointer !important;
-    flex-grow: 1 !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    text-align: left !important;
-}
-
-.tw-script-name {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: var(--title-color) !important;
-}
-
-/* =========================================================
-         WŁĄCZNIK POWER (Zamiast ikony zielono-czerwonej)
-   ========================================================= */
-
-.tw-power-checkbox {
-    display: none !important;
-}
-
-.tw-power-switch {
-    position: relative !important;
-    width: 30px !important;
-    height: 30px !important;
-    background-color: var(--bg-header) !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border: 1px solid var(--neon-red) !important;
-    box-shadow: var(--neon-red-glow) !important;
-    flex-shrink: 0 !important;
-    transition: all 0.3s ease !important;
-}
-
-.tw-power-switch svg {
-    width: 14px !important;
-    height: 14px !important;
-    transition: all 0.3s ease !important;
-}
-
-.tw-power-switch svg path {
-    fill: var(--neon-red) !important;
-    transition: fill 0.3s ease !important;
-}
-
-/* Stan WŁĄCZONY (Checked) -> Zmiana koloru na Neon Green */
-.tw-power-checkbox:checked + .tw-power-switch {
-    border: 1px solid var(--neon-green) !important;
-    box-shadow: var(--neon-glow) !important;
-    background-color: var(--bg-main) !important;
-}
-
-.tw-power-checkbox:checked + .tw-power-switch svg {
-    filter: drop-shadow(0px 0px 4px var(--neon-green)) !important;
-}
-
-.tw-power-checkbox:checked + .tw-power-switch svg path {
-    fill: var(--neon-green) !important;
-}
-
-/* =========================================================
-         IKONA INFORMACJI "i" ORAZ ELEMENTY NAGŁÓWKA
-   ========================================================= */
-
-.tw-info-icon {
-    background: var(--bg-header) !important;
-    color: var(--neon-green) !important; 
-    border: 1px solid var(--neon-green) !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-    font-size: 10px !important;
-    font-weight: bold !important;
-    padding: 3px 6px !important;
-    margin-left: 4px !important;
-    box-shadow: var(--neon-glow) !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-.tw-info-icon.tw-info-off {
-    color: var(--neon-red) !important; 
-    border-color: var(--neon-red) !important;
-    box-shadow: var(--neon-red-glow) !important;
-}
-
-.tw-header-btn {
-    background: transparent !important;
-    border: none !important;
-    color: var(--title-color) !important;
-    font-size: 12px !important;
-    padding: 0 2px !important;
-    cursor: pointer !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 22px !important;
-    height: 22px !important;
-}
-
-.tw-pin-icon, .tw-close-icon {
-    width: 18px !important;
-    height: 18px !important;
-    object-fit: contain !important;
-}
-
-/* Dymek podpowiedzi */
-#tw-global-tooltip {
-    background-color: var(--bg-header) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--neon-green) !important;
-    border-radius: 6px !important;
-    padding: 8px !important;
-    width: 200px !important;
-    font-size: 10px !important;
-    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.9) !important;
-    z-index: 999999999 !important;
-}
+[
+    {
+        "id": "ciemny_motyw",
+        "name": "ciemny motyw",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
+        "description": "Ułatwia wysyłanie farmy z poziomu placu.",
+        "screens": ["*"]
+    },
+    {
+        "id": "wybijak_monet",
+        "name": "Aktywator monet",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
+        "description": "aktywuje automatyczne wybijanie monet wchodzimy w pałac/wybijanie monet działa w aktualnie przeglądanej grupie.",
+        "screens": ["mode=coin"]
+    },
+    {
+        "id": "etykiety",
+        "name": "Etykiety",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
+        "description": "Etykiety z filtrami.",
+        "screens": ["mode=incomings"]
+    },
+    {
+        "id": "tager_przychodzace",
+        "name": "Tag(przychodzące)",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
+        "description": "Ataki przychodzące.",
+        "screens": ["mode=incomings"]
+    },
+    {
+        "id": "tager_wychodzace",
+        "name": "Tag(wychodzące + filtry)",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
+        "description": "Ataki wychodzące oraz filtry do tagera.",
+        "screens": ["mode=commands", "overview_villages", "report"]
+    },
+    {
+        "id": "edytor_nazw",
+        "name": "Zmaina nazw",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
+        "description": "Zmiana nazw wiosek.",
+        "screens": ["overview_villages"]
+    },
+    {
+        "id": "komendy",
+        "name": "Komendy",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
+        "description": "Udostępnianie komend",
+        "screens": ["settings", "info_command"]
+    },
+    {
+        "id": "rank",
+        "name": "Ranking",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
+        "description": "Ranking zbieractwo/farma",
+        "screens": ["ranking"]
+    },
+    {
+        "id": "farma",
+        "name": "Farma",
+        "category": "Farma/zbieractwo",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
+        "description": "Automatyczne wspomaganie farmienia.",
+        "screens": ["am_farm"]
+    },
+    {
+        "id": "szablony_wojsk",
+        "name": "Szablony wojsk(Mk)",
+        "category": "Budowa/rekrutacja",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
+        "description": "Zarządzanie szablonami wojsk.",
+        "screens": ["am_troops", "train"]
+    },
+    {
+        "id": "mapa_kordy",
+        "name": "Kordy z mapy",
+        "category": "Mapa",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
+        "description": "Kopiowanie współrzędnych z mapy.",
+        "screens": ["map"]
+    },
+    {
+        "id": "atak_wsparcie",
+        "name": "Atak/Wsparcie",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
+        "description": "Szybkie przełączanie między atakiem i wsparciem.",
+        "screens": ["place"]
+    },
+    {
+        "id": "szablony_budowy",
+        "name": "Szablony budowy(MK)",
+        "category": "Budowa/rekrutacja",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
+        "description": "Zarządzanie szablonami budowy.",
+        "screens": ["memo"]
+    },
+    {
+        "id": "klin_cofka",
+        "name": "Klin z cofki",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
+        "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować.",
+        "screens": ["place", "info_command"]
+    },
+    {
+        "id": "zbierak_mass",
+        "name": "Zbierak mass",
+        "category": "Farma/zbieractwo",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
+        "description": "Masowe wysyłanie na zbieractwo.",
+        "screens": ["scavenge_mass"]
+    },
+    {
+        "id": "podswietlanie_wioski",
+        "name": "Podświetlenie wioski (Ataki)",
+        "category": "Mapa",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
+        "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków.",
+        "screens": ["map"]
+    },
+    {
+        "id": "znajomi",
+        "name": "Znajomi",
+        "category": "Inne",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
+        "description": "dodawanie/usuwanie znajomych ",
+        "screens": ["buddies"]
+    },
+    {
+        "id": "balancer",
+        "name": "Balancer",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
+        "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
+        "screens": ["mode=prod"]
+    },
+    {
+        "id": "feje",
+        "name": "Fejkomat",
+        "category": "Atak/obrona",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
+        "description": "...",
+        "screens": ["place"]
+    },
+    {
+        "id": "kalk_surowce",
+        "name": "Kalkulator",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
+        "description": "oblicza zapotrzebowanie budynki/monety/szlachta",
+        "screens": ["main", "snob", "market"]
+    },
+    {
+        "id": "kalk_surowce_w",
+        "name": "Kalkulator(handlarz)",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
+        "description": "wypełnia formularze i wysyłki na rynku",
+        "screens": ["market"]
+    },
+    {
+        "id": "bob",
+        "name": "Budowlaniec",
+        "category": "Budowa/rekrutacja",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/bob.js",
+        "description": "budowa wioski gotwe szablony mozliwosc wrzucenia wlasnego",
+        "screens": ["main"]
+    }
+]
