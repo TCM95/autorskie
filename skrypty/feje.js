@@ -1,9 +1,10 @@
 // ==UserScript==
-// @name         FEJKOMAT  v3.5
-// @version      1.8
-// @author       TCN
-// @match        https://*.plemiona.pl/game.php?*screen=place*
+// @name         FEJKOMAT Własny Skrypt
 // @namespace    https://viayoo.com/
+// @version      1.0
+// @description  Wysyłanie z własnego skryptu na pasku
+// @author       TCM
+// @match        https://*.plemiona.pl/game.php?*screen=place*
 // @grant        none
 // ==/UserScript==
 
@@ -96,7 +97,6 @@
     Object.keys(sentCoords).forEach(k => { if (nowTime - sentCoords[k] > 12 * 3600000) delete sentCoords[k]; });
     setS('sent_list', JSON.stringify(sentCoords));
 
-    // --- AKTUALNA DATA DOMYŚLNA ---
     const currentDateObj = new Date();
     const defaultDay = String(currentDateObj.getDate()).padStart(2, '0');
     const defaultMonth = String(currentDateObj.getMonth() + 1).padStart(2, '0');
@@ -105,6 +105,7 @@
     // --- USTAWIENIA ---
     let stan = getS('stan', 'STOP');
     let kordyRaw = getS('kordy', '');
+    let customScript = getS('custom_script', '');
     let gracze = getS('gracze', '');
     let tagi = getS('tagi', '');
     
@@ -178,14 +179,17 @@
 
     ui.innerHTML = `
         <div id="drag_h" class="tcn-header" style="cursor:${isPinned ? 'default' : 'move'};">
-            <span>ETYKIETY V53.0</span>
+            <span>FEJKOMAT PRO</span>
             <div>
                 <span id="pin_fejk" style="cursor:pointer; padding:0 5px;" title="Przypnij do tła">${isPinned ? '🔴' : '📌'}</span>
                 <span id="close_fejk" style="cursor:pointer; color:#ff4d4d; font-size:14px; padding:0 5px;" title="Zamknij">✖</span>
             </div>
         </div>
+        
+        <textarea id="f_custom_script" class="tcn-input" placeholder="Wklej tutaj SWÓJ skrypt z paska (nadpisuje ustawienia poniżej)..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical; background: #2f3136; border: 1px solid #7289da;">${customScript}</textarea>
+
         <div style="font-size:10px; margin-bottom:8px; color:var(--title-color); text-align:center;">
-            Dostępne: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
+            Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
         </div>
         <textarea id="f_k" class="tcn-input" placeholder="Wklej kordy tutaj..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical;">${kordyRaw}</textarea>
         
@@ -196,21 +200,15 @@
 
         <div style="font-size:10px; color:var(--title-color); margin-bottom:2px; font-weight:bold;">Data Od:</div>
         <div style="display:flex; gap:4px; margin-bottom:6px; align-items:center; font-size:10px;">
-            <span style="color:var(--title-color);">Dzień:</span>
             <select id="sel_day_from_in" class="tcn-input" style="flex:1;">${daysOptionsFrom}</select>
-            <span style="color:var(--title-color);">Miesiąc:</span>
             <select id="sel_month_from_in" class="tcn-input" style="flex:1;">${monthsOptionsFrom}</select>
-            <span style="color:var(--title-color);">Godz:</span>
             <select id="time_from_in" class="tcn-input" style="flex:1;">${hoursOptionsFrom}</select>
         </div>
 
         <div style="font-size:10px; color:var(--title-color); margin-bottom:2px; font-weight:bold;">Data Do:</div>
         <div style="display:flex; gap:4px; margin-bottom:10px; align-items:center; font-size:10px;">
-            <span style="color:var(--title-color);">Dzień:</span>
             <select id="sel_day_to_in" class="tcn-input" style="flex:1;">${daysOptionsTo}</select>
-            <span style="color:var(--title-color);">Miesiąc:</span>
             <select id="sel_month_to_in" class="tcn-input" style="flex:1;">${monthsOptionsTo}</select>
-            <span style="color:var(--title-color);">Godz:</span>
             <select id="time_to_in" class="tcn-input" style="flex:1;">${hoursOptionsTo}</select>
         </div>
         
@@ -222,7 +220,7 @@
                 <input id="f_p" class="tcn-input" type="number" value="${petla}" style="width:40px; text-align:center;">
             </div>
             <div style="display:flex; align-items:center; gap:4px;">
-                <span>Limit:</span>
+                <span>Limit/Wioskę:</span>
                 <input id="f_l" class="tcn-input" type="number" value="${limit}" style="width:40px; text-align:center;">
             </div>
         </div>
@@ -259,6 +257,7 @@
     });
 
     $('#sav_btn').click(() => {
+        setS('custom_script', $('#f_custom_script').val());
         setS('kordy', $('#f_k').val()); 
         setS('gracze', $('#f_g').val()); 
         setS('tagi', $('#f_t').val());
@@ -289,11 +288,11 @@
     const delayedNextV = (message) => {
         setS('has_moved', 'true');
         let info = document.getElementById('status_info');
-        if(info) info.innerText = message + " - Przeskok za 3s...";
+        if(info) info.innerText = message + " - Przeskok...";
         setTimeout(() => {
             const n = document.querySelector('.arrowRight') || document.querySelector('.groupRight');
             if (n) n.click();
-        }, 3000);
+        }, 1500);
     };
 
     const getAvailableTroops = (unitName) => {
@@ -344,6 +343,52 @@
             return; 
         }
 
+        // ====== TRYB WŁASNEGO SKRYPTU ======
+        if (customScript.trim().length > 10) {
+            let cleanScript = customScript.replace(/^javascript:/i, '').trim();
+            
+            try {
+                // Uruchamiamy Twój skrypt z paska
+                let externalCode = new Function(cleanScript);
+                externalCode();
+            } catch(e) {
+                console.error("Błąd ładowania własnego skryptu:", e);
+                document.getElementById('status_info').innerText = "Błąd własnego skryptu!";
+            }
+
+            setTimeout(() => {
+                if (location.href.includes('confirm')) {
+                    let b = document.querySelector('#troop_confirm_submit');
+                    if (b) {
+                        let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
+                        if (target) { sentCoords[target[0]] = Date.now(); setS('sent_list', JSON.stringify(sentCoords)); }
+                        count++; localStorage.setItem(cKey, count); b.click();
+                    }
+                } else {
+                    let t = 0;
+                    let c = setInterval(() => {
+                        let inp = document.querySelector('.target-input-field');
+                        // Skrypt zewnętrzny wypełnia inputa
+                        if (inp && inp.value.length >= 5) {
+                            clearInterval(c);
+                            setTimeout(() => { 
+                                let atkBtn = document.getElementById('target_attack');
+                                if(atkBtn) atkBtn.click();
+                            }, 800);
+                        }
+                        if (t++ > 20) {
+                            clearInterval(c);
+                            delayedNextV("Brak celu ze skryptu, pomijam...");
+                        }
+                    }, 300);
+                }
+            }, 600);
+            
+            return; // Kończymy kod tutaj, omijamy natywną logikę poniżej
+        }
+        // ===================================
+
+        // Odtąd zaczyna się stara logika wbudowanego skryptu (uruchomi się tylko jeśli panel własnego skryptu jest pusty)
         if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
             if (!hasEnoughTroops()) {
                 delayedNextV("Brak wojska!");
@@ -384,7 +429,6 @@
         
         if(!customFill) customFill = 'spy,ram,catapult,axe,light,heavy,sword,spear';
 
-        // Pełen, niezależny przedział dat i godzin dla skryptu zewnętrznego
         let dateFromStr = `${selDayFrom}.${selMonthFrom}.${defaultYear}`;
         let dateToStr = `${selDayTo}.${selMonthTo}.${defaultYear}`;
         let rangeTime = `${dateFromStr} ${timeFrom} - ${dateToStr} ${timeTo}`;
@@ -413,7 +457,7 @@
                         let inp = document.querySelector('.target-input-field');
                         if (inp && inp.value.length > 5) {
                             clearInterval(c);
-                            setTimeout(() => { document.getElementById('target_attack').click(); }, 1500);
+                            setTimeout(() => { document.getElementById('target_attack').click(); }, 800);
                         }
                         if (t++ > 15) {
                             clearInterval(c);
