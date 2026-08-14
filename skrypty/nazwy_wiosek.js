@@ -172,8 +172,8 @@
         <span style="font-weight: bold; width: 35px; color: #ffffdf; font-size: 9px;">Nazwa:</span>
         <input type="text" id="tcm-base-name" class="tcm-shinko-input" placeholder="np. Xxx" value="${getFromStorage('baseName') || ''}" style="flex: 1; font-size: 9px;">
         <select id="tcm-pos" class="tcm-shinko-input" style="width: 85px; height: 21px; font-size: 9px; padding: 1px !important;">
-            <option value="after" ${getFromStorage('pos') === 'after' ? 'selected' : ''}>[Nazwa/Nr]</option>
-            <option value="before" ${getFromStorage('pos') === 'before' ? 'selected' : ''}>[Nr/Nazwa]</option>
+            <option value="after" ${getFromStorage('pos') === 'after' ? 'selected' : ''}>[Nzw/Nr]</option>
+            <option value="before" ${getFromStorage('pos') === 'before' ? 'selected' : ''}>[Nr/Nzw]</option>
         </select>
     `;
     smartPanel.appendChild(smartRow1);
@@ -359,7 +359,7 @@
                 }, 85, row, j);
             }
             j++;
-        }, 240);
+        }, 1001);
     };
 
     document.getElementById("tcm-start-list").onclick = () => runRenamer('overwrite');
