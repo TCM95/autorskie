@@ -185,17 +185,21 @@
 
         const clean = (str) => {
             let content = str;
+            // Ochrona skryptów konfiguracyjnych w grawisach
             const codeMatch = str.match(/`([^`]+)`/);
             if (codeMatch) content = codeMatch[1];
 
-            return content.split(/[,;\n]|(?:\s+x\s+)/i)
+            // Usunięto dzielenie po " x " i dodano tabulatory z plusem
+            return content.split(/[,;\n\t]+/)
                 .map(n => n.replace(/[\[\]"']/g, '').trim())
                 .filter(n => {
                     if (n === "") return false;
+                    // Odfiltrowujemy śmieci składniowe na wypadek braku grawisów
                     if (n.match(/^(javascript:|var\s|let\s|const\s|if\s*\(|else|\$|\/\/|UI\.InfoMessage|\})/i)) return false;
                     return true;
                 });
         };
+
 
         const radaList = clean($('#tcm_input_rada').val());
         const graczeList = clean($('#tcm_input_gracze').val());
