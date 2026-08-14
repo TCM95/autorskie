@@ -1,5 +1,13 @@
+// ==UserScript==
+// @name         Menedżer Skryptów TCM
+// @namespace    https://viayoo.com/
+// @version      1.0
+// @description  Ładowanie i zarządzanie skryptami w panelu TCM
+// @author       TCM
+// ==/UserScript==
+
 (async function() {
-    'use strict';
+    'style strict';
 
     const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/';
     const UI_JS = ['ui/panel.js'];
@@ -74,13 +82,24 @@
             if (s.id === 'ciemny_motyw' || !state[s.id] || !s.screens) continue;
 
             if (s.screens.includes('*') || s.screens.some(sc => url.includes(sc))) {
-                const sRes = await fetch(`${s.url}?t=${Date.now()}`);
-                if (sRes.ok) {
-                    const el = document.createElement('script');
-                    el.textContent = await sRes.text();
-                    document.head.appendChild(el);
-                }
+                runScriptByUrl(s.url);
             }
+        }
+    }
+
+    // Pomocnicza funkcja do natychmiastowego pobierania i odpalania kodu po URL
+    async function runScriptByUrl(scriptUrl) {
+        if (!scriptUrl) return;
+        try {
+            const fetchUrl = scriptUrl.includes('?') ? `${scriptUrl}&t=${Date.now()}` : `${scriptUrl}?t=${Date.now()}`;
+            const sRes = await fetch(fetchUrl);
+            if (sRes.ok) {
+                const el = document.createElement('script');
+                el.textContent = await sRes.text();
+                document.head.appendChild(el);
+            }
+        } catch (e) {
+            console.error("Błąd uruchamiania skryptu:", e);
         }
     }
 
@@ -98,14 +117,25 @@
             scripts = Array.isArray(json) ? json : (json.scripts || []);
         }
 
+        // Funkcja wywoływana z panelu przy kliknięciu w przycisk
+        const runScript = (id) => {
+            const found = scripts.find(s => s.id === id);
+            if (found && found.url) {
+                runScriptByUrl(found.url);
+            } else {
+                console.warn("Nie znaleziono adresu URL dla skryptu:", id);
+            }
+        };
+
         window.TCM_UI.initPanel(scripts, CATEGORIES, { 
             getScriptsState, 
             saveScriptState, 
-            onToggleTheme: toggleDarkTheme 
+            onToggleTheme: toggleDarkTheme,
+            runScript // Dopisano brakujący callback
         });
 
         await loadActiveScripts(scripts);
     } catch (e) {
         console.error("TCM Menedżer Błąd:", e);
     }
-})(); 
+})();
