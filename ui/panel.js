@@ -1,4 +1,4 @@
-window.TCM_UI = window.TCM_UI || {};
+Window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
@@ -21,10 +21,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     opener.id = 'tw-panel-opener';
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
 
-    // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
-    // Aplikowanie zapisanej pozycji dla ikony startowej
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
         opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
@@ -35,7 +33,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
 
-    // Aplikowanie zapisanej pozycji dla samego panelu
     if (savedPanelPos) {
         panel.style.setProperty('left', savedPanelPos.x + 'px', 'important');
         panel.style.setProperty('top', savedPanelPos.y + 'px', 'important');
@@ -67,16 +64,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     };
 
-    // --- PRZYCISK PINEZKI Z IKONĄ ---
     const pinBtn = document.createElement('button');
     pinBtn.className = 'tw-header-btn';
     let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-    
+
     const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
     const pinImg = document.createElement('img');
     pinImg.src = pinImgUrl;
-    pinImg.className = 'tw-pin-icon'; // Dedykowana klasa dla kontroli w CSS
-    
+    pinImg.className = 'tw-pin-icon'; 
+
     if (isPinned) {
         pinImg.style.opacity = '0.5';
     }
@@ -88,13 +84,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         pinImg.style.opacity = isPinned ? '0.5' : '1.0';
     };
 
-    // --- PRZYCISK ZAMKNIĘCIA Z IKONĄ ---
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-header-btn';
-    
+
     const closeImg = document.createElement('img');
     closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.className = 'tw-close-icon'; // Dedykowana klasa dla kontroli w CSS
+    closeImg.className = 'tw-close-icon'; 
     closeBtn.appendChild(closeImg);
 
     closeBtn.onclick = () => { 
@@ -119,6 +114,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     contentInner.className = 'tw-content-inner';
     contentArea.appendChild(contentInner);
 
+    // =========================================================
+    // NOWA FUNKCJA RENDEROWANIA - DOPASOWANA DO WŁĄCZNIKÓW POWER
+    // =========================================================
     function renderScripts() {
         contentInner.innerHTML = '';
         const state = callbacks.getScriptsState();
@@ -132,30 +130,57 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             return;
         }
 
-        filtered.forEach(script => {
+        filtered.forEach((script, index) => {
             const isActive = state[script.id] === true;
+            
+            // KARTA GŁÓWNA
             const item = document.createElement('div');
             item.className = 'tw-script-item';
 
-            const gameBtn = document.createElement('div');
+            // PRZYCISK NAZWY (Teraz odpala również włącznik)
+            const gameBtn = document.createElement('button');
             gameBtn.className = 'tw-game-btn';
-
-            const statusIcon = document.createElement('span');
-            statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
 
             const nameLabel = document.createElement('span');
             nameLabel.className = 'tw-script-name';
             nameLabel.innerText = script.name;
-
-            gameBtn.appendChild(statusIcon);
             gameBtn.appendChild(nameLabel);
-            gameBtn.onclick = () => {
-                const newState = !state[script.id];
+
+            // WŁĄCZNIK POWER - Niewidzialny checkbox
+            const uniqueId = `tw-power-toggle-${script.id}-${index}`;
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = uniqueId;
+            checkbox.className = 'tw-power-checkbox';
+            checkbox.checked = isActive;
+
+            // WŁĄCZNIK POWER - Wizualna etykieta (SVG)
+            const label = document.createElement('label');
+            label.className = 'tw-power-switch';
+            label.setAttribute('for', uniqueId);
+            label.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                    <path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"></path>
+                </svg>
+            `;
+
+            // Funkcja zapisująca stan po kliknięciu
+            const handleStateChange = () => {
+                const newState = checkbox.checked;
                 callbacks.saveScriptState(script.id, newState);
-                statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
                 state[script.id] = newState;
             };
 
+            // Nasłuchiwanie na fizyczny klik we włącznik
+            checkbox.addEventListener('change', handleStateChange);
+            
+            // Nasłuchiwanie na kliknięcie w nazwę (aby ułatwić używanie na telefonie)
+            gameBtn.onclick = () => {
+                checkbox.checked = !checkbox.checked;
+                handleStateChange();
+            };
+
+            // IKONA INFORMACJI 'i'
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-info-icon';
             infoIcon.innerText = 'i';
@@ -165,11 +190,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
                     globalTooltip.dataset.activeId = '';
+                    infoIcon.classList.remove('tw-info-off');
                 } else {
+                    document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
+                    infoIcon.classList.add('tw-info-off');
+
                     const rect = infoIcon.getBoundingClientRect();
                     const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
 
-                    globalTooltip.innerHTML = `<strong style="color: #ffffdf;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #3e4147; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
+                    globalTooltip.innerHTML = `<strong style="color: var(--neon-green); text-shadow: var(--neon-glow);">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 4px 0;"><strong style="color: white;">Opis:</strong> ${script.description || 'Brak.'}<br><strong style="color: white;">Strony:</strong> ${screensInfo}`;
 
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
@@ -178,7 +207,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 }
             };
 
+            // Dodawanie elementów do wiersza (Karty) w poprawnej kolejności
             item.appendChild(gameBtn);
+            item.appendChild(checkbox);
+            item.appendChild(label);
             item.appendChild(infoIcon);
             contentInner.appendChild(item);
         });
@@ -191,6 +223,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.onclick = () => {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
+            document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
 
             if (currentCategory === cat) {
                 currentCategory = null;
@@ -213,18 +246,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     let wasDragged = false; 
 
-    // Otwieranie panelu
     opener.onclick = (e) => { 
         if (wasDragged) return; 
         panel.style.setProperty('display', 'flex', 'important');
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
-    // Dwuetapowe zamykanie przy kliknięciu w tło
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-info-icon')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
+            document.querySelectorAll('.tw-info-icon').forEach(icon => icon.classList.remove('tw-info-off'));
         }
 
         const clickedInsidePanel = e.target.closest('#tw-script-panel');
