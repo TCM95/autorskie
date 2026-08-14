@@ -10,6 +10,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         globalTooltip.id = 'tw-global-tooltip';
         globalTooltip.style.display = 'none';
         globalTooltip.style.position = 'absolute';
+        globalTooltip.style.zIndex = '9999999';
         document.body.appendChild(globalTooltip);
     }
 
@@ -115,7 +116,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     contentArea.appendChild(contentInner);
 
     // =========================================================
-    // NOWA FUNKCJA RENDEROWANIA - DOPASOWANA DO WŁĄCZNIKÓW POWER
+    // RENDEROWANIE SKRYPTÓW - GŁÓWNA LOGIKA
     // =========================================================
     function renderScripts() {
         contentInner.innerHTML = '';
@@ -124,7 +125,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
-            emptyMsg.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 8px;';
+            emptyMsg.style.cssText = 'text-align: center; color: var(--text-color, #fff); font-style: italic; padding: 8px;';
             emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
             contentInner.appendChild(emptyMsg);
             return;
@@ -133,11 +134,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         filtered.forEach((script, index) => {
             const isActive = state[script.id] === true;
             
-            // KARTA GŁÓWNA
             const item = document.createElement('div');
             item.className = 'tw-script-item';
 
-            // PRZYCISK NAZWY (Teraz odpala również włącznik)
+            // PRZYCISK URUCHAMIAJĄCY SKRYPT
             const gameBtn = document.createElement('button');
             gameBtn.className = 'tw-game-btn';
 
@@ -146,7 +146,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             nameLabel.innerText = script.name;
             gameBtn.appendChild(nameLabel);
 
-            // WŁĄCZNIK POWER - Niewidzialny checkbox
+            // Akcja uruchomienia skryptu w grze
+            gameBtn.onclick = () => {
+                if (callbacks && typeof callbacks.runScript === 'function') {
+                    callbacks.runScript(script.id);
+                } else if (callbacks && typeof callbacks.execute === 'function') {
+                    callbacks.execute(script.id);
+                } else {
+                    console.warn('Brak funkcji uruchamiającej skrypt dla:', script.id);
+                }
+            };
+
+            // WŁĄCZNIK POWER (Zapisywanie stanu / autostart)
             const uniqueId = `tw-power-toggle-${script.id}-${index}`;
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -154,7 +165,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             checkbox.className = 'tw-power-checkbox';
             checkbox.checked = isActive;
 
-            // WŁĄCZNIK POWER - Wizualna etykieta (SVG)
             const label = document.createElement('label');
             label.className = 'tw-power-switch';
             label.setAttribute('for', uniqueId);
@@ -164,21 +174,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 </svg>
             `;
 
-            // Funkcja zapisująca stan po kliknięciu
-            const handleStateChange = () => {
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
                 const newState = checkbox.checked;
-                callbacks.saveScriptState(script.id, newState);
+                if (callbacks && typeof callbacks.saveScriptState === 'function') {
+                    callbacks.saveScriptState(script.id, newState);
+                }
                 state[script.id] = newState;
-            };
-
-            // Nasłuchiwanie na fizyczny klik we włącznik
-            checkbox.addEventListener('change', handleStateChange);
-            
-            // Nasłuchiwanie na kliknięcie w nazwę (aby ułatwić używanie na telefonie)
-            gameBtn.onclick = () => {
-                checkbox.checked = !checkbox.checked;
-                handleStateChange();
-            };
+            });
 
             // IKONA INFORMACJI 'i'
             const infoIcon = document.createElement('button');
@@ -207,7 +210,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 }
             };
 
-            // Dodawanie elementów do wiersza (Karty) w poprawnej kolejności
             item.appendChild(gameBtn);
             item.appendChild(checkbox);
             item.appendChild(label);
@@ -246,9 +248,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     let wasDragged = false; 
 
+    // Otwieranie panelu
     opener.onclick = (e) => { 
         if (wasDragged) return; 
-        panel.style.setProperty('display', 'flex', 'important');
+        panel.style.setProperty('display', 'block', 'important'); // Poprawiono z flex na block
         opener.style.setProperty('display', 'none', 'important'); 
     };
 
