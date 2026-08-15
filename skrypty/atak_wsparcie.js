@@ -28,7 +28,7 @@
                 }
             }).catch(() => {});
     }
-    setInterval(checkPing, 2000);
+    setInterval(checkPing, 1100);
 
     // --- STYL (CSS) ---
     const style = document.createElement('style');
@@ -103,12 +103,12 @@
     const buttonsHtml = `
         <div id="tw-pro-tools">
             <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify- content: space-between; align-items: center;">
-                <span>⚡TIMING TOOLS</span>
-                <span>PING: <span id="live-ping-val" style="color: #00ff00;">sprawdzam...</span></span>
+                <span>⚡</span>
+                <span>PING: <span id="live-ping-val" style="color: #00ff00;">...</span></span>
             </div>
             <table>
                 <tr>
-                    <td>Offset (Ping kor.):</td>
+                    <td>Offset:</td>
                     <td style="text-align: right;">
                         <input id="delayInput" class="shinko-input" value="${delayTime}" style="width:50px">
                         <a id="delayButton" class="shinko-btn">Zapisz</a>
