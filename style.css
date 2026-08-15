@@ -282,45 +282,7 @@
 #tw-global-tooltip {
     background-color: var(--bg-main) !important;
     color: var(--title-color) !important;
-    border: 1px solid var(--border-### 1. 📊 Ocena Ogólna
-
-Przedstawiona specyfikacja to solidny krok w stronę profesjonalnego i czytelnego interfejsu (UI) dla przeglądarki mobilnej. Zastąpienie pinezek automatycznym zapisywaniem pozycji w `localStorage` oraz użycie pozycjonowania `fixed` to świetna decyzja w kontekście urządzeń dotykowych – zapobiegnie to "gubieniu" panelu podczas dynamicznego przewijania mapy w Plemionach. Logika wskaźników (LED, obramówki, zmiana kolorystyki) znacząco poprawi User Experience (UX), dając graczowi natychmiastową informację zwrotną o stanie skryptów bez konieczności wczytywania się w tekst.
-
-### 2. 🐛 Zidentyfikowane Błędy (Koncepcyjne)
-
-Ponieważ dostarczyłeś wytyczne do przebudowy bez kodu źródłowego, zidentyfikowałem potencjalne pułapki w samej specyfikacji, które naprawiłem w implementacji:
-*   **Konflikt Zdarzeń Dotykowych i `fixed`:** Przeciąganie (drag) elementów z `position: fixed` na urządzeniach mobilnych czasami wywołuje przewijanie strony w tle. Wymaga to użycia `e.preventDefault()` na zdarzeniu `touchmove` dla obszaru chwytania (uchwytu), aby ruch był płynny.
-*   **Wydajność Tooltipów na Mobile:** Klasyczne tooltipy oparte na zdarzeniu `hover` (najechanie myszką) nie działają intuicyjnie na ekranach dotykowych (wymagają tapnięcia). Konieczna jest optymalizacja ich widoczności lub dostosowanie interakcji pod `touchstart`.
-
-### 3. 💡 Proponowane Rozwiązania
-
-*   **Pinezki i Panel (`localStorage` + `fixed`):** Stworzony został jeden, główny kontener (ikona), który funkcjonuje jako kotwica. Pozycja X i Y jest zapisywana w przeglądarce za każdym razem, gdy użytkownik skończy przesuwać element. Panel rozwija się w prawo od ikony głównej.
-*   **System Obramówek (Borders):** Dodano klasy `.script-on` i `.script-off`, które nadpisują kolor obramowania, zachowując oryginalne tło zdefiniowane w zmiennych.
-*   **Przyciski Kategorii:** Aktywne kategorie zyskały nowy, zielony gradient (dopasowany stylem 3D do bazowego `--btn-bg`), podczas gdy nieaktywne korzystają ze standardowego stylu.
-*   **Ikony Kontrolne:** Wprowadzono minimalistyczne, kwadratowe przyciski (np. `[ X ]`, `[ _ ]`). Ich kolor zmienia się dynamicznie (zielony/czerwony) zależnie od przypisanego stanu za pomocą modyfikatorów klas CSS.
-*   **Niestandardowe Tooltipy:** Wdrożono czysto CSS-owe tooltipy za pomocą atrybutów `data-tooltip`, które generują eleganckie chmurki z odpowiednim obramowaniem i responsywnym zachowaniem.
-
-### 4. 🧩 Ocena Logiki
-
-Logika wskaźnika LED (wygaszone = otwarte, świecące = zamknięte) została zastosowana na ikonie wywołującej. Domyślnie na telefonie przestrzeń robocza jest kluczowa. Mechanizm rozwijania panelu "w prawo" od punktu zakotwiczenia (ikony) sprawdza się dobrze, o ile ikona nie zostanie dosunięta do samej prawej krawędzi ekranu – dlatego w skrypcie zaimplementowałem prosty system sprawdzający granice ekranu (tzw. "boundary check"), aby panel nie wyszedł poza widoczny obszar roboczy (viewport).
-
-### 5. ⚡ Optymalizacje
-
-*   **Delegacja zdarzeń (Event Delegation):** Zamiast przypisywać nasłuchiwacze (`addEventListener`) do każdego przycisku kategorii z osobna, obsługa kliknięć jest zapięta na cały panel. To zmniejsza obciążenie pamięci, co na telefonach przyspiesza działanie gry.
-*   **Vanilla JS i CSS Variables:** Skrypt opiera się wyłącznie na zadeklarowanych wcześniej zmiennych korzenia (`:root`) i czystym JavaScript, nie wymagając żadnych zewnętrznych bibliotek i wymuszając renderowanie GPU podczas przesuwania (`transform` zamiast animacji `top`/`left`).
-
-### 6. ✅ Kod Poprawiony
-
-Poniżej znajduje się kompletny, gotowy do wdrożenia skrypt realizujący wszystkie założenia specyfikacji.
-
-```javascript
-// ==UserScript==
-// @name Panel Sterowania
-// @namespace [https://viayoo.com/](https://viayoo.com/)
-// @version 1.0
-// @description Zoptymalizowany interfejs UI/UX dla zarządzania skryptami z obsługą dotykową
-// @author TCM
-// ==/UserScript==
+    border: 1px solid var(--border-### 
 
 (function() {
     'use strict';
