@@ -1,20 +1,42 @@
+Przycisk w grze mi zjechał przez ui można dać je tak jakby wiersz niżej 
 // ==UserScript==
-// @name         Zarządca Skryptów UI
-// @version      1.1.1
-// @description  Ruchomy panel z zablokowaną poświatą i poprawnym rozmiarem ikony
+// @name         Atak/wsparcie (Shinko UI)
+// @version      1.0.0
+// @description  Zintegrowany system wysyłki w kompaktowym UI
 // @namespace    https://viayoo.com/
 // @author       TCM
-// @match        *://*.plemiona.pl/*
+// @include      https://*/game.php?*&screen=place&try=confirm
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Wstrzykiwanie stylów CSS
+    let inputMs, input, delay, arrRequest, attRequest;
+    let delayTime = parseInt(localStorage.delayTime) || 0;
+
+    // --- SEKCJA PINGU (LOGIKA) ---
+    function checkPing() {
+        const start = Date.now();
+        fetch('/game.php?screen=overview', { method: 'HEAD', cache: 'no-store' })
+            .then(() => {
+                const diff = Date.now() - start;
+                const pingDisplay = document.getElementById("live-ping-val");
+                if (pingDisplay) {
+                    // Wyświetlamy samą wartość liczbową, aby oszczędzić miejsce (np. "45" zamiast "45ms")
+                    pingDisplay.innerText = diff;
+                    pingDisplay.style.color = diff < 150 ? "#00ff00" : (diff < 250 ? "#ffff00" : "#ff4444");
+                }
+            }).catch(() => {});
+    }
+    setInterval(checkPing, 1100);
+
+    // --- STYL (CSS) ---
     const style = document.createElement('style');
-    style.innerHTML = `
+    style.textContent = `
         :root {
+            --ui-font-size: 12px; /* Zmniejszona bazowa czcionka dla małego UI */
+            
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
             --bg-header: #202225;
@@ -24,352 +46,176 @@
             
             --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-
-            --border-off: #f44336;
-            --border-on: #4caf50;
-            --btn-active-bg: linear-gradient(#66bb6a 0%, #4caf50 30%, #2e7d32 80%, #1b5e20 100%);
-            
-            --neon-green: #74ff00;
-            --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-            --neon-red: #ff003c;
-            --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
+            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+            --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
         }
 
-        /* RESET NIEBIESKIEJ POŚWIATY & ZAZNACZANIA */
-        #tcm-anchor, #tcm-anchor * {
-            -webkit-tap-highlight-color: transparent !important;
-            -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
-            outline: none !important;
-            box-sizing: border-box !important;
-            font-family: Verdana, Arial, sans-serif !important;
-            user-select: none !important;
+        #tw-pro-tools {
+            display: inline-block; /* To zapobiega rozciąganiu na całą szerokość ekranu */
+            min-width: 220px; /* Zapewnia zgrabny, prostokątny kształt */
+            background-color: var(--bg-main) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            font-family: Verdana, sans-serif !important;
+            border-radius: 4px !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
+            font-size: var(--ui-font-size) !important;
+            padding: 8px !important;
+            margin-top: 10px !important;
+            box-sizing: border-box;
         }
 
-        #tcm-anchor button:focus, 
-        #tcm-anchor button:active,
-        #tcm-anchor a:focus,
-        #tcm-anchor a:active {
-            outline: none !important;
-            -webkit-tap-highlight-color: transparent !important;
-        }
-
-        /* GŁÓWNY KONTENER - Blokada rozciągania */
-        #tcm-anchor {
-            position: fixed !important;
-            z-index: 999999 !important;
-            display: inline-flex !important;
-            align-items: flex-start !important;
-            touch-action: none !important;
-            width: auto !important;
-            height: auto !important;
-        }
-
-        /* IKONA OTWIERANIA - Sztywne wymiary */
-        #tcm-trigger-icon {
-            width: 40px !important;
-            height: 40px !important;
-            min-width: 40px !important;
-            min-height: 40px !important;
-            max-width: 40px !important;
-            max-height: 40px !important;
-            background: var(--bg-main) !important;
-            border: 2px solid var(--border-color) !important;
-            border-radius: 8px !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5) !important;
-            position: relative !important;
-            flex-shrink: 0 !important;
-            transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
-        }
-
-        /* LED Indicator */
-        #tcm-trigger-icon::after {
-            content: '' !important;
-            position: absolute !important;
-            top: -4px !important;
-            right: -4px !important;
-            width: 12px !important;
-            height: 12px !important;
-            border-radius: 50% !important;
-            background: #555 !important;
-            border: 1px solid #222 !important;
-            transition: all 0.3s ease !important;
-        }
-        #tcm-anchor.closed #tcm-trigger-icon::after {
-            background: var(--neon-green) !important;
-            box-shadow: var(--neon-glow) !important;
-            border-color: rgba(255,255,255,0.4) !important;
+        /* Ustawienie wierszy w technologii Flexbox */
+        .tw-row {
+            display: flex;
+            justify-content: space-between; /* Rozsuwa elementy na boki */
+            align-items: center; /* Wyśrodkowuje w pionie */
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        #tcm-anchor.closed #tcm-trigger-icon {
-            border-color: var(--neon-green) !important;
+        .tw-row-no-border {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-top: 6px;
+            gap: 5px; /* Odstęp między przyciskami na dole */
         }
 
-        /* Główny Panel */
-        #tcm-panel {
-            background: var(--bg-main) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 4px !important;
-            padding: 10px !important;
-            margin-left: 10px !important;
-            width: 280px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-        }
-        #tcm-anchor.closed #tcm-panel {
-            display: none !important;
-        }
-
-        /* Górny pasek */
-        .tcm-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            background: var(--bg-header) !important;
-            padding: 5px !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            border-radius: 3px !important;
-        }
-
-        .tcm-controls {
-            display: flex !important;
-            gap: 5px !important;
-        }
-
-        .tcm-sq-btn {
-            width: 24px !important;
-            height: 24px !important;
+        .shinko-btn {
             background: var(--btn-bg) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
+            border-radius: 3px !important;
+            cursor: pointer !important;
             font-weight: bold !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            cursor: pointer !important;
-            border-radius: 3px !important;
+            padding: 4px 6px !important;
+            text-shadow: 1px 1px 2px black;
+            font-size: var(--ui-font-size) !important;
+            display: inline-block;
+            text-decoration: none !important;
+            text-align: center;
+            box-sizing: border-box;
         }
-        .tcm-sq-btn:hover { background: var(--btn-hover) !important; }
-        .tcm-sq-btn.close { color: var(--neon-red) !important; text-shadow: 0 0 3px rgba(255,0,60,0.5) !important; border-color: var(--neon-red) !important; }
-        .tcm-sq-btn.min { color: var(--neon-green) !important; text-shadow: 0 0 3px rgba(116,255,0,0.5) !important; border-color: var(--neon-green) !important; }
 
-        /* Przyciski skryptów */
-        .tcm-script-btn {
-            background: var(--btn-bg) !important;
+        .shinko-btn:hover {
+            background: var(--btn-hover) !important;
+            color: #ffffff !important;
+        }
+
+        .shinko-input {
+            background-color: var(--bg-header) !important;
+            border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
-            padding: 8px !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 4px !important;
-            cursor: pointer !important;
-            text-align: center !important;
-            font-weight: bold !important;
-            margin-bottom: 5px !important;
-        }
-        .tcm-script-btn.off { border: 2px solid var(--neon-red) !important; box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1) !important; }
-        .tcm-script-btn.on { border: 2px solid var(--neon-green) !important; box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1) !important; }
-
-        /* Przyciski kategorii */
-        .tcm-category-btn {
-            background: var(--btn-bg) !important;
-            color: var(--text-color) !important;
-            padding: 6px !important;
-            border: 1px solid var(--border-color) !important;
-            cursor: pointer !important;
-            flex: 1 !important;
-            text-align: center !important;
             border-radius: 3px !important;
-        }
-        .tcm-category-btn.active {
-            background: var(--btn-active-bg) !important;
-            border-color: var(--neon-green) !important;
-            color: var(--title-color) !important;
-            box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
+            padding: 3px !important;
+            font-size: var(--ui-font-size) !important;
+            text-align: center;
+            box-sizing: border-box;
         }
 
-        .tcm-categories { display: flex !important; gap: 5px !important; margin-bottom: 5px !important; }
-
-        /* Tooltips */
-        [data-tooltip] { position: relative !important; }
-        [data-tooltip]::before {
-            content: attr(data-tooltip) !important;
-            position: absolute !important;
-            bottom: 110% !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
-            color: var(--title-color) !important;
-            padding: 6px 10px !important;
-            font-size: 11px !important;
-            white-space: nowrap !important;
-            border-radius: 4px !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: opacity 0.2s !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
-            z-index: 2147483647 !important; 
+        .ping-box {
+            font-weight: bold;
+            font-size: 0.9em;
         }
-        [data-tooltip]:hover::before, [data-tooltip]:active::before { opacity: 1 !important; }
     `;
     document.head.appendChild(style);
 
-    // Struktura DOM
-    const anchor = document.createElement('div');
-    anchor.id = 'tcm-anchor';
-    
-    // Panel domyślnie zamknięty
-    anchor.classList.add('closed');
-
-    // Wczytanie pozycji z localStorage
-    const savedPos = JSON.parse(localStorage.getItem('tcm_panel_pos')) || { top: '50px', left: '50px' };
-    anchor.style.top = savedPos.top;
-    anchor.style.left = savedPos.left;
-
-    anchor.innerHTML = `
-        <div id="tcm-trigger-icon" data-tooltip="Przeciągnij lub kliknij">🛠️</div>
-        <div id="tcm-panel">
-            <div class="tcm-header">
-                <span style="color: var(--title-color); font-weight: bold;">Zarządca Skryptów</span>
-                <div class="tcm-controls">
-                    <div class="tcm-sq-btn min" data-tooltip="Minimalizuj panel">_</div>
-                    <div class="tcm-sq-btn close" data-tooltip="Zamknij całkowicie">X</div>
+    // --- INTERFEJS (HTML) ---
+    // Zbudowany dokładnie według Twojego schematu
+    const buttonsHtml = `
+        <div id="tw-pro-tools">
+            <!-- Wiersz 1: OFFSET [Ping] [Input] [Zapisz] -->
+            <div class="tw-row">
+                <span style="font-weight: bold;">OFFSET</span>
+                <span class="ping-box">[<span id="live-ping-val" style="color: #00ff00;">...</span>ms]</span>
+                <div style="display: flex; gap: 3px;">
+                    <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 40px;">
+                    <a id="delayButton" class="shinko-btn" title="Zapisz">💾</a>
                 </div>
             </div>
-
-            <div class="tcm-categories">
-                <div class="tcm-category-btn active" data-target="cat1">Zbierak</div>
-                <div class="tcm-category-btn" data-target="cat2">Kalkulator Wojsko</div>
+            
+            <!-- Wiersz 2: czas wejścia - xxxxx -->
+            <div class="tw-row">
+                <span>Wejście - </span>
+                <span id="showArrTime" style="font-weight: bold; color: var(--title-color);">-</span>
             </div>
-
-            <div id="cat1" class="tcm-script-list">
-                <div class="tcm-script-btn on" data-tooltip="Skrypt aktywny">Auto Zbieranie A</div>
-                <div class="tcm-script-btn off" data-tooltip="Skrypt wstrzymany">Szablony Zbieraka</div>
+            
+            <!-- Wiersz 3: czas wyjścia - xxxxx -->
+            <div class="tw-row">
+                <span>Wysyłka - </span>
+                <span id="showSendTime" style="font-weight: bold; color: var(--title-color);">-</span>
+            </div>
+            
+            <!-- Wiersz 4: [btn] [btn] -->
+            <div class="tw-row tw-row-no-border">
+                <a id="arrTime" class="shinko-btn" style="flex: 1;">Dotarcie</a>
+                <a id="sendTime" class="shinko-btn" style="flex: 1;">Wysyłka</a>
             </div>
         </div>
     `;
-    document.body.appendChild(anchor);
 
-    // --- LOGIKA UI --- //
-    const triggerIcon = document.getElementById('tcm-trigger-icon');
-    const minBtn = anchor.querySelector('.tcm-sq-btn.min');
-    const closeBtn = anchor.querySelector('.tcm-sq-btn.close');
+    document.getElementById("troop_confirm_submit").insertAdjacentHTML("afterend", buttonsHtml);
 
-    let lastToggleTime = 0;
-
-    function togglePanel(e) {
-        if (e) {
-            e.stopPropagation();
-            e.preventDefault();
-        }
-        
-        const now = Date.now();
-        if (now - lastToggleTime < 300) return; 
-        if (hasDragged) return;
-
-        lastToggleTime = now;
-        anchor.classList.toggle('closed');
+    // --- LOGIKA CZASU ---
+    function toMs(t) {
+        const [h, m, s] = t.split(":").map(Number);
+        return ((h * 3600) + (m * 60) + s) * 1000;
     }
 
-    triggerIcon.addEventListener('click', togglePanel);
-    triggerIcon.addEventListener('touchend', function(e) {
-        if(!hasDragged) { togglePanel(e); }
-    });
-    
-    minBtn.addEventListener('click', togglePanel);
-    closeBtn.addEventListener('click', () => anchor.remove());
-
-    const panel = document.getElementById('tcm-panel');
-    panel.addEventListener('click', (e) => {
-        if (e.target.classList.contains('tcm-category-btn')) {
-            panel.querySelectorAll('.tcm-category-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
+    function setArrivalTime() {
+        const targetMs = toMs(input);
+        function check() {
+            let arrivalText = document.querySelector(".relative_time").textContent;
+            let nowMs = toMs(arrivalText.slice(-8));
+            if (nowMs >= targetMs) {
+                cancelAnimationFrame(arrRequest);
+                setTimeout(() => document.getElementById("troop_confirm_submit").click(), delay);
+            } else { arrRequest = requestAnimationFrame(check); }
         }
-
-        if (e.target.classList.contains('tcm-script-btn')) {
-            if (e.target.classList.contains('on')) {
-                e.target.classList.replace('on', 'off');
-                e.target.setAttribute('data-tooltip', 'Skrypt wyłączony');
-            } else {
-                e.target.classList.replace('off', 'on');
-                e.target.setAttribute('data-tooltip', 'Skrypt włączony');
-            }
-        }
-    });
-
-    // --- LOGIKA PRZECIĄGANIA (DRAG & DROP) --- //
-    let isDragging = false;
-    let hasDragged = false;
-    let startX, startY, initialLeft, initialTop;
-
-    function dragStart(e) {
-        if (e.target !== triggerIcon && !e.target.closest('.tcm-header')) return;
-        
-        isDragging = true;
-        hasDragged = false;
-
-        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-
-        startX = clientX;
-        startY = clientY;
-
-        const rect = anchor.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
+        arrRequest = requestAnimationFrame(check);
     }
 
-    function drag(e) {
-        if (!isDragging) return;
-
-        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-            hasDragged = true;
+    function setSendTime() {
+        const targetMs = toMs(input);
+        function check() {
+            const now = Timing.getCurrentServerTime();
+            const date = new Date(now);
+            const nowMs = (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) * 1000;
+            if (nowMs >= targetMs) {
+                cancelAnimationFrame(attRequest);
+                setTimeout(() => document.getElementById("troop_confirm_submit").click(), delay);
+            } else { attRequest = requestAnimationFrame(check); }
         }
-
-        if (!hasDragged) return;
-
-        e.preventDefault();
-
-        let newLeft = initialLeft + dx;
-        let newTop = initialTop + dy;
-
-        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - 40));
-        newTop = Math.max(0, Math.min(newTop, window.innerHeight - 40));
-
-        anchor.style.left = `${newLeft}px`;
-        anchor.style.top = `${newTop}px`;
+        attRequest = requestAnimationFrame(check);
     }
 
-    function dragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
+    // --- OBSŁUGA PRZYCISKÓW ---
+    document.getElementById("arrTime").onclick = function () {
+        cancelAnimationFrame(attRequest);
+        input = prompt("Godzina (HH:MM:SS)", document.querySelector(".relative_time").textContent.slice(-8));
+        inputMs = parseInt(prompt("Milisekundy (0–999)", "000"));
+        delay = delayTime + inputMs;
+        document.getElementById("showArrTime").innerText = input + ":" + inputMs.toString().padStart(3, "0");
+        setArrivalTime();
+    };
 
-        if (hasDragged) {
-            localStorage.setItem('tcm_panel_pos', JSON.stringify({
-                top: anchor.style.top,
-                left: anchor.style.left
-            }));
-        }
-        
-        setTimeout(() => { hasDragged = false; }, 50);
-    }
+    document.getElementById("sendTime").onclick = function () {
+        cancelAnimationFrame(arrRequest);
+        input = prompt("Godzina (HH:MM:SS)", document.getElementById("serverTime").textContent);
+        inputMs = parseInt(prompt("Milisekundy (0–999)", "000"));
+        delay = delayTime + inputMs;
+        document.getElementById("showSendTime").innerText = input + ":" + inputMs.toString().padStart(3, "0");
+        setSendTime();
+    };
 
-    anchor.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
-    anchor.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
+    document.getElementById("delayButton").onclick = function () {
+        delayTime = parseInt(document.getElementById("delayInput").value) || 0;
+        localStorage.delayTime = JSON.stringify(delayTime);
+        alert("Zapisano Offset: " + delayTime);
+    };
 
 })();
