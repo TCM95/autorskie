@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name        Atak/wsparcie (Shinko UI)
+// @name         Atak/wsparcie (Shinko UI)
 // @version      1.0.0
 // @description  Zintegrowany system wysyłki
 // @namespace    https://viayoo.com/
-// @author       tcm
+// @author       TCM
 // @include      https://*/game.php?*&screen=place&try=confirm
 // @grant        none
 // ==/UserScript==
@@ -23,7 +23,6 @@
                 const pingDisplay = document.getElementById("live-ping-val");
                 if (pingDisplay) {
                     pingDisplay.innerText = diff + "ms";
-                    // Kolorowanie pingu dla szybkiej oceny
                     pingDisplay.style.color = diff < 150 ? "#00ff00" : (diff < 250 ? "#ffff00" : "#ff4444");
                 }
             }).catch(() => {});
@@ -34,14 +33,24 @@
     const style = document.createElement('style');
     style.textContent = `
         :root {
+            /* ZMIEŃ TĘ WARTOŚĆ ABY POWIĘKSZYĆ/POMNIEJSZYĆ CAŁE UI */
+            --ui-font-size: 14px; 
+            
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
             --bg-header: #202225;
             --border-color: #3e4147;
             --text-color: white;
             --title-color: #ffffdf;
+            
             --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+            --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
         }
 
         #tw-pro-tools {
@@ -51,9 +60,11 @@
             font-family: Verdana, sans-serif !important;
             border-radius: 4px !important;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-            font-size: 11px !important;
-            padding: 10px !important;
+            font-size: var(--ui-font-size) !important; /* <--- Użycie zmiennej wielkości */
+            padding: 1em !important;
             margin-top: 10px !important;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         #tw-pro-tools table {
@@ -63,9 +74,10 @@
         }
 
         #tw-pro-tools td {
-            padding: 4px 6px;
+            padding: 0.5em;
             color: var(--text-color);
             border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
         }
 
         .shinko-btn {
@@ -75,11 +87,12 @@
             border-radius: 3px !important;
             cursor: pointer !important;
             font-weight: bold !important;
-            padding: 4px 8px !important;
+            padding: 0.5em 1em !important; /* <--- Użycie em (skaluje się z czcionką) */
             text-shadow: 1px 1px 2px black;
-            font-size: 11px !important;
+            font-size: var(--ui-font-size) !important;
             display: inline-block;
             text-decoration: none !important;
+            box-sizing: border-box;
         }
 
         .shinko-btn:hover {
@@ -92,9 +105,10 @@
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
             border-radius: 3px !important;
-            padding: 3px 5px !important;
-            font-size: 11px !important;
+            padding: 0.4em !important;
+            font-size: var(--ui-font-size) !important;
             text-align: center;
+            box-sizing: border-box;
         }
     `;
     document.head.appendChild(style);
@@ -102,15 +116,15 @@
     // --- INTERFEJS (HTML) ---
     const buttonsHtml = `
         <div id="tw-pro-tools">
-            <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify- content: space-between; align-items: center;">
+            <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify-content: space-between; align-items: center;">
                 <span>⚡</span>
-                <span>PING: <span id="live-ping-val" style="color: #00ff00;">...</span></span>
+                <span><span id="live-ping-val" style="color: #00ff00;">...</span></span>
             </div>
             <table>
                 <tr>
                     <td>Offset:</td>
-                    <td style="text-align: right;">
-                        <input id="delayInput" class="shinko-input" value="${delayTime}" style="width:50px">
+                    <td style="text-align: right; display: flex; gap: 5px; justify-content: flex-end;">
+                        <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 4em;">
                         <a id="delayButton" class="shinko-btn">Zapisz</a>
                     </td>
                 </tr>
