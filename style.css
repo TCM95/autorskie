@@ -1,288 +1,12 @@
-:root {
-    --bg-main: #36393f;
-    --bg-row-alt: #32353b;
-    --bg-header: #202225;
-    --border-color: #3e4147;
-    --text-color: white;
-    --title-color: #ffffdf;
-    
-    /* Standardowe szare tło 3D */
-    --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-    --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-    
-    /* ZIELONE tło 3D dla aktywnych kategorii */
-    --btn-bg-green: linear-gradient(#5da832 0%, #3d781b 30%, #224a0d 80%, black 100%);
-
-    --neon-green: #74ff00;
-    --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-    
-    --neon-red: #ff003c;
-    --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
-}
-
-#tw-script-panel *, 
-#tw-panel-opener *,
-#tw-global-tooltip * {
-    box-sizing: border-box !important;
-    font-family: Verdana, Arial, sans-serif !important;
-    color: var(--text-color) !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-}
-
-/* =========================================================
-   IKONA (OPENER) - STAN LED
-========================================================= */
-#tw-panel-opener {
-    position: absolute !important;
-    z-index: 999999 !important;
-    cursor: pointer !important;
-    width: 50px !important;
-    height: 50px !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    background-image: var(--btn-bg) !important;
-    border-radius: 50% !important;
-    user-select: none !important;
-    touch-action: none !important;
-    padding: 0 !important;
-    overflow: hidden !important;
-    transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
-}
-
-/* Panel ZAMKNIĘTY = LED zaświecony (zielony) */
-.tw-opener-closed {
-    border: 2px solid var(--neon-green) !important;
-    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
-    animation: neon-pulse 2s infinite alternate ease-in-out !important;
-}
-
-/* Panel OTWARTY = LED wygaszony (ciemnoszary) */
-.tw-opener-open {
-    border: 2px solid var(--border-color) !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
-    animation: none !important;
-    filter: brightness(0.7) !important; /* Dodatkowe zgaszenie ikony */
-}
-
-@keyframes neon-pulse {
-    0% { box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8); }
-    100% { box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8); }
-}
-
-#tw-panel-opener img {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 50px !important;
-    max-height: 50px !important;
-    object-fit: contain !important;
-    pointer-events: none !important;
-}
-
-/* =========================================================
-   PANEL I KATEGORIE
-========================================================= */
-#tw-script-panel {
-    position: absolute !important;
-    z-index: 999998 !important;
-    width: 140px !important;
-    background-color: var(--bg-main) !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-    display: none;
-    flex-direction: column !important;
-}
-
-#tw-categories-bar {
-    display: flex !important;
-    flex-direction: column !important;
-    padding: 4px !important;
-    gap: 4px !important;
-    background-color: var(--bg-main) !important;
-}
-
-#tw-content-area {
-    display: none;
-    position: absolute !important;
-    top: -2px !important;
-    left: 100% !important;
-    margin-left: 5px !important;
-    width: 270px !important;
-    background-color: var(--bg-row-alt) !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: 4px !important;
-    box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
-    z-index: 999997 !important;
-}
-
-.tw-content-inner {
-    max-height: 280px !important;
-    overflow-y: auto !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 6px !important;
-    padding: 6px !important;
-    background-color: var(--bg-row-alt) !important;
-}
-
-/* =========================================================
-   ZAKŁADKI KATEGORII
-========================================================= */
-.tw-tab {
-    background-image: var(--btn-bg) !important;
-    color: var(--text-color) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 3px !important;
-    cursor: pointer !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    padding: 5px !important;
-    text-align: center !important;
-    display: block !important;
-    width: 100% !important;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-    transition: 0.15s !important;
-}
-
-.tw-tab:hover {
-    background-image: var(--btn-hover) !important;
-}
-
-/* Aktywna kategoria (Cała zielona z zachowaniem 3D) */
-.tw-tab.active-tab {
-    background-image: var(--btn-bg-green) !important;
-    border-color: var(--neon-green) !important;
-    color: var(--title-color) !important;
-    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
-    box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
-}
-
-/* =========================================================
-   SKRYPTY I OBRAMÓWKI STANÓW
-========================================================= */
-.tw-script-item {
-    background-color: var(--bg-main) !important;
-    border-radius: 3px !important;
-    padding: 5px 8px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
-}
-
-/* Skrypt wyłączony */
-.tw-item-off {
-    border: 1px solid var(--neon-red) !important;
-    box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1) !important;
-}
-
-/* Skrypt włączony */
-.tw-item-on {
-    border: 1px solid var(--neon-green) !important;
-    box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1) !important;
-}
-
-/* =========================================================
-   KWADRATOWE IKONY AKCJI (Header & Informacje)
-========================================================= */
-.tw-square-btn {
-    background-image: var(--btn-bg) !important;
-    border-radius: 3px !important;
-    cursor: pointer !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 20px !important;
-    height: 20px !important;
-    padding: 0 !important;
-    margin-left: 4px !important;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-.tw-square-btn:hover {
-    background-image: var(--btn-hover) !important;
-}
-
-.tw-btn-active {
-    color: var(--neon-green) !important; 
-    border: 1px solid var(--neon-green) !important;
-    box-shadow: var(--neon-glow) !important;
-}
-
-.tw-btn-inactive {
-    color: var(--neon-red) !important; 
-    border: 1px solid var(--neon-red) !important;
-    box-shadow: var(--neon-red-glow) !important;
-}
-
-/* =========================================================
-   POZOSTAŁE ELEMENTY
-========================================================= */
-#tw-script-panel-header {
-    background-color: var(--bg-header) !important;
-    color: var(--title-color) !important;
-    padding: 8px !important;
-    font-weight: bold !important;
-    font-size: 12px !important;
-    border-bottom: 2px solid var(--border-color) !important;
-    user-select: none !important;
-    text-align: center !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-}
-
-.tw-game-btn {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    cursor: pointer !important;
-    flex-grow: 1 !important;
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    text-align: left !important;
-}
-
-.tw-script-name {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    color: var(--title-color) !important;
-}
-
-.tw-status-icon {
-    width: 10px !important;
-    height: 10px !important;
-    border-radius: 50% !important;
-    flex-shrink: 0 !important;
-    display: inline-block !important;
-}
-
-.tw-status-on { 
-    background: var(--neon-green) !important; 
-    box-shadow: var(--neon-glow) !important; 
-    border: 1px solid rgba(255,255,255,0.4) !important;
-}
-
-.tw-status-off { 
-    background: var(--neon-red) !important; 
-    box-shadow: var(--neon-red-glow) !important;
-    border: 1px solid rgba(255,255,255,0.4) !important;
-}
-
-/* Tooltip - Obramówka modyfikowana w JS */
-#tw-global-tooltip {
-    background-color: var(--bg-main) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--border-### 
+// ==UserScript==
+// @name         Zarządca Skryptów UI
+// @version      1.1.0
+// @description  Ruchomy panel z zablokowaną poświatą i poprawnym klikaniem
+// @namespace    https://viayoo.com/
+// @author       TCM
+// @match        *://*.plemiona.pl/*
+// @grant        none
+// ==/UserScript==
 
 (function() {
     'use strict';
@@ -297,13 +21,38 @@
             --border-color: #3e4147;
             --text-color: white;
             --title-color: #ffffdf;
+            
             --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-            
-            /* Dodatkowe zmienne dla nowych wymagań */
+
             --border-off: #f44336;
             --border-on: #4caf50;
             --btn-active-bg: linear-gradient(#66bb6a 0%, #4caf50 30%, #2e7d32 80%, #1b5e20 100%);
+            
+            --neon-green: #74ff00;
+            --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
+            --neon-red: #ff003c;
+            --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
+        }
+
+        /* ---------------------------------------------------------
+           AGRESYWNY RESET NIEBIESKIEJ POŚWIATY & ZAZNACZANIA
+        --------------------------------------------------------- */
+        #tcm-anchor, #tcm-anchor * {
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+            outline: none !important;
+            box-sizing: border-box !important;
+            font-family: Verdana, Arial, sans-serif !important;
+            user-select: none !important;
+        }
+
+        #tcm-anchor button:focus, 
+        #tcm-anchor button:active,
+        #tcm-anchor a:focus,
+        #tcm-anchor a:active {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
 
         /* Ikona główna i pozycjonowanie */
@@ -312,7 +61,7 @@
             z-index: 99999;
             display: flex;
             align-items: flex-start;
-            touch-action: none; /* Zapobiega scrollowaniu przy przeciąganiu */
+            touch-action: none;
         }
 
         #tcm-trigger-icon {
@@ -327,9 +76,10 @@
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.5);
             position: relative;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
         }
 
-        /* LED Indicator */
+        /* LED Indicator - Panel zamknięty = Zaświecony */
         #tcm-trigger-icon::after {
             content: '';
             position: absolute;
@@ -338,13 +88,18 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #555; /* Wygaszone (Panel otwarty) */
+            background: #555;
             border: 1px solid #222;
             transition: all 0.3s ease;
         }
         #tcm-anchor.closed #tcm-trigger-icon::after {
-            background: var(--border-on); /* Zaświecone (Panel zamknięty) */
-            box-shadow: 0 0 8px var(--border-on);
+            background: var(--neon-green);
+            box-shadow: var(--neon-glow);
+            border-color: rgba(255,255,255,0.4);
+        }
+        
+        #tcm-anchor.closed #tcm-trigger-icon {
+            border-color: var(--neon-green);
         }
 
         /* Główny Panel */
@@ -373,8 +128,9 @@
             background: var(--bg-header);
             padding: 5px;
             border-bottom: 1px solid var(--border-color);
+            border-radius: 3px;
         }
-        
+
         .tcm-controls {
             display: flex;
             gap: 5px;
@@ -391,10 +147,11 @@
             justify-content: center;
             align-items: center;
             cursor: pointer;
+            border-radius: 3px;
         }
         .tcm-sq-btn:hover { background: var(--btn-hover); }
-        .tcm-sq-btn.close { color: var(--border-off); text-shadow: 0 0 3px rgba(244,67,54,0.5); }
-        .tcm-sq-btn.min { color: var(--border-on); text-shadow: 0 0 3px rgba(76,175,80,0.5); }
+        .tcm-sq-btn.close { color: var(--neon-red); text-shadow: 0 0 3px rgba(255,0,60,0.5); border-color: var(--neon-red); }
+        .tcm-sq-btn.min { color: var(--neon-green); text-shadow: 0 0 3px rgba(116,255,0,0.5); border-color: var(--neon-green); }
 
         /* Przyciski skryptów (Obramówki) */
         .tcm-script-btn {
@@ -406,10 +163,11 @@
             cursor: pointer;
             text-align: center;
             font-weight: bold;
+            margin-bottom: 5px;
         }
-        .tcm-script-btn.off { border: 2px solid var(--border-off); }
-        .tcm-script-btn.on { border: 2px solid var(--border-on); }
-        
+        .tcm-script-btn.off { border: 2px solid var(--neon-red); box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1); }
+        .tcm-script-btn.on { border: 2px solid var(--neon-green); box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1); }
+
         /* Przyciski kategorii */
         .tcm-category-btn {
             background: var(--btn-bg);
@@ -419,27 +177,28 @@
             cursor: pointer;
             flex: 1;
             text-align: center;
+            border-radius: 3px;
         }
         .tcm-category-btn.active {
             background: var(--btn-active-bg);
-            border-color: var(--border-on);
+            border-color: var(--neon-green);
+            color: var(--title-color);
+            box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3);
         }
-        
-        .tcm-categories { display: flex; gap: 5px; }
+
+        .tcm-categories { display: flex; gap: 5px; margin-bottom: 5px; }
 
         /* Tooltips */
-        [data-tooltip] {
-            position: relative;
-        }
+        [data-tooltip] { position: relative; }
         [data-tooltip]::before {
             content: attr(data-tooltip);
             position: absolute;
             bottom: 110%;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--bg-header);
+            background: linear-gradient(145deg, #36393f 0%, #202225 100%);
             color: var(--title-color);
-            padding: 4px 8px;
+            padding: 6px 10px;
             font-size: 11px;
             white-space: nowrap;
             border-radius: 4px;
@@ -447,13 +206,12 @@
             pointer-events: none;
             transition: opacity 0.2s;
             border: 1px solid var(--border-color);
-            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.9);
+            z-index: 2147483647; 
         }
-        [data-tooltip]:hover::before, [data-tooltip]:active::before {
-            opacity: 1;
-        }
-        [data-tooltip].off::before { border-color: var(--border-off); color: #ff8a80; }
-        [data-tooltip].on::before { border-color: var(--border-on); color: #b9f6ca; }
+        [data-tooltip]:hover::before, [data-tooltip]:active::before { opacity: 1; }
+        [data-tooltip].off::before { border-color: var(--neon-red); color: #ff8a80; }
+        [data-tooltip].on::before { border-color: var(--neon-green); color: #b9f6ca; }
     `;
     document.head.appendChild(style);
 
@@ -461,12 +219,14 @@
     const anchor = document.createElement('div');
     anchor.id = 'tcm-anchor';
     
+    // Panel domyślnie zamknięty
+    anchor.classList.add('closed');
+
     // Wczytanie pozycji z localStorage
     const savedPos = JSON.parse(localStorage.getItem('tcm_panel_pos')) || { top: '50px', left: '50px' };
     anchor.style.top = savedPos.top;
     anchor.style.left = savedPos.left;
-    
-    // Domyślnie panel otwarty
+
     anchor.innerHTML = `
         <div id="tcm-trigger-icon" data-tooltip="Przeciągnij lub kliknij" class="on">🛠️</div>
         <div id="tcm-panel">
@@ -477,12 +237,12 @@
                     <div class="tcm-sq-btn close" data-tooltip="Zamknij całkowicie" class="off">X</div>
                 </div>
             </div>
-            
+
             <div class="tcm-categories">
                 <div class="tcm-category-btn active" data-target="cat1">Zbierak</div>
                 <div class="tcm-category-btn" data-target="cat2">Kalkulator Wojsko</div>
             </div>
-            
+
             <div id="cat1" class="tcm-script-list">
                 <div class="tcm-script-btn on" data-tooltip="Skrypt aktywny" class="on">Auto Zbieranie A</div>
                 <div class="tcm-script-btn off" data-tooltip="Skrypt wstrzymany" class="off">Szablony Zbieraka</div>
@@ -496,57 +256,71 @@
     const minBtn = anchor.querySelector('.tcm-sq-btn.min');
     const closeBtn = anchor.querySelector('.tcm-sq-btn.close');
 
-    // Toggle Panel
-    function togglePanel() {
+    let lastToggleTime = 0;
+
+    // Funkcja otwierania / zamykania z blokadą (Debounce + sprawdzenie Drag)
+    function togglePanel(e) {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault(); // Blokuje domyślne zachowanie na dotyk
+        }
+        
+        // Zabezpieczenie przed podwójnym kliknięciem (Ghost click mobile)
+        const now = Date.now();
+        if (now - lastToggleTime < 300) return; 
+        
+        if (hasDragged) return; // Jeśli wykonano ruch panelem, nie przełączaj!
+
+        lastToggleTime = now;
         anchor.classList.toggle('closed');
     }
-    
-    // Minimalizuj
+
+    // Eventy nasłuchujące przełączania (podłączamy click i touchend dla pewności)
     triggerIcon.addEventListener('click', togglePanel);
-    minBtn.addEventListener('click', togglePanel);
+    triggerIcon.addEventListener('touchend', function(e) {
+        if(!hasDragged) { togglePanel(e); }
+    });
     
-    // Zamknij
+    minBtn.addEventListener('click', togglePanel);
     closeBtn.addEventListener('click', () => anchor.remove());
 
     // Obsługa kategorii (Event Delegation)
     const panel = document.getElementById('tcm-panel');
     panel.addEventListener('click', (e) => {
         if (e.target.classList.contains('tcm-category-btn')) {
-            // Reset stylów
             panel.querySelectorAll('.tcm-category-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
-            
-            // Tutaj można dodać logikę przełączania widoczności list skryptów
         }
-        
-        // Zmiana stanu skryptu On/Off
+
         if (e.target.classList.contains('tcm-script-btn')) {
             if (e.target.classList.contains('on')) {
                 e.target.classList.replace('on', 'off');
                 e.target.setAttribute('data-tooltip', 'Skrypt wyłączony');
-                e.target.className += ' off'; // Aktualizacja tooltopa
             } else {
                 e.target.classList.replace('off', 'on');
                 e.target.setAttribute('data-tooltip', 'Skrypt włączony');
-                e.target.className += ' on';
             }
         }
     });
 
-    // --- LOGIKA PRZECIĄGANIA (DRAG & DROP - TOUCH / MOUSE) --- //
+    // --- LOGIKA PRZECIĄGANIA (DRAG & DROP) --- //
     let isDragging = false;
+    let hasDragged = false;
     let startX, startY, initialLeft, initialTop;
 
     function dragStart(e) {
+        // Zezwól na przeciąganie łapiąc za ikonę lub górny pasek
         if (e.target !== triggerIcon && !e.target.closest('.tcm-header')) return;
-        isDragging = true;
         
+        isDragging = true;
+        hasDragged = false; // Resetujemy stan ruchu
+
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        
+
         startX = clientX;
         startY = clientY;
-        
+
         const rect = anchor.getBoundingClientRect();
         initialLeft = rect.left;
         initialTop = rect.top;
@@ -554,18 +328,26 @@
 
     function drag(e) {
         if (!isDragging) return;
-        e.preventDefault(); // Blokada scrollowania strony podczas dragu (kluczowe na mobile)
-        
+
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-        
+
         const dx = clientX - startX;
         const dy = clientY - startY;
-        
-        // Boundary Check (zabezpieczenie przed wyrzuceniem poza ekran)
+
+        // Próg tolerancji: 5 pikseli ruchu odróżnia przeciągnięcie od zwykłego kliknięcia/drżenia
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            hasDragged = true;
+        }
+
+        // Jeśli to tylko drżenie palca (hasDragged === false), nie psujemy przewijania ekranu
+        if (!hasDragged) return;
+
+        e.preventDefault(); // Blokujemy przewijanie strony gry w trakcie noszenia UI
+
         let newLeft = initialLeft + dx;
         let newTop = initialTop + dy;
-        
+
         newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - 40));
         newTop = Math.max(0, Math.min(newTop, window.innerHeight - 40));
 
@@ -576,68 +358,27 @@
     function dragEnd() {
         if (!isDragging) return;
         isDragging = false;
+
+        // Zapis tylko, jeżeli fizycznie zmieniono pozycję
+        if (hasDragged) {
+            localStorage.setItem('tcm_panel_pos', JSON.stringify({
+                top: anchor.style.top,
+                left: anchor.style.left
+            }));
+        }
         
-        // Zapis do localStorage
-        localStorage.setItem('tcm_panel_pos', JSON.stringify({
-            top: anchor.style.top,
-            left: anchor.style.left
-        }));
+        // Zresetowanie hasDragged po 50ms zapobiega kliknięciu "w tle" przy puszczeniu palca
+        setTimeout(() => { hasDragged = false; }, 50);
     }
 
     // Eventy Mouse
     anchor.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
-    
+
     // Eventy Touch (Mobile)
     anchor.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
-/* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY (Tap Highlight) */
-#tw-script-panel button, 
-#tw-panel-opener,
-#tw-script-panel a,
-.tw-tab,
-.tw-square-btn {
-    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
-    -webkit-tap-highlight-color: transparent !important;
-    outline: none !important;
-}
-
-#tw-script-panel button:focus, 
-#tw-script-panel button:active, 
-#tw-panel-opener:focus,
-#tw-panel-opener:active {
-    outline: none !important;
-    -webkit-tap-highlight-color: transparent !important;
-}
-
-/* POPRAWA TOOLTIPA - DODANO MAX Z-INDEX */
-#tw-global-tooltip {
-    background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
-    color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important;
-    border-radius: 6px !important;
-    padding: 10px 12px !important;
-    width: 220px !important;
-    font-size: 11px !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
-    /* Maksymalna wartość Z-index wymuszająca bycie na samym wierzchu */
-    z-index: 2147483647 !important; 
-    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
-}
-
-/* Wstępne ustawienia dla dzwonka (gdy nie ma aktywnego przypisanego skryptu to jest szary) */
-.tw-bell-btn {
-    color: #ffd700 !important; /* Złoty kolor dzwonka */
-    border: 1px solid var(--border-color) !important;
-    font-size: 13px !important;
-}
-
-/* Gdy skrypt powiadomień zostanie aktywowany, wystarczy dodać klasę tw-btn-active za pomocą JS */
-.tw-bell-btn.tw-btn-active {
-    border-color: var(--neon-green) !important;
-    box-shadow: var(--neon-glow) !important;
-}
 
 })();
