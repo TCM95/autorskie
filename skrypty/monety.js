@@ -78,7 +78,7 @@
                 const actionUrl = typ === 'start' ? 'start_auto_minting_session' : 'stop_auto_minting_session';
                 
                 await fetch(`/game.php?village=${vid}&screen=snob&action=${actionUrl}&h=${token}`, { method: 'POST' });
-                await new Promise(r => setTimeout(r, 1100));
+                await new Promise(r => setTimeout(r, 1000));
             }
             
             statusLabel.innerHTML = "OK!";
