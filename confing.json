@@ -33,10 +33,10 @@
     },
     {
         "id": "tager_wychodzace",
-        "name": "Tag(wychodzące + filtry)",
+        "name": "Tag(wychodzące)",
         "category": "Atak/obrona",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
-        "description": "Ataki wychodzące oraz filtry do tagera.",
+        "description": "Ataki wychodzące.",
         "screens": ["mode=commands", "overview_villages", "report"]
     },
     {
