@@ -129,21 +129,41 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             infoIcon.className = 'tw-square-btn tw-btn-active';
             infoIcon.innerText = 'i';
 
-            infoIcon.onclick = (e) => {
+                        infoIcon.onclick = (e) => {
                 e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
                     globalTooltip.dataset.activeId = '';
                 } else {
-                    const rect = infoIcon.getBoundingClientRect();
                     updateTooltipContent(script, state[script.id] === true);
                     
-                    globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
-                    globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
+                    // Najpierw aktywujemy okienko, aby wymusić rendering w DOM
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
+                    
+                    const rect = infoIcon.getBoundingClientRect();
+                    const tooltipWidth = 250; // Zakładana pełna szerokość tooltipa z paddingami (220px + margines)
+                    
+                    let topPos = rect.top + window.scrollY - 10;
+                    let leftPos = rect.right + window.scrollX + 10;
+                    
+                    // Sprawdzamy czy okienko zmieści się po prawej stronie ekranu (kluczowe na telefonach)
+                    if (rect.right + tooltipWidth > window.innerWidth) {
+                        // Jeśli nie ma miejsca z prawej, przerzucamy tooltip na lewą stronę przycisku
+                        leftPos = rect.left + window.scrollX - tooltipWidth - 10;
+                    }
+
+                    // Korekta dolnej krawędzi, jeśli tooltip wychodzi za dół ekranu
+                    const tooltipHeight = globalTooltip.offsetHeight;
+                    if (rect.top + tooltipHeight > window.innerHeight) {
+                        topPos = rect.top + window.scrollY - tooltipHeight + rect.height;
+                    }
+
+                    globalTooltip.style.top = topPos + 'px';
+                    globalTooltip.style.left = leftPos + 'px';
                 }
             };
+
 
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
