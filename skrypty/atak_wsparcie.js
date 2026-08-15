@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Atak/wsparcie (Shinko UI)
 // @version      1.0.0
-// @description  Zintegrowany system wysyłki
+// @description  Zintegrowany system wysyłki w kompaktowym UI
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @include      https://*/game.php?*&screen=place&try=confirm
@@ -22,7 +22,8 @@
                 const diff = Date.now() - start;
                 const pingDisplay = document.getElementById("live-ping-val");
                 if (pingDisplay) {
-                    pingDisplay.innerText = diff + "ms";
+                    // Wyświetlamy samą wartość liczbową, aby oszczędzić miejsce (np. "45" zamiast "45ms")
+                    pingDisplay.innerText = diff;
                     pingDisplay.style.color = diff < 150 ? "#00ff00" : (diff < 250 ? "#ffff00" : "#ff4444");
                 }
             }).catch(() => {});
@@ -33,8 +34,7 @@
     const style = document.createElement('style');
     style.textContent = `
         :root {
-            /* ZMIEŃ TĘ WARTOŚĆ ABY POWIĘKSZYĆ/POMNIEJSZYĆ CAŁE UI */
-            --ui-font-size: 5px; 
+            --ui-font-size: 12px; /* Zmniejszona bazowa czcionka dla małego UI */
             
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
@@ -54,30 +54,34 @@
         }
 
         #tw-pro-tools {
+            display: inline-block; /* To zapobiega rozciąganiu na całą szerokość ekranu */
+            min-width: 220px; /* Zapewnia zgrabny, prostokątny kształt */
             background-color: var(--bg-main) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
             font-family: Verdana, sans-serif !important;
             border-radius: 4px !important;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-            font-size: var(--ui-font-size) !important; /* <--- Użycie zmiennej wielkości */
-            padding: 1em !important;
+            font-size: var(--ui-font-size) !important;
+            padding: 8px !important;
             margin-top: 10px !important;
             box-sizing: border-box;
-            max-width: 100%;
         }
 
-        #tw-pro-tools table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 5px;
-        }
-
-        #tw-pro-tools td {
-            padding: 0.5em;
-            color: var(--text-color);
+        /* Ustawienie wierszy w technologii Flexbox */
+        .tw-row {
+            display: flex;
+            justify-content: space-between; /* Rozsuwa elementy na boki */
+            align-items: center; /* Wyśrodkowuje w pionie */
+            padding: 4px 0;
             border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
+        }
+        
+        .tw-row-no-border {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-top: 6px;
+            gap: 5px; /* Odstęp między przyciskami na dole */
         }
 
         .shinko-btn {
@@ -87,11 +91,12 @@
             border-radius: 3px !important;
             cursor: pointer !important;
             font-weight: bold !important;
-            padding: 0.5em 1em !important; /* <--- Użycie em (skaluje się z czcionką) */
+            padding: 4px 6px !important;
             text-shadow: 1px 1px 2px black;
             font-size: var(--ui-font-size) !important;
             display: inline-block;
             text-decoration: none !important;
+            text-align: center;
             box-sizing: border-box;
         }
 
@@ -105,35 +110,49 @@
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
             border-radius: 3px !important;
-            padding: 0.4em !important;
+            padding: 3px !important;
             font-size: var(--ui-font-size) !important;
             text-align: center;
             box-sizing: border-box;
+        }
+
+        .ping-box {
+            font-weight: bold;
+            font-size: 0.9em;
         }
     `;
     document.head.appendChild(style);
 
     // --- INTERFEJS (HTML) ---
+    // Zbudowany dokładnie według Twojego schematu
     const buttonsHtml = `
         <div id="tw-pro-tools">
-            <div style="margin-bottom: 8px; font-weight: bold; color: var(--title-color); display: flex; justify-content: space-between; align-items: center;">
-                <span>⚡</span>
-                <span><span id="live-ping-val" style="color: #00ff00;">...</span></span>
+            <!-- Wiersz 1: OFFSET [Ping] [Input] [Zapisz] -->
+            <div class="tw-row">
+                <span style="font-weight: bold;">OFFSET</span>
+                <span class="ping-box">[<span id="live-ping-val" style="color: #00ff00;">...</span>ms]</span>
+                <div style="display: flex; gap: 3px;">
+                    <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 40px;">
+                    <a id="delayButton" class="shinko-btn" title="Zapisz">💾</a>
+                </div>
             </div>
-            <table>
-                <tr>
-                    <td>Offset:</td>
-                    <td style="text-align: right; display: flex; gap: 5px; justify-content: flex-end;">
-                        <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 4em;">
-                        <a id="delayButton" class="shinko-btn">Zapisz</a>
-                    </td>
-                </tr>
-                <tr><td>Czas wejścia:</td><td id="showArrTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
-                <tr><td>Czas wysyłki:</td><td id="showSendTime" style="text-align: right; font-weight: bold; color: var(--title-color);">-</td></tr>
-            </table>
-            <div style="margin-top: 10px; display: flex; gap: 5px;">
-                <a id="arrTime" class="shinko-btn" style="cursor:pointer; flex: 1; text-align: center;">Ustaw dotarcie</a>
-                <a id="sendTime" class="shinko-btn" style="cursor:pointer; flex: 1; text-align: center;">Ustaw wysyłkę</a>
+            
+            <!-- Wiersz 2: czas wejścia - xxxxx -->
+            <div class="tw-row">
+                <span>Wejście - </span>
+                <span id="showArrTime" style="font-weight: bold; color: var(--title-color);">-</span>
+            </div>
+            
+            <!-- Wiersz 3: czas wyjścia - xxxxx -->
+            <div class="tw-row">
+                <span>Wysyłka - </span>
+                <span id="showSendTime" style="font-weight: bold; color: var(--title-color);">-</span>
+            </div>
+            
+            <!-- Wiersz 4: [btn] [btn] -->
+            <div class="tw-row tw-row-no-border">
+                <a id="arrTime" class="shinko-btn" style="flex: 1;">Dotarcie</a>
+                <a id="sendTime" class="shinko-btn" style="flex: 1;">Wysyłka</a>
             </div>
         </div>
     `;
