@@ -22,19 +22,18 @@
                 const diff = Date.now() - start;
                 const pingDisplay = document.getElementById("live-ping-val");
                 if (pingDisplay) {
-                    // Wyświetlamy samą wartość liczbową, aby oszczędzić miejsce (np. "45" zamiast "45ms")
                     pingDisplay.innerText = diff;
                     pingDisplay.style.color = diff < 150 ? "#00ff00" : (diff < 250 ? "#ffff00" : "#ff4444");
                 }
             }).catch(() => {});
     }
-    setInterval(checkPing, 1100);
+    setInterval(checkPing, 3000);
 
     // --- STYL (CSS) ---
     const style = document.createElement('style');
     style.textContent = `
         :root {
-            --ui-font-size: 12px; /* Zmniejszona bazowa czcionka dla małego UI */
+            --ui-font-size: 12px;
             
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
@@ -54,8 +53,8 @@
         }
 
         #tw-pro-tools {
-            display: inline-block; /* To zapobiega rozciąganiu na całą szerokość ekranu */
-            min-width: 220px; /* Zapewnia zgrabny, prostokątny kształt */
+            display: inline-block;
+            min-width: 220px;
             background-color: var(--bg-main) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
@@ -64,15 +63,13 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
             font-size: var(--ui-font-size) !important;
             padding: 8px !important;
-            margin-top: 10px !important;
             box-sizing: border-box;
         }
 
-        /* Ustawienie wierszy w technologii Flexbox */
         .tw-row {
             display: flex;
-            justify-content: space-between; /* Rozsuwa elementy na boki */
-            align-items: center; /* Wyśrodkowuje w pionie */
+            justify-content: space-between;
+            align-items: center;
             padding: 4px 0;
             border-bottom: 1px solid var(--border-color);
         }
@@ -81,7 +78,7 @@
             border-bottom: none;
             padding-bottom: 0;
             margin-top: 6px;
-            gap: 5px; /* Odstęp między przyciskami na dole */
+            gap: 5px;
         }
 
         .shinko-btn {
@@ -124,35 +121,37 @@
     document.head.appendChild(style);
 
     // --- INTERFEJS (HTML) ---
-    // Zbudowany dokładnie według Twojego schematu
+    // Dodano wrapper wymuszający załamanie linii (display: block; clear: both;)
     const buttonsHtml = `
-        <div id="tw-pro-tools">
-            <!-- Wiersz 1: OFFSET [Ping] [Input] [Zapisz] -->
-            <div class="tw-row">
-                <span style="font-weight: bold;">OFFSET</span>
-                <span class="ping-box">[<span id="live-ping-val" style="color: #00ff00;">...</span>ms]</span>
-                <div style="display: flex; gap: 3px;">
-                    <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 40px;">
-                    <a id="delayButton" class="shinko-btn" title="Zapisz">💾</a>
+        <div style="display: block; clear: both; width: 100%; margin-top: 15px;">
+            <div id="tw-pro-tools">
+                <!-- Wiersz 1: OFFSET [Ping] [Input] [Zapisz] -->
+                <div class="tw-row">
+                    <span style="font-weight: bold;">OFFSET</span>
+                    <span class="ping-box">[<span id="live-ping-val" style="color: #00ff00;">...</span>ms]</span>
+                    <div style="display: flex; gap: 3px;">
+                        <input id="delayInput" class="shinko-input" value="${delayTime}" style="width: 40px;">
+                        <a id="delayButton" class="shinko-btn" title="Zapisz">💾</a>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Wiersz 2: czas wejścia - xxxxx -->
-            <div class="tw-row">
-                <span>Wejście - </span>
-                <span id="showArrTime" style="font-weight: bold; color: var(--title-color);">-</span>
-            </div>
-            
-            <!-- Wiersz 3: czas wyjścia - xxxxx -->
-            <div class="tw-row">
-                <span>Wysyłka - </span>
-                <span id="showSendTime" style="font-weight: bold; color: var(--title-color);">-</span>
-            </div>
-            
-            <!-- Wiersz 4: [btn] [btn] -->
-            <div class="tw-row tw-row-no-border">
-                <a id="arrTime" class="shinko-btn" style="flex: 1;">Dotarcie</a>
-                <a id="sendTime" class="shinko-btn" style="flex: 1;">Wysyłka</a>
+                
+                <!-- Wiersz 2: czas wejścia - xxxxx -->
+                <div class="tw-row">
+                    <span>Wejście - </span>
+                    <span id="showArrTime" style="font-weight: bold; color: var(--title-color);">-</span>
+                </div>
+                
+                <!-- Wiersz 3: czas wyjścia - xxxxx -->
+                <div class="tw-row">
+                    <span>Wysyłka - </span>
+                    <span id="showSendTime" style="font-weight: bold; color: var(--title-color);">-</span>
+                </div>
+                
+                <!-- Wiersz 4: [btn] [btn] -->
+                <div class="tw-row tw-row-no-border">
+                    <a id="arrTime" class="shinko-btn" style="flex: 1;">Dotarcie</a>
+                    <a id="sendTime" class="shinko-btn" style="flex: 1;">Wysyłka</a>
+                </div>
             </div>
         </div>
     `;
