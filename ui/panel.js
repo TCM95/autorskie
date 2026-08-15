@@ -1,7 +1,6 @@
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
-    const darkThemeConfig = scriptsArray.find(s => s.id === 'ciemny_motyw');
     let currentCategory = null;
 
     let globalTooltip = document.getElementById('tw-global-tooltip');
@@ -17,10 +16,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    // Domyślnie zamknięty -> LED zielony
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
     if (savedOpenerPos) {
@@ -32,7 +29,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
-    // Usunięto zapisywanie pozycji panelu - panel jest zawsze obok ikony
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
@@ -40,26 +36,25 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
+    // 4. Napis Menu pisany kursywą
+    titleSpan.style.cssText = 'font-style: italic; letter-spacing: 1px;';
 
     const controls = document.createElement('div');
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    // Standaryzacja ikon - Kwadratowe przyciski CSS
-    const themeBtn = document.createElement('button');
-    themeBtn.className = 'tw-square-btn tw-btn-active'; // Domyślnie aktywny/zielony wygląd
-    let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    themeBtn.innerText = isDark ? '☾' : '☼';
-    themeBtn.onclick = async () => {
-        isDark = !isDark;
-        themeBtn.innerText = isDark ? '☾' : '☼';
-        if (darkThemeConfig && callbacks.onToggleTheme) {
-            await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
-        }
+    // 2. Usunięto motyw, dodano ikonę Dzwonka (Powiadomienia)
+    const bellBtn = document.createElement('button');
+    // Klasa .tw-bell-btn pozwoli Ci z zewnątrz sterować obramówką (dodaj jej klasę .tw-btn-active gdy skrypt ruszy)
+    bellBtn.className = 'tw-square-btn tw-bell-btn'; 
+    bellBtn.innerText = '🔔';
+    bellBtn.onclick = () => {
+        // Tutaj w przyszłości podepniemy logikę skryptu powiadomień
+        console.log("Kliknięto dzwonek powiadomień.");
     };
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'tw-square-btn tw-btn-inactive'; // Zamknij to akcja destrukcyjna (czerwony)
+    closeBtn.className = 'tw-square-btn tw-btn-inactive';
     closeBtn.innerText = 'X';
 
     closeBtn.onclick = () => { 
@@ -69,7 +64,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         globalTooltip.style.display = 'none';
     };
 
-    controls.appendChild(themeBtn);
+    controls.appendChild(bellBtn);
     controls.appendChild(closeBtn);
     header.appendChild(titleSpan);
     header.appendChild(controls);
@@ -88,7 +83,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     function renderScripts() {
         contentInner.innerHTML = '';
         const state = callbacks.getScriptsState();
-        let filtered = scriptsArray.filter(s => s.id !== 'ciemny_motyw' && (s.category || "Ogólne") === currentCategory);
+        let filtered = scriptsArray.filter(s => (s.category || "Ogólne") === currentCategory);
 
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
@@ -101,7 +96,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
             const item = document.createElement('div');
-            // Zmiana obramówki kontenera
             item.className = `tw-script-item ${isActive ? 'tw-item-on' : 'tw-item-off'}`;
 
             const gameBtn = document.createElement('div');
@@ -125,14 +119,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 item.className = `tw-script-item ${newState ? 'tw-item-on' : 'tw-item-off'}`;
                 state[script.id] = newState;
 
-                // Aktualizacja tooltipa w locie, jeśli jest otwarty
                 if (globalTooltip.dataset.activeId === script.id) {
                     updateTooltipContent(script, newState);
                 }
             };
 
             const infoIcon = document.createElement('button');
-            infoIcon.className = 'tw-square-btn ' + (isActive ? 'tw-btn-active' : 'tw-btn-inactive');
+            // 3. Przycisk "I" jest zawsze w klasie 'tw-btn-active' (zawsze zielony)
+            infoIcon.className = 'tw-square-btn tw-btn-active';
             infoIcon.innerText = 'i';
 
             infoIcon.onclick = (e) => {
@@ -163,13 +157,16 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const statusText = isActive ? 'Aktywny' : 'Wyłączony';
         
         globalTooltip.style.borderColor = `var(${isActive ? '--neon-green' : '--neon-red'})`;
+        globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 10px var(${isActive ? '--neon-green' : '--neon-red'})`;
         
         globalTooltip.innerHTML = `
-            <strong style="color: var(--title-color);">${script.name}</strong> 
-            <span style="color: ${colorVar}; float: right; font-weight: bold;">[${statusText}]</span><br>
-            <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 4px 0;">
-            <strong>Opis:</strong> ${script.description || 'Brak.'}<br>
-            <strong>Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>`;
+            <strong style="color: var(--title-color); font-size: 12px;">${script.name}</strong> 
+            <span style="color: ${colorVar}; float: right; font-weight: bold; text-shadow: 0 0 4px ${colorVar};">[${statusText}]</span><br>
+            <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 6px 0;">
+            <div style="line-height: 1.4;">
+                <strong>Opis:</strong> ${script.description || 'Brak.'}<br>
+                <strong style="margin-top:4px; display:inline-block;">Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>
+            </div>`;
     }
 
     categories.forEach(cat => {
@@ -199,12 +196,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(contentArea);
     document.body.appendChild(panel);
 
+    // 1. Zmienna kontrolująca, czy nastąpiło przesunięcie panelu
     let wasDragged = false; 
 
-    // Otwieranie panelu - zakotwiczenie do prawej krawędzi ikony
+    // Kliknięcie w ikonę (opener)
     opener.onclick = (e) => { 
-        if (wasDragged) return; 
+        if (wasDragged) {
+            wasDragged = false; // Reset flagi
+            return; // Przerwij, jeśli to było przesunięcie palcem
+        }
         
+        // Logika minimalizacji/maksymalizacji
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
@@ -214,7 +216,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
             
-            // Pozycjonowanie absolutne względem ikony (50px szerokość ikony + 5px marginesu)
             const absoluteLeft = parseInt(opener.style.left) || 0;
             const absoluteTop = parseInt(opener.style.top) || 0;
             
@@ -245,18 +246,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // Przeciąganie działa tylko na ikonie openera (panel podąża przy następnym otwarciu)
+    // Drag & Drop
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
 
     function dragStart(e) {
-        // Zablokowano przeciąganie po panelu, dozwolone tylko po ikonie
         if (e.currentTarget !== opener) return;
 
         draggedElement = opener;
-        wasDragged = false;
+        wasDragged = false; // Reset przed ruchem
 
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
@@ -272,7 +272,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
         isDragging = true;
         
-        // Zamykaj panel podczas przeciągania dla lepszej wydajności
         panel.style.setProperty('display', 'none', 'important');
         opener.classList.remove('tw-opener-open');
         opener.classList.add('tw-opener-closed');
@@ -301,6 +300,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
+        // Jeśli przesunięcie jest większe niż 5 pikseli, blokujemy normalne kliknięcie (wasDragged = true)
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             wasDragged = true; 
         }
@@ -324,14 +324,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.removeEventListener('touchmove', dragMove);
         document.removeEventListener('mouseup', dragEnd);
         document.removeEventListener('touchend', dragEnd);
-
-        setTimeout(() => { wasDragged = false; }, 50);
     }
 
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
-
-    if (isDark && darkThemeConfig && callbacks.onToggleTheme) {
-        callbacks.onToggleTheme(darkThemeConfig.url, true);
-    }
 };
