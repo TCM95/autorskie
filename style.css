@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zarządca Skryptów UI
-// @version      1.1.0
-// @description  Ruchomy panel z zablokowaną poświatą i poprawnym klikaniem
+// @version      1.1.1
+// @description  Ruchomy panel z zablokowaną poświatą i poprawnym rozmiarem ikony
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @match        *://*.plemiona.pl/*
@@ -35,9 +35,7 @@
             --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
         }
 
-        /* ---------------------------------------------------------
-           AGRESYWNY RESET NIEBIESKIEJ POŚWIATY & ZAZNACZANIA
-        --------------------------------------------------------- */
+        /* RESET NIEBIESKIEJ POŚWIATY & ZAZNACZANIA */
         #tcm-anchor, #tcm-anchor * {
             -webkit-tap-highlight-color: transparent !important;
             -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
@@ -55,163 +53,168 @@
             -webkit-tap-highlight-color: transparent !important;
         }
 
-        /* Ikona główna i pozycjonowanie */
+        /* GŁÓWNY KONTENER - Blokada rozciągania */
         #tcm-anchor {
-            position: fixed;
-            z-index: 99999;
-            display: flex;
-            align-items: flex-start;
-            touch-action: none;
+            position: fixed !important;
+            z-index: 999999 !important;
+            display: inline-flex !important;
+            align-items: flex-start !important;
+            touch-action: none !important;
+            width: auto !important;
+            height: auto !important;
         }
 
+        /* IKONA OTWIERANIA - Sztywne wymiary */
         #tcm-trigger-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--bg-main);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            position: relative;
-            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            max-width: 40px !important;
+            max-height: 40px !important;
+            background: var(--bg-main) !important;
+            border: 2px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5) !important;
+            position: relative !important;
+            flex-shrink: 0 !important;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
         }
 
-        /* LED Indicator - Panel zamknięty = Zaświecony */
+        /* LED Indicator */
         #tcm-trigger-icon::after {
-            content: '';
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #555;
-            border: 1px solid #222;
-            transition: all 0.3s ease;
+            content: '' !important;
+            position: absolute !important;
+            top: -4px !important;
+            right: -4px !important;
+            width: 12px !important;
+            height: 12px !important;
+            border-radius: 50% !important;
+            background: #555 !important;
+            border: 1px solid #222 !important;
+            transition: all 0.3s ease !important;
         }
         #tcm-anchor.closed #tcm-trigger-icon::after {
-            background: var(--neon-green);
-            box-shadow: var(--neon-glow);
-            border-color: rgba(255,255,255,0.4);
+            background: var(--neon-green) !important;
+            box-shadow: var(--neon-glow) !important;
+            border-color: rgba(255,255,255,0.4) !important;
         }
         
         #tcm-anchor.closed #tcm-trigger-icon {
-            border-color: var(--neon-green);
+            border-color: var(--neon-green) !important;
         }
 
         /* Główny Panel */
         #tcm-panel {
-            background: var(--bg-main);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            padding: 10px;
-            margin-left: 10px;
-            width: 280px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: opacity 0.2s;
+            background: var(--bg-main) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 4px !important;
+            padding: 10px !important;
+            margin-left: 10px !important;
+            width: 280px !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
         }
         #tcm-anchor.closed #tcm-panel {
-            display: none;
+            display: none !important;
         }
 
-        /* Górny pasek z kontrolkami kwadratowymi */
+        /* Górny pasek */
         .tcm-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--bg-header);
-            padding: 5px;
-            border-bottom: 1px solid var(--border-color);
-            border-radius: 3px;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            background: var(--bg-header) !important;
+            padding: 5px !important;
+            border-bottom: 1px solid var(--border-color) !important;
+            border-radius: 3px !important;
         }
 
         .tcm-controls {
-            display: flex;
-            gap: 5px;
+            display: flex !important;
+            gap: 5px !important;
         }
 
         .tcm-sq-btn {
-            width: 24px;
-            height: 24px;
-            background: var(--btn-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            border-radius: 3px;
+            width: 24px !important;
+            height: 24px !important;
+            background: var(--btn-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-color) !important;
+            font-weight: bold !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            border-radius: 3px !important;
         }
-        .tcm-sq-btn:hover { background: var(--btn-hover); }
-        .tcm-sq-btn.close { color: var(--neon-red); text-shadow: 0 0 3px rgba(255,0,60,0.5); border-color: var(--neon-red); }
-        .tcm-sq-btn.min { color: var(--neon-green); text-shadow: 0 0 3px rgba(116,255,0,0.5); border-color: var(--neon-green); }
+        .tcm-sq-btn:hover { background: var(--btn-hover) !important; }
+        .tcm-sq-btn.close { color: var(--neon-red) !important; text-shadow: 0 0 3px rgba(255,0,60,0.5) !important; border-color: var(--neon-red) !important; }
+        .tcm-sq-btn.min { color: var(--neon-green) !important; text-shadow: 0 0 3px rgba(116,255,0,0.5) !important; border-color: var(--neon-green) !important; }
 
-        /* Przyciski skryptów (Obramówki) */
+        /* Przyciski skryptów */
         .tcm-script-btn {
-            background: var(--btn-bg);
-            color: var(--text-color);
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 5px;
+            background: var(--btn-bg) !important;
+            color: var(--text-color) !important;
+            padding: 8px !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            text-align: center !important;
+            font-weight: bold !important;
+            margin-bottom: 5px !important;
         }
-        .tcm-script-btn.off { border: 2px solid var(--neon-red); box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1); }
-        .tcm-script-btn.on { border: 2px solid var(--neon-green); box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1); }
+        .tcm-script-btn.off { border: 2px solid var(--neon-red) !important; box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1) !important; }
+        .tcm-script-btn.on { border: 2px solid var(--neon-green) !important; box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1) !important; }
 
         /* Przyciski kategorii */
         .tcm-category-btn {
-            background: var(--btn-bg);
-            color: var(--text-color);
-            padding: 6px;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            flex: 1;
-            text-align: center;
-            border-radius: 3px;
+            background: var(--btn-bg) !important;
+            color: var(--text-color) !important;
+            padding: 6px !important;
+            border: 1px solid var(--border-color) !important;
+            cursor: pointer !important;
+            flex: 1 !important;
+            text-align: center !important;
+            border-radius: 3px !important;
         }
         .tcm-category-btn.active {
-            background: var(--btn-active-bg);
-            border-color: var(--neon-green);
-            color: var(--title-color);
-            box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3);
+            background: var(--btn-active-bg) !important;
+            border-color: var(--neon-green) !important;
+            color: var(--title-color) !important;
+            box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
         }
 
-        .tcm-categories { display: flex; gap: 5px; margin-bottom: 5px; }
+        .tcm-categories { display: flex !important; gap: 5px !important; margin-bottom: 5px !important; }
 
         /* Tooltips */
-        [data-tooltip] { position: relative; }
+        [data-tooltip] { position: relative !important; }
         [data-tooltip]::before {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(145deg, #36393f 0%, #202225 100%);
-            color: var(--title-color);
-            padding: 6px 10px;
-            font-size: 11px;
-            white-space: nowrap;
-            border-radius: 4px;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.9);
-            z-index: 2147483647; 
+            content: attr(data-tooltip) !important;
+            position: absolute !important;
+            bottom: 110% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
+            color: var(--title-color) !important;
+            padding: 6px 10px !important;
+            font-size: 11px !important;
+            white-space: nowrap !important;
+            border-radius: 4px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.2s !important;
+            border: 1px solid var(--border-color) !important;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
+            z-index: 2147483647 !important; 
         }
-        [data-tooltip]:hover::before, [data-tooltip]:active::before { opacity: 1; }
-        [data-tooltip].off::before { border-color: var(--neon-red); color: #ff8a80; }
-        [data-tooltip].on::before { border-color: var(--neon-green); color: #b9f6ca; }
+        [data-tooltip]:hover::before, [data-tooltip]:active::before { opacity: 1 !important; }
     `;
     document.head.appendChild(style);
 
@@ -228,13 +231,13 @@
     anchor.style.left = savedPos.left;
 
     anchor.innerHTML = `
-        <div id="tcm-trigger-icon" data-tooltip="Przeciągnij lub kliknij" class="on">🛠️</div>
+        <div id="tcm-trigger-icon" data-tooltip="Przeciągnij lub kliknij">🛠️</div>
         <div id="tcm-panel">
             <div class="tcm-header">
                 <span style="color: var(--title-color); font-weight: bold;">Zarządca Skryptów</span>
                 <div class="tcm-controls">
-                    <div class="tcm-sq-btn min" data-tooltip="Minimalizuj panel" class="on">_</div>
-                    <div class="tcm-sq-btn close" data-tooltip="Zamknij całkowicie" class="off">X</div>
+                    <div class="tcm-sq-btn min" data-tooltip="Minimalizuj panel">_</div>
+                    <div class="tcm-sq-btn close" data-tooltip="Zamknij całkowicie">X</div>
                 </div>
             </div>
 
@@ -244,8 +247,8 @@
             </div>
 
             <div id="cat1" class="tcm-script-list">
-                <div class="tcm-script-btn on" data-tooltip="Skrypt aktywny" class="on">Auto Zbieranie A</div>
-                <div class="tcm-script-btn off" data-tooltip="Skrypt wstrzymany" class="off">Szablony Zbieraka</div>
+                <div class="tcm-script-btn on" data-tooltip="Skrypt aktywny">Auto Zbieranie A</div>
+                <div class="tcm-script-btn off" data-tooltip="Skrypt wstrzymany">Szablony Zbieraka</div>
             </div>
         </div>
     `;
@@ -258,24 +261,20 @@
 
     let lastToggleTime = 0;
 
-    // Funkcja otwierania / zamykania z blokadą (Debounce + sprawdzenie Drag)
     function togglePanel(e) {
         if (e) {
             e.stopPropagation();
-            e.preventDefault(); // Blokuje domyślne zachowanie na dotyk
+            e.preventDefault();
         }
         
-        // Zabezpieczenie przed podwójnym kliknięciem (Ghost click mobile)
         const now = Date.now();
         if (now - lastToggleTime < 300) return; 
-        
-        if (hasDragged) return; // Jeśli wykonano ruch panelem, nie przełączaj!
+        if (hasDragged) return;
 
         lastToggleTime = now;
         anchor.classList.toggle('closed');
     }
 
-    // Eventy nasłuchujące przełączania (podłączamy click i touchend dla pewności)
     triggerIcon.addEventListener('click', togglePanel);
     triggerIcon.addEventListener('touchend', function(e) {
         if(!hasDragged) { togglePanel(e); }
@@ -284,7 +283,6 @@
     minBtn.addEventListener('click', togglePanel);
     closeBtn.addEventListener('click', () => anchor.remove());
 
-    // Obsługa kategorii (Event Delegation)
     const panel = document.getElementById('tcm-panel');
     panel.addEventListener('click', (e) => {
         if (e.target.classList.contains('tcm-category-btn')) {
@@ -309,11 +307,10 @@
     let startX, startY, initialLeft, initialTop;
 
     function dragStart(e) {
-        // Zezwól na przeciąganie łapiąc za ikonę lub górny pasek
         if (e.target !== triggerIcon && !e.target.closest('.tcm-header')) return;
         
         isDragging = true;
-        hasDragged = false; // Resetujemy stan ruchu
+        hasDragged = false;
 
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
@@ -335,15 +332,13 @@
         const dx = clientX - startX;
         const dy = clientY - startY;
 
-        // Próg tolerancji: 5 pikseli ruchu odróżnia przeciągnięcie od zwykłego kliknięcia/drżenia
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             hasDragged = true;
         }
 
-        // Jeśli to tylko drżenie palca (hasDragged === false), nie psujemy przewijania ekranu
         if (!hasDragged) return;
 
-        e.preventDefault(); // Blokujemy przewijanie strony gry w trakcie noszenia UI
+        e.preventDefault();
 
         let newLeft = initialLeft + dx;
         let newTop = initialTop + dy;
@@ -359,7 +354,6 @@
         if (!isDragging) return;
         isDragging = false;
 
-        // Zapis tylko, jeżeli fizycznie zmieniono pozycję
         if (hasDragged) {
             localStorage.setItem('tcm_panel_pos', JSON.stringify({
                 top: anchor.style.top,
@@ -367,16 +361,13 @@
             }));
         }
         
-        // Zresetowanie hasDragged po 50ms zapobiega kliknięciu "w tle" przy puszczeniu palca
         setTimeout(() => { hasDragged = false; }, 50);
     }
 
-    // Eventy Mouse
     anchor.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
 
-    // Eventy Touch (Mobile)
     anchor.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
