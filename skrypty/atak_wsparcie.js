@@ -34,7 +34,7 @@
     style.textContent = `
         :root {
             /* ZMIEŃ TĘ WARTOŚĆ ABY POWIĘKSZYĆ/POMNIEJSZYĆ CAŁE UI */
-            --ui-font-size: 14px; 
+            --ui-font-size: 8px; 
             
             --bg-main: #36393f;
             --bg-row-alt: #32353b;
