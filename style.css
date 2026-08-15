@@ -631,5 +631,42 @@ Poniżej znajduje się kompletny, gotowy do wdrożenia skrypt realizujący wszys
     anchor.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
+/* 1. USUNIĘCIE NIEBIESKIEGO PODŚWIETLENIA (Tap Highlight) na telefonach */
+#tw-script-panel *, 
+#tw-panel-opener *,
+#tw-global-tooltip * {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    outline: none !important;
+}
+
+/* 3. TUNING TOOLTIPA - Nadanie "wyrazu" i gradientu */
+#tw-global-tooltip {
+    background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
+    color: var(--title-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important; /* Łagodniejsze rogi */
+    padding: 10px 12px !important; /* Trochę więcej miejsca w środku */
+    width: 220px !important;
+    font-size: 11px !important;
+    /* Głęboki cień oddzielający okienko od tła gry */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
+    z-index: 999999999 !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+/* Wstępne ustawienia dla dzwonka (gdy nie ma aktywnego przypisanego skryptu to jest szary) */
+.tw-bell-btn {
+    color: #ffd700 !important; /* Złoty kolor dzwonka */
+    border: 1px solid var(--border-color) !important;
+    font-size: 13px !important;
+}
+
+/* Gdy skrypt powiadomień zostanie aktywowany, wystarczy dodać klasę tw-btn-active za pomocą JS */
+.tw-bell-btn.tw-btn-active {
+    border-color: var(--neon-green) !important;
+    box-shadow: var(--neon-glow) !important;
+}
 
 })();
