@@ -181,7 +181,15 @@
         "category": "Budowa/rekrutacja",
         "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
         "description": "Rekrutacja wojsk",
-       "screens": ["train", "barracks" ]
+       "screens": ["train", "barracks"]
+    },
+    {
+        "id": "dyspo",
+        "name": "Dysponent",
+        "category": "Surowce",
+        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/dyspo.js",
+        "description": "Przesyłanie surowców A>B>C",
+       "screens": ["mode=combined", "mode=call"]
     }
 
 ]
