@@ -81,7 +81,7 @@
                 await new Promise(r => setTimeout(r, 1000));
             }
             
-            statusLabel.innerHTML = "OK!";
+            statusLabel.innerHTML = "Gotowe!";
             statusLabel.style.color = "#00ff00";
         };
 
