@@ -631,28 +631,37 @@ Poniżej znajduje się kompletny, gotowy do wdrożenia skrypt realizujący wszys
     anchor.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
-/* 1. USUNIĘCIE NIEBIESKIEGO PODŚWIETLENIA (Tap Highlight) na telefonach */
-#tw-script-panel *, 
-#tw-panel-opener *,
-#tw-global-tooltip * {
+/* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY (Tap Highlight) */
+#tw-script-panel button, 
+#tw-panel-opener,
+#tw-script-panel a,
+.tw-tab,
+.tw-square-btn {
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
     -webkit-tap-highlight-color: transparent !important;
-    -webkit-user-select: none !important;
-    user-select: none !important;
     outline: none !important;
 }
 
-/* 3. TUNING TOOLTIPA - Nadanie "wyrazu" i gradientu */
+#tw-script-panel button:focus, 
+#tw-script-panel button:active, 
+#tw-panel-opener:focus,
+#tw-panel-opener:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* POPRAWA TOOLTIPA - DODANO MAX Z-INDEX */
 #tw-global-tooltip {
     background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
     color: var(--title-color) !important;
     border: 1px solid var(--border-color) !important;
-    border-radius: 6px !important; /* Łagodniejsze rogi */
-    padding: 10px 12px !important; /* Trochę więcej miejsca w środku */
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
     width: 220px !important;
     font-size: 11px !important;
-    /* Głęboki cień oddzielający okienko od tła gry */
     box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
-    z-index: 999999999 !important;
+    /* Maksymalna wartość Z-index wymuszająca bycie na samym wierzchu */
+    z-index: 2147483647 !important; 
     transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
 
