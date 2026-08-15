@@ -13,18 +13,16 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // --- ODCZYT ZAPISANYCH POZYCJI Z PAMIĘCI PRZEGLĄDARKI ---
     const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
-    const savedPanelPos = JSON.parse(localStorage.getItem('tw_panel_pos') || 'null');
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
+    // Domyślnie zamknięty -> LED zielony
+    opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
 
-    // Twarde wymuszenie pozycji bezpośrednio w JS - omija cache CSS
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
-    // Aplikowanie zapisanej pozycji dla ikony startowej
     if (savedOpenerPos) {
         opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
         opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
@@ -34,12 +32,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
-
-    // Aplikowanie zapisanej pozycji dla samego panelu
-    if (savedPanelPos) {
-        panel.style.setProperty('left', savedPanelPos.x + 'px', 'important');
-        panel.style.setProperty('top', savedPanelPos.y + 'px', 'important');
-    }
+    // Usunięto zapisywanie pozycji panelu - panel jest zawsze obok ikony
 
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
@@ -52,58 +45,31 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    const iconDark = '☾';
-    const iconLight = '☼';
-
+    // Standaryzacja ikon - Kwadratowe przyciski CSS
     const themeBtn = document.createElement('button');
-    themeBtn.className = 'tw-header-btn';
+    themeBtn.className = 'tw-square-btn tw-btn-active'; // Domyślnie aktywny/zielony wygląd
     let isDark = localStorage.getItem('tw_dark_theme') === '1';
-    themeBtn.innerText = isDark ? iconDark : iconLight;
+    themeBtn.innerText = isDark ? '☾' : '☼';
     themeBtn.onclick = async () => {
         isDark = !isDark;
-        themeBtn.innerText = isDark ? iconDark : iconLight;
+        themeBtn.innerText = isDark ? '☾' : '☼';
         if (darkThemeConfig && callbacks.onToggleTheme) {
             await callbacks.onToggleTheme(darkThemeConfig.url, isDark);
         }
     };
 
-    // --- PRZYCISK PINEZKI Z IKONĄ ---
-    const pinBtn = document.createElement('button');
-    pinBtn.className = 'tw-header-btn';
-    let isPinned = localStorage.getItem('tw_panel_pinned') === '1';
-    
-    const pinImgUrl = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/pin1.png';
-    const pinImg = document.createElement('img');
-    pinImg.src = pinImgUrl;
-    pinImg.className = 'tw-pin-icon'; // Dedykowana klasa dla kontroli w CSS
-    
-    if (isPinned) {
-        pinImg.style.opacity = '0.5';
-    }
-    pinBtn.appendChild(pinImg);
-
-    pinBtn.onclick = () => {
-        isPinned = !isPinned;
-        localStorage.setItem('tw_panel_pinned', isPinned ? '1' : '0');
-        pinImg.style.opacity = isPinned ? '0.5' : '1.0';
-    };
-
-    // --- PRZYCISK ZAMKNIĘCIA Z IKONĄ ---
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'tw-header-btn';
-    
-    const closeImg = document.createElement('img');
-    closeImg.src = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/krzyzyk.png';
-    closeImg.className = 'tw-close-icon'; // Dedykowana klasa dla kontroli w CSS
-    closeBtn.appendChild(closeImg);
+    closeBtn.className = 'tw-square-btn tw-btn-inactive'; // Zamknij to akcja destrukcyjna (czerwony)
+    closeBtn.innerText = 'X';
 
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
-        opener.style.setProperty('display', 'flex', 'important'); 
+        opener.classList.remove('tw-opener-open');
+        opener.classList.add('tw-opener-closed');
+        globalTooltip.style.display = 'none';
     };
 
     controls.appendChild(themeBtn);
-    controls.appendChild(pinBtn);
     controls.appendChild(closeBtn);
     header.appendChild(titleSpan);
     header.appendChild(controls);
@@ -127,7 +93,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (filtered.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 8px;';
-            emptyMsg.innerText = 'Brak skryptów w tej kategorii.';
+            emptyMsg.innerText = 'Brak skryptów.';
             contentInner.appendChild(emptyMsg);
             return;
         }
@@ -135,7 +101,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
             const item = document.createElement('div');
-            item.className = 'tw-script-item';
+            // Zmiana obramówki kontenera
+            item.className = `tw-script-item ${isActive ? 'tw-item-on' : 'tw-item-off'}`;
 
             const gameBtn = document.createElement('div');
             gameBtn.className = 'tw-game-btn';
@@ -149,15 +116,23 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             gameBtn.appendChild(statusIcon);
             gameBtn.appendChild(nameLabel);
+            
             gameBtn.onclick = () => {
                 const newState = !state[script.id];
                 callbacks.saveScriptState(script.id, newState);
+                
                 statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
+                item.className = `tw-script-item ${newState ? 'tw-item-on' : 'tw-item-off'}`;
                 state[script.id] = newState;
+
+                // Aktualizacja tooltipa w locie, jeśli jest otwarty
+                if (globalTooltip.dataset.activeId === script.id) {
+                    updateTooltipContent(script, newState);
+                }
             };
 
             const infoIcon = document.createElement('button');
-            infoIcon.className = 'tw-info-icon';
+            infoIcon.className = 'tw-square-btn ' + (isActive ? 'tw-btn-active' : 'tw-btn-inactive');
             infoIcon.innerText = 'i';
 
             infoIcon.onclick = (e) => {
@@ -167,10 +142,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     globalTooltip.dataset.activeId = '';
                 } else {
                     const rect = infoIcon.getBoundingClientRect();
-                    const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
-
-                    globalTooltip.innerHTML = `<strong style="color: #ffffdf;">${script.name}</strong><br><hr style="border: 0; border-bottom: 1px solid #3e4147; margin: 4px 0;"><strong>Opis:</strong> ${script.description || 'Brak.'}<br><strong>Strony:</strong> ${screensInfo}`;
-
+                    updateTooltipContent(script, state[script.id] === true);
+                    
                     globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
                     globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
                     globalTooltip.style.display = 'block';
@@ -182,6 +155,21 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             item.appendChild(infoIcon);
             contentInner.appendChild(item);
         });
+    }
+
+    function updateTooltipContent(script, isActive) {
+        const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
+        const colorVar = isActive ? 'var(--neon-green)' : 'var(--neon-red)';
+        const statusText = isActive ? 'Aktywny' : 'Wyłączony';
+        
+        globalTooltip.style.borderColor = `var(${isActive ? '--neon-green' : '--neon-red'})`;
+        
+        globalTooltip.innerHTML = `
+            <strong style="color: var(--title-color);">${script.name}</strong> 
+            <span style="color: ${colorVar}; float: right; font-weight: bold;">[${statusText}]</span><br>
+            <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 4px 0;">
+            <strong>Opis:</strong> ${script.description || 'Brak.'}<br>
+            <strong>Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>`;
     }
 
     categories.forEach(cat => {
@@ -213,16 +201,30 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     let wasDragged = false; 
 
-    // Otwieranie panelu
+    // Otwieranie panelu - zakotwiczenie do prawej krawędzi ikony
     opener.onclick = (e) => { 
         if (wasDragged) return; 
-        panel.style.setProperty('display', 'flex', 'important');
-        opener.style.setProperty('display', 'none', 'important'); 
+        
+        if (panel.style.display === 'flex') {
+            panel.style.setProperty('display', 'none', 'important');
+            opener.classList.remove('tw-opener-open');
+            opener.classList.add('tw-opener-closed');
+        } else {
+            panel.style.setProperty('display', 'flex', 'important');
+            opener.classList.remove('tw-opener-closed');
+            opener.classList.add('tw-opener-open');
+            
+            // Pozycjonowanie absolutne względem ikony (50px szerokość ikony + 5px marginesu)
+            const absoluteLeft = parseInt(opener.style.left) || 0;
+            const absoluteTop = parseInt(opener.style.top) || 0;
+            
+            panel.style.setProperty('left', (absoluteLeft + 55) + 'px', 'important');
+            panel.style.setProperty('top', absoluteTop + 'px', 'important');
+        }
     };
 
-    // Dwuetapowe zamykanie przy kliknięciu w tło
     document.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('tw-info-icon')) {
+        if (!e.target.classList.contains('tw-square-btn')) {
             globalTooltip.style.display = 'none';
             globalTooltip.dataset.activeId = '';
         }
@@ -237,21 +239,23 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 contentArea.style.setProperty('display', 'none', 'important');
             } else {
                 panel.style.setProperty('display', 'none', 'important');
-                opener.style.setProperty('display', 'flex', 'important'); 
+                opener.classList.remove('tw-opener-open');
+                opener.classList.add('tw-opener-closed');
             }
         }
     });
 
-    // --- OBSŁUGA DRAG & DROP Z ZAPISEM DO PAMIĘCI ---
+    // Przeciąganie działa tylko na ikonie openera (panel podąża przy następnym otwarciu)
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
     let startX = 0, startY = 0;
 
     function dragStart(e) {
-        if (localStorage.getItem('tw_panel_pinned') === '1' || e.target.closest('.tw-header-btn')) return;
+        // Zablokowano przeciąganie po panelu, dozwolone tylko po ikonie
+        if (e.currentTarget !== opener) return;
 
-        draggedElement = (e.currentTarget === header) ? panel : opener;
+        draggedElement = opener;
         wasDragged = false;
 
         if (e.type === "touchstart") {
@@ -266,16 +270,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         initialX = rect.left;
         initialY = rect.top;
 
-        draggedElement.style.setProperty('position', 'fixed', 'important');
-        draggedElement.style.setProperty('bottom', 'auto', 'important');
-        draggedElement.style.setProperty('right', 'auto', 'important');
-        draggedElement.style.setProperty('margin', '0', 'important');
-        draggedElement.style.setProperty('transform', 'none', 'important');
-
-        draggedElement.style.setProperty('left', initialX + 'px', 'important');
-        draggedElement.style.setProperty('top', initialY + 'px', 'important');
-
         isDragging = true;
+        
+        // Zamykaj panel podczas przeciągania dla lepszej wydajności
+        panel.style.setProperty('display', 'none', 'important');
+        opener.classList.remove('tw-opener-open');
+        opener.classList.add('tw-opener-closed');
+        globalTooltip.style.display = 'none';
 
         document.addEventListener('mousemove', dragMove, { passive: false });
         document.addEventListener('touchmove', dragMove, { passive: false });
@@ -285,7 +286,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function dragMove(e) {
         if (!isDragging || !draggedElement) return;
-
         if (e.cancelable) e.preventDefault(); 
         window.getSelection().removeAllRanges(); 
 
@@ -312,17 +312,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     function dragEnd() {
         if (!isDragging) return;
 
-        if (draggedElement === opener) {
-            localStorage.setItem('tw_opener_pos', JSON.stringify({
-                x: parseInt(opener.style.left) || 0,
-                y: parseInt(opener.style.top) || 0
-            }));
-        } else if (draggedElement === panel) {
-            localStorage.setItem('tw_panel_pos', JSON.stringify({
-                x: parseInt(panel.style.left) || 0,
-                y: parseInt(panel.style.top) || 0
-            }));
-        }
+        localStorage.setItem('tw_opener_pos', JSON.stringify({
+            x: parseInt(opener.style.left) || 0,
+            y: parseInt(opener.style.top) || 0
+        }));
 
         isDragging = false;
         draggedElement = null;
@@ -334,9 +327,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
         setTimeout(() => { wasDragged = false; }, 50);
     }
-
-    header.addEventListener('mousedown', dragStart, { passive: false });
-    header.addEventListener('touchstart', dragStart, { passive: false });
 
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
