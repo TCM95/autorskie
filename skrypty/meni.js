@@ -2,8 +2,8 @@
 // @name         Menu skryptów (wersja podpięta)
 // @author       TCM
 // @namespace    https://viayoo.com/
-// @version      1.3
-// @description  Ładuje listę skryptów do głównego panelu
+// @version      1.4
+// @description  Ładuje listę skryptów do głównego panelu ze spójnym UI
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
 // ==/UserScript==
@@ -12,9 +12,9 @@
     'use strict';
 
     const scripts = [
-        { name: "Wybierz", run: () => {} },
+        { name: "Wybierz skrypt...", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
-        { name: "Przegląd ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
+        { name: "Przegląd ataków (bardzo długa nazwa testowa)", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
         { name: "Filtry raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
         { name: "Tekst na notatkę", run: () => $.getScript('https://twscripts.dev/scripts/convertTextToNote.js') },
         { name: "Menadżer pamięci", run: () => $.getScript('https://twscripts.dev/scripts/localStorageManager.js') },
@@ -30,8 +30,9 @@
         container.innerHTML = '';
 
         const select = document.createElement('select');
-        select.style.cssText = 'flex-grow: 1; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; outline: none;';
-        
+        // Dodano min-width: 0, text-overflow, white-space i overflow aby zapobiec rozpychaniu
+        select.style.cssText = 'flex-grow: 1; min-width: 0; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; outline: none; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;';
+
         scripts.forEach((s, i) => {
             let opt = document.createElement('option');
             opt.value = i;
@@ -40,10 +41,27 @@
         });
 
         const runBtn = document.createElement('button');
-        runBtn.className = 'tw-square-btn tw-btn-active';
-        runBtn.innerText = '▶';
-        runBtn.style.padding = '4px 10px';
+        runBtn.innerText = 'Uruchom';
         runBtn.title = 'Uruchom wybrany skrypt';
+        
+        // Stylowanie zielonego przycisku zgodnie z naszymi zmiennymi CSS
+        runBtn.style.cssText = `
+            padding: 4px 10px; 
+            background: var(--btn-green-bg); 
+            color: var(--title-color); 
+            border: 1px solid var(--border-color); 
+            border-radius: 3px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            transition: background 0.2s;
+        `;
+
+        // Obsługa najechania myszką (hover)
+        runBtn.onmouseenter = () => runBtn.style.background = 'var(--btn-green-hover)';
+        runBtn.onmouseleave = () => runBtn.style.background = 'var(--btn-green-bg)';
 
         runBtn.onclick = () => {
             const idx = select.value;
