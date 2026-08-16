@@ -205,16 +205,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
 
-     // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
+       // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
     const externalMenuContainer = document.createElement('div');
     externalMenuContainer.id = 'tcm-external-menu-container';
     
-    // Twarda definicja układu Grid wymuszana w samym rdzeniu panelu
-    // Ochroni to układ przed rozpychaniem jeszcze przed startem skryptów zewnętrznych
-    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: grid !important; grid-template-columns: minmax(0, 1fr) 75px !important; gap: 5px !important;';
+    // ZWYKŁY BLOK 100% SZEROKOŚCI - Bez siatki Grid
+    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
     panel.appendChild(externalMenuContainer);
 
-    // Zmieniony "Cache Buster" wymuszający agresywne pobranie najnowszej wersji pliku z jsDelivr
+    // Cache buster dla pewności załadowania nowej wersji z Githuba
     const externalScript = document.createElement('script');
     externalScript.src = 'https://cdn.jsdelivr.net/gh/TCM95/autorskie@main/skrypty/meni.js?v=' + Math.random().toString(36).substring(2, 10);
     document.head.appendChild(externalScript);
