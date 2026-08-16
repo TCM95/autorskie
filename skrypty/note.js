@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Notatki z Raportu (Auto-Next + UI)
+// @name         Notatki
 // @namespace    https://viayoo.com/
 // @version      1.2
 // @description  Automatyczne notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i auto-next
