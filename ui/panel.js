@@ -210,10 +210,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     externalMenuContainer.id = 'tcm-external-menu-container';
     externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
     panel.appendChild(externalMenuContainer);
-
-    // Ładowanie bezpośrednie przez $.getScript (dokładnie tak jak robią to przyciski wyżej), z pominięciem zapisu w pamięci
-    $.getScript('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/meni2.js?' + new Date().getTime());
-    // ------------------------------------
+  ------------------------------------
 
 
     document.body.appendChild(panel);
