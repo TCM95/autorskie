@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Menu skryptów (wersja podpięta)
 // @namespace    https://viayoo.com/
-// @version      1.7
-// @description  Dzieli szerokość kontenera na 2/3 (select) i 1/3 (przycisk)
+// @version      1.8
+// @description  Wymusza twardy układ CSS Grid, naprawiając rozpychanie na mobile
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -14,7 +14,7 @@
     const scripts = [
         { name: "Wybierz skrypt...", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
-        { name: "Przegląd ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
+        { name: "Przegląd ataków (bardzo długa nazwa testowa do ucięcia)", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
         { name: "Filtry raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
         { name: "Tekst na notatkę", run: () => $.getScript('https://twscripts.dev/scripts/convertTextToNote.js') },
         { name: "Menadżer pamięci", run: () => $.getScript('https://twscripts.dev/scripts/localStorageManager.js') },
@@ -27,32 +27,16 @@
         const container = document.getElementById('tcm-external-menu-container');
         if (!container) return false;
 
-        // Twarde zabezpieczenie rodzica
-        container.style.setProperty('box-sizing', 'border-box', 'important');
-        container.style.setProperty('width', '100%', 'important');
-        container.style.setProperty('max-width', '100%', 'important');
-        container.style.setProperty('overflow', 'hidden', 'important');
-        container.style.setProperty('display', 'flex', 'important');
-        container.style.setProperty('gap', '6px', 'important');
+        // BRUTALNE NADPISANIE CAŁEGO CSS RODZICA (GRID LAYOUT)
+        // Kolumna 1: minmax(0, 1fr) - zajmuje resztę, zmusza do ucinania tekstu
+        // Kolumna 2: 75px - sztywna szerokość dla przycisku
+        container.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; padding: 6px 8px !important; background: var(--bg-row-alt) !important; border-top: 1px solid var(--border-color) !important; display: grid !important; grid-template-columns: minmax(0, 1fr) 75px !important; gap: 5px !important; overflow: hidden !important; border-bottom-left-radius: 4px !important; border-bottom-right-radius: 4px !important;';
         
         container.innerHTML = '';
 
         const select = document.createElement('select');
-        
-        // Szerokość ~2/3 panelu (64% minus odstęp)
-        select.style.setProperty('width', 'calc(64% - 3px)', 'important');
-        select.style.setProperty('flex-shrink', '0', 'important');
-        select.style.setProperty('padding', '4px', 'important');
-        select.style.setProperty('background', 'var(--bg-main)', 'important');
-        select.style.setProperty('color', 'var(--text-color)', 'important');
-        select.style.setProperty('border', '1px solid var(--border-color)', 'important');
-        select.style.setProperty('border-radius', '3px', 'important');
-        select.style.setProperty('font-size', '12px', 'important');
-        select.style.setProperty('outline', 'none', 'important');
-        select.style.setProperty('text-overflow', 'ellipsis', 'important');
-        select.style.setProperty('white-space', 'nowrap', 'important');
-        select.style.setProperty('overflow', 'hidden', 'important');
-        select.style.setProperty('cursor', 'pointer', 'important');
+        // Stylowanie selecta - zmuszamy go do pozostania w swojej celi siatki
+        select.style.cssText = 'width: 100% !important; max-width: 100% !important; min-width: 0 !important; padding: 4px !important; background: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 3px !important; font-size: 12px !important; outline: none !important; text-overflow: ellipsis !important; white-space: nowrap !important; overflow: hidden !important; cursor: pointer !important;';
 
         scripts.forEach((s, i) => {
             let opt = document.createElement('option');
@@ -63,23 +47,8 @@
 
         const runBtn = document.createElement('button');
         runBtn.innerText = 'Uruchom';
-        runBtn.className = ''; 
-        
-        // Szerokość ~1/3 panelu (36% minus odstęp) oraz zielony styl
-        runBtn.style.setProperty('width', 'calc(36% - 3px)', 'important');
-        runBtn.style.setProperty('flex-shrink', '0', 'important');
-        runBtn.style.setProperty('padding', '4px 2px', 'important');
-        runBtn.style.setProperty('background', 'var(--btn-green-bg)', 'important');
-        runBtn.style.setProperty('color', 'var(--title-color)', 'important');
-        runBtn.style.setProperty('border', '1px solid var(--border-color)', 'important');
-        runBtn.style.setProperty('border-radius', '3px', 'important');
-        runBtn.style.setProperty('font-size', '11px', 'important');
-        runBtn.style.setProperty('font-weight', 'bold', 'important');
-        runBtn.style.setProperty('text-transform', 'uppercase', 'important');
-        runBtn.style.setProperty('cursor', 'pointer', 'important');
-        runBtn.style.setProperty('box-shadow', '0 1px 3px rgba(0,0,0,0.5)', 'important');
-        runBtn.style.setProperty('transition', 'background 0.2s', 'important');
-        runBtn.style.setProperty('text-align', 'center', 'important');
+        // Stylowanie przycisku - twardo zajmuje swoje 75px
+        runBtn.style.cssText = 'width: 100% !important; padding: 4px 0 !important; background: var(--btn-green-bg) !important; color: var(--title-color) !important; border: 1px solid var(--border-color) !important; border-radius: 3px !important; font-size: 11px !important; font-weight: bold !important; text-transform: uppercase !important; cursor: pointer !important; box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important; transition: background 0.2s !important; text-align: center !important;';
 
         runBtn.onmouseenter = () => runBtn.style.setProperty('background', 'var(--btn-green-hover)', 'important');
         runBtn.onmouseleave = () => runBtn.style.setProperty('background', 'var(--btn-green-bg)', 'important');
