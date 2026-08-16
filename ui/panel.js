@@ -7,7 +7,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
-        // NAPRAWA: Dodany z-index, by był najwyżej w hierarchii
         globalTooltip.style.cssText = 'display: none; position: absolute; z-index: 1000000 !important; background: var(--bg-main); border-radius: 4px; padding: 10px; pointer-events: none;';
         document.body.appendChild(globalTooltip);
     }
@@ -205,13 +204,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
 
-    // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
+    // --- CZYSTE MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
     const externalMenuContainer = document.createElement('div');
     externalMenuContainer.id = 'tcm-external-menu-container';
     externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
     panel.appendChild(externalMenuContainer);
-  ------------------------------------
-
+    // ------------------------------------
 
     document.body.appendChild(panel);
 
