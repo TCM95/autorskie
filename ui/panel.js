@@ -36,20 +36,16 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
-    // 4. Napis Menu pisany kursywą
     titleSpan.style.cssText = 'font-style: italic; letter-spacing: 1px;';
 
     const controls = document.createElement('div');
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
-    // 2. Usunięto motyw, dodano ikonę Dzwonka (Powiadomienia)
     const bellBtn = document.createElement('button');
-    // Klasa .tw-bell-btn pozwoli Ci z zewnątrz sterować obramówką (dodaj jej klasę .tw-btn-active gdy skrypt ruszy)
     bellBtn.className = 'tw-square-btn tw-bell-btn'; 
     bellBtn.innerText = '🔔';
     bellBtn.onclick = () => {
-        // Tutaj w przyszłości podepniemy logikę skryptu powiadomień
         console.log("Kliknięto dzwonek powiadomień.");
     };
 
@@ -125,11 +121,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             };
 
             const infoIcon = document.createElement('button');
-            // 3. Przycisk "I" jest zawsze w klasie 'tw-btn-active' (zawsze zielony)
             infoIcon.className = 'tw-square-btn tw-btn-active';
             infoIcon.innerText = 'i';
 
-                        infoIcon.onclick = (e) => {
+            infoIcon.onclick = (e) => {
                 e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
@@ -137,23 +132,19 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 } else {
                     updateTooltipContent(script, state[script.id] === true);
 
-                    // Najpierw aktywujemy okienko, aby wymusić rendering w DOM
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
 
                     const rect = infoIcon.getBoundingClientRect();
-                    const tooltipWidth = 250; // Zakładana pełna szerokość tooltipa z paddingami (220px + margines)
+                    const tooltipWidth = 250; 
 
                     let topPos = rect.top + window.scrollY - 10;
                     let leftPos = rect.right + window.scrollX + 10;
 
-                    // Sprawdzamy czy okienko zmieści się po prawej stronie ekranu (kluczowe na telefonach)
                     if (rect.right + tooltipWidth > window.innerWidth) {
-                        // Jeśli nie ma miejsca z prawej, przerzucamy tooltip na lewą stronę przycisku
                         leftPos = rect.left + window.scrollX - tooltipWidth - 10;
                     }
 
-                    // Korekta dolnej krawędzi, jeśli tooltip wychodzi za dół ekranu
                     const tooltipHeight = globalTooltip.offsetHeight;
                     if (rect.top + tooltipHeight > window.innerHeight) {
                         topPos = rect.top + window.scrollY - tooltipHeight + rect.height;
@@ -163,7 +154,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     globalTooltip.style.left = leftPos + 'px';
                 }
             };
-
 
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
@@ -212,21 +202,62 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         categoriesBar.appendChild(tab);
     });
 
+    // --- NOWA SEKCJA: Szybkie Menu (okienko ze strzałką) ---
+    const quickMenuContainer = document.createElement('div');
+    quickMenuContainer.style.cssText = 'padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); display: flex; gap: 5px; align-items: center; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;';
+    
+    const quickScripts = [
+        { name: "Wybierz narzędzie...", run: () => {} },
+        { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
+        { name: "Przegląd Ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
+        { name: "Filtry Raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
+        { name: "Tekst na Notatkę", run: () => $.getScript('https://twscripts.dev/scripts/convertTextToNote.js') },
+        { name: "Menadżer Pamięci", run: () => $.getScript('https://twscripts.dev/scripts/localStorageManager.js') },
+        { name: "Statystyki Plemienia", run: () => $.getScript('https://twscripts.dev/scripts/tribeStatsTool.js') },
+        { name: "Pojedynczy Zbierak", run: () => { window.premiumBtnEnabled = false; $.getScript('https://shinko-to-kuma.com/scripts/scavengingFinal.js'); } },
+        { name: "Import Grup", run: () => $.getScript("https://shinko-to-kuma.com/scripts/groupImport.js") }
+    ];
+
+    const quickSelect = document.createElement('select');
+    quickSelect.style.cssText = 'flex-grow: 1; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; outline: none; font-size: 13px;';
+    
+    quickScripts.forEach((s, i) => {
+        let opt = document.createElement('option');
+        opt.value = i;
+        opt.innerText = s.name;
+        quickSelect.appendChild(opt);
+    });
+
+    const runQuickBtn = document.createElement('button');
+    runQuickBtn.className = 'tw-square-btn tw-btn-active'; // Korzysta z Twojego systemu klas, by być na zielono/aktywnym
+    runQuickBtn.innerText = '▶';
+    runQuickBtn.style.padding = '4px 10px';
+    runQuickBtn.title = 'Uruchom wybrany skrypt';
+
+    runQuickBtn.onclick = () => {
+        const idx = quickSelect.value;
+        if (idx > 0) quickScripts[idx].run();
+    };
+
+    quickMenuContainer.appendChild(quickSelect);
+    quickMenuContainer.appendChild(runQuickBtn);
+    // -------------------------------------------------------
+
+    // Kolejność dodawania elementów do głównego panelu
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
+    panel.appendChild(quickMenuContainer); // Szybkie menu dodane zawsze na samym dole
+    
     document.body.appendChild(panel);
 
-    // 1. Zmienna kontrolująca, czy nastąpiło przesunięcie panelu
     let wasDragged = false; 
 
-    // Kliknięcie w ikonę (opener)
     opener.onclick = (e) => { 
         if (wasDragged) {
-            wasDragged = false; // Reset flagi
-            return; // Przerwij, jeśli to było przesunięcie palcem
+            wasDragged = false; 
+            return; 
         }
 
-        // Logika minimalizacji/maksymalizacji
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
@@ -266,7 +297,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
-    // Drag & Drop
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
@@ -276,7 +306,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (e.currentTarget !== opener) return;
 
         draggedElement = opener;
-        wasDragged = false; // Reset przed ruchem
+        wasDragged = false; 
 
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
@@ -320,7 +350,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        // Jeśli przesunięcie jest większe niż 5 pikseli, blokujemy normalne kliknięcie (wasDragged = true)
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             wasDragged = true; 
         }
