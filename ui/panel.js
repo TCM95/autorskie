@@ -17,8 +17,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
-    // Dodano draggable="false" oraz pointer-events: none dla stabilności na urządzeniach mobilnych
-    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" draggable="false" style="width:100%; height:100%; object-fit:contain; pointer-events:none;">`;
+    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
     if (savedOpenerPos) {
@@ -37,17 +36,20 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const titleSpan = document.createElement('span');
     titleSpan.innerText = 'Menu';
+    // 4. Napis Menu pisany kursywą
     titleSpan.style.cssText = 'font-style: italic; letter-spacing: 1px;';
 
     const controls = document.createElement('div');
     controls.style.display = 'flex';
     controls.style.gap = '4px';
 
+    // 2. Usunięto motyw, dodano ikonę Dzwonka (Powiadomienia)
     const bellBtn = document.createElement('button');
+    // Klasa .tw-bell-btn pozwoli Ci z zewnątrz sterować obramówką (dodaj jej klasę .tw-btn-active gdy skrypt ruszy)
     bellBtn.className = 'tw-square-btn tw-bell-btn'; 
     bellBtn.innerText = '🔔';
     bellBtn.onclick = () => {
-        // Tu zostanie podpięty system powiadomień
+        // Tutaj w przyszłości podepniemy logikę skryptu powiadomień
         console.log("Kliknięto dzwonek powiadomień.");
     };
 
@@ -123,10 +125,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             };
 
             const infoIcon = document.createElement('button');
+            // 3. Przycisk "I" jest zawsze w klasie 'tw-btn-active' (zawsze zielony)
             infoIcon.className = 'tw-square-btn tw-btn-active';
             infoIcon.innerText = 'i';
 
-            infoIcon.onclick = (e) => {
+                        infoIcon.onclick = (e) => {
                 e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
                     globalTooltip.style.display = 'none';
@@ -134,34 +137,33 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 } else {
                     updateTooltipContent(script, state[script.id] === true);
 
+                    // Najpierw aktywujemy okienko, aby wymusić rendering w DOM
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
 
                     const rect = infoIcon.getBoundingClientRect();
-                    const tooltipWidth = 250; 
+                    const tooltipWidth = 250; // Zakładana pełna szerokość tooltipa z paddingami (220px + margines)
 
                     let topPos = rect.top + window.scrollY - 10;
                     let leftPos = rect.right + window.scrollX + 10;
 
-                    // Ochrona prawej krawędzi
+                    // Sprawdzamy czy okienko zmieści się po prawej stronie ekranu (kluczowe na telefonach)
                     if (rect.right + tooltipWidth > window.innerWidth) {
+                        // Jeśli nie ma miejsca z prawej, przerzucamy tooltip na lewą stronę przycisku
                         leftPos = rect.left + window.scrollX - tooltipWidth - 10;
                     }
-                    
-                    // Ochrona lewej krawędzi (np. bardzo wąski telefon)
-                    leftPos = Math.max(10, leftPos);
 
-                    // Ochrona dolnej i górnej krawędzi
-                    const tooltipHeight = globalTooltip.offsetHeight || 80;
+                    // Korekta dolnej krawędzi, jeśli tooltip wychodzi za dół ekranu
+                    const tooltipHeight = globalTooltip.offsetHeight;
                     if (rect.top + tooltipHeight > window.innerHeight) {
                         topPos = rect.top + window.scrollY - tooltipHeight + rect.height;
                     }
-                    topPos = Math.max(10 + window.scrollY, topPos); // Nie pozwól wyjść poza górę widoku
 
                     globalTooltip.style.top = topPos + 'px';
                     globalTooltip.style.left = leftPos + 'px';
                 }
             };
+
 
             item.appendChild(gameBtn);
             item.appendChild(infoIcon);
@@ -214,14 +216,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(contentArea);
     document.body.appendChild(panel);
 
+    // 1. Zmienna kontrolująca, czy nastąpiło przesunięcie panelu
     let wasDragged = false; 
 
-    opener.addEventListener('click', (e) => { 
+    // Kliknięcie w ikonę (opener)
+    opener.onclick = (e) => { 
         if (wasDragged) {
-            wasDragged = false; 
-            return; 
+            wasDragged = false; // Reset flagi
+            return; // Przerwij, jeśli to było przesunięcie palcem
         }
 
+        // Logika minimalizacji/maksymalizacji
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
@@ -234,11 +239,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             const absoluteLeft = parseInt(opener.style.left) || 0;
             const absoluteTop = parseInt(opener.style.top) || 0;
 
-            // Ustawienie panelu obok ikony
             panel.style.setProperty('left', (absoluteLeft + 55) + 'px', 'important');
             panel.style.setProperty('top', absoluteTop + 'px', 'important');
         }
-    });
+    };
 
     document.addEventListener('click', (e) => {
         if (!e.target.classList.contains('tw-square-btn')) {
@@ -262,6 +266,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 
+    // Drag & Drop
     let isDragging = false;
     let draggedElement = null;
     let initialX = 0, initialY = 0;
@@ -271,7 +276,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         if (e.currentTarget !== opener) return;
 
         draggedElement = opener;
-        wasDragged = false; 
+        wasDragged = false; // Reset przed ruchem
 
         if (e.type === "touchstart") {
             startX = e.touches[0].clientX;
@@ -301,11 +306,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     function dragMove(e) {
         if (!isDragging || !draggedElement) return;
         if (e.cancelable) e.preventDefault(); 
-        
-        // Zabezpieczenie czyszczenia zakresów
-        if (window.getSelection().rangeCount > 0) {
-            window.getSelection().removeAllRanges(); 
-        }
+        window.getSelection().removeAllRanges(); 
 
         let currentX, currentY;
         if (e.type === "touchmove") {
@@ -319,6 +320,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
+        // Jeśli przesunięcie jest większe niż 5 pikseli, blokujemy normalne kliknięcie (wasDragged = true)
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             wasDragged = true; 
         }
