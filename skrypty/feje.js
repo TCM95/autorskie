@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         FEJKOMAT Własny Skrypt
+// @name         FEJKOMAT Własny
 // @namespace    https://viayoo.com/
 // @version      1.0
 // @description  Wysyłanie z własnego skryptu na pasku
