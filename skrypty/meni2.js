@@ -20,8 +20,18 @@
         { name: "Menadżer pamięci", run: () => $.getScript('https://twscripts.dev/scripts/localStorageManager.js') },
         { name: "Statystyki plemienia", run: () => $.getScript('https://twscripts.dev/scripts/tribeStatsTool.js') },
         { name: "Single zbierak", run: () => { window.premiumBtnEnabled = false; $.getScript('https://shinko-to-kuma.com/scripts/scavengingFinal.js'); } },
-        { name: "Import grup", run: () => $.getScript("https://shinko-to-kuma.com/scripts/groupImport.js") }
-    ];
+        { name: "Import grup", run: () => $.getScript("https://shinko-to-kuma.com/scripts/groupImport.js") },
+{ name: "Wyszukiwarka Barbar", run: () => $.getScript('https://twscripts.dev/scripts/barbsFinder.js') },
+{ name: "Szukanie Wioosek Bonusowych", run: () => $.getScript('https://twscripts.dev/scripts/bonusFinderEvolved.js') },
+{ name: "Burzenie Murów Barbar", run: () => $.getScript('https://twscripts.dev/scripts/clearBarbarianWalls.js') },
+{ name: "Karetka Fejków", run: () => $.getScript('https://twscripts.dev/scripts/evolvedFakeTrain.js') },
+{ name: "Wydajność Zbieracza/Farmy", run: () => $.getScript('https://twscripts.dev/scripts/farmingEfficiencyCalculator.js') },
+{ name: "Masywny Planer Ataków", run: () => $.getScript('https://twscripts.dev/scripts/massAttackPlanner.js') },
+{ name: "Masywne Klinowanie", run: () => $.getScript('https://twscripts.dev/scripts/massSnipe.js') },
+{ name: "Planer Jednej Wioski", run: () => $.getScript('https://twscripts.dev/scripts/singleVillagePlanner.js') },
+{ name: "Klin z Jednej Wioski", run: () => $.getScript('https://twscripts.dev/scripts/singleVillageSnipe.js') },
+{ name: "Zaawansowana Strażnica", run: () => $.getScript('https://twscripts.dev/scripts/watchtowerEvolved.js') }
+   ];
 
     function initMenu() {
         const container = document.getElementById('tcm-external-menu-container');
