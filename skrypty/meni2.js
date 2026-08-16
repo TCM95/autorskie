@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Menu skryptów (Custom Shape)
+// @name         Meni
 // @namespace    https://viayoo.com/
-// @version      3.0
-// @description  Niewidzialny select nałożony na customowy guzik w kształcie strzały z neonowym obramowaniem
+// @version      1.0
+// @description  Niewidzialny select
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -12,7 +12,7 @@
     'use strict';
 
     const scripts = [
-        { name: "Wybierz skrypt...", run: () => {} },
+        { name: "vVV", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
         { name: "Przegląd ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
         { name: "Filtry raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
