@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Meni
 // @namespace    https://viayoo.com/
-// @version      1.5
-// @description  Ładuje listę skryptów, automatycznie naprawia UI i nadpisuje style rodzica
+// @version      1.6
+// @description  Wymusza twarde style !important i sztywne wymiary
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -27,19 +27,28 @@
         const container = document.getElementById('tcm-external-menu-container');
         if (!container) return false;
 
-        // ----------------------------------------------------
-        // NAPRAWA STYLÓW PANELU (RODZICA) Z POZIOMU TEGO SKRYPTU
-        // ----------------------------------------------------
-        container.style.boxSizing = 'border-box';
-        container.style.width = '100%';
-        container.style.overflow = 'hidden';
+        // TWARDE BLOKOWANIE RODZICA
+        container.style.setProperty('box-sizing', 'border-box', 'important');
+        container.style.setProperty('width', '100%', 'important');
+        container.style.setProperty('max-width', '100%', 'important');
+        container.style.setProperty('overflow', 'hidden', 'important');
         
         container.innerHTML = '';
 
         const select = document.createElement('select');
         
-        // Flexbox naprawiony: min-width 0 zapobiega rozpychaniu, ellipsis ucina tekst
-        select.style.cssText = 'flex: 1 1 auto; min-width: 0; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; outline: none; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; cursor: pointer;';
+        // Twarda kalkulacja szerokości (100% szerokości panelu minus przycisk i marginesy)
+        select.style.setProperty('width', 'calc(100% - 85px)', 'important');
+        select.style.setProperty('padding', '4px', 'important');
+        select.style.setProperty('background', 'var(--bg-main)', 'important');
+        select.style.setProperty('color', 'var(--text-color)', 'important');
+        select.style.setProperty('border', '1px solid var(--border-color)', 'important');
+        select.style.setProperty('border-radius', '3px', 'important');
+        select.style.setProperty('font-size', '13px', 'important');
+        select.style.setProperty('outline', 'none', 'important');
+        select.style.setProperty('text-overflow', 'ellipsis', 'important');
+        select.style.setProperty('white-space', 'nowrap', 'important');
+        select.style.setProperty('overflow', 'hidden', 'important');
 
         scripts.forEach((s, i) => {
             let opt = document.createElement('option');
@@ -50,34 +59,28 @@
 
         const runBtn = document.createElement('button');
         runBtn.innerText = 'Uruchom';
-        runBtn.title = 'Uruchom wybrany skrypt';
+        
+        // CAŁKOWITE USUNIĘCIE KLASY - zapobiega konfliktom i starym, niebieskim stylom
+        runBtn.className = ''; 
+        
+        // TWARDE WYMUSZANIE WYGLĄDU (Zielony styl)
+        runBtn.style.setProperty('width', '75px', 'important');
+        runBtn.style.setProperty('flex-shrink', '0', 'important');
+        runBtn.style.setProperty('padding', '4px 0', 'important');
+        runBtn.style.setProperty('background', 'var(--btn-green-bg)', 'important');
+        runBtn.style.setProperty('color', 'var(--title-color)', 'important');
+        runBtn.style.setProperty('border', '1px solid var(--border-color)', 'important');
+        runBtn.style.setProperty('border-radius', '3px', 'important');
+        runBtn.style.setProperty('font-size', '11px', 'important');
+        runBtn.style.setProperty('font-weight', 'bold', 'important');
+        runBtn.style.setProperty('text-transform', 'uppercase', 'important');
+        runBtn.style.setProperty('cursor', 'pointer', 'important');
+        runBtn.style.setProperty('box-shadow', '0 1px 3px rgba(0,0,0,0.5)', 'important');
+        runBtn.style.setProperty('transition', 'background 0.2s', 'important');
 
-        // Estetyczny przycisk 3D z zielonym gradientem (zgodnie z UI panelu)
-        // flex-shrink: 0 zapobiega ściskaniu przycisku przez długi tekst w selekcie
-        runBtn.style.cssText = `
-            flex-shrink: 0; 
-            padding: 4px 10px; 
-            background: var(--btn-green-bg); 
-            color: var(--title-color); 
-            border: 1px solid var(--border-color); 
-            border-radius: 3px; 
-            font-size: 11px; 
-            font-weight: bold; 
-            text-transform: uppercase;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            transition: background 0.2s, box-shadow 0.2s;
-        `;
-
-        // Pseudo-efekt hover (najechanie)
-        runBtn.onmouseenter = () => {
-            runBtn.style.background = 'var(--btn-green-hover)';
-            runBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.7)';
-        };
-        runBtn.onmouseleave = () => {
-            runBtn.style.background = 'var(--btn-green-bg)';
-            runBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.5)';
-        };
+        // Dynamiczne zarządzanie najeżdżaniem myszką
+        runBtn.onmouseenter = () => runBtn.style.setProperty('background', 'var(--btn-green-hover)', 'important');
+        runBtn.onmouseleave = () => runBtn.style.setProperty('background', 'var(--btn-green-bg)', 'important');
 
         runBtn.onclick = () => {
             const idx = select.value;
