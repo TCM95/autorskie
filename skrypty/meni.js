@@ -2,8 +2,10 @@
 // @name         Menu skryptów (wersja podpięta)
 // @author       TCM
 // @namespace    https://viayoo.com/
-// @version      1.1
-// @description  Ładuje listę skryptów do głównego panelu z zabezpieczeniem DOM
+// @version      1.2
+// @description  Ładuje listę skryptów do głównego panelu
+// @match        *://*.plemiona.pl/game.php*
+// @grant        none
 // ==/UserScript==
 
 (function() {
