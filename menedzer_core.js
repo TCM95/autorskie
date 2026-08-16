@@ -4,8 +4,9 @@
     const BASE_URL = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/';
     const UI_JS = ['ui/panel.js'];
     const UI_CSS_URL = `${BASE_URL}style.css`;
+    const EXTERNAL_MENU_URL = `${BASE_URL}skrypty/meni2.js`; // Ścieżka do Twojego skryptu z menu
 
-    const CATEGORIES = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo",  "Surowce", "Mapa", "Inne"];
+    const CATEGORIES = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Surowce", "Mapa", "Inne"];
     const STORAGE_KEY = 'tw_scripts_state';
 
     function getScriptsState() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
@@ -15,7 +16,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    // Wymuszenie załadowania i wstrzyknięcia CSS przed uruchomieniem UI
+    // Wymuszenie załadowania i wstrzyknięcia CSS
     async function loadCSS() {
         try {
             const res = await fetch(`${UI_CSS_URL}?t=${Date.now()}`);
@@ -31,8 +32,10 @@
         }
     }
 
+    // Uniwersalna funkcja ładowania dowolnego pliku .js z GitHuba
     async function loadModule(path) {
-        const res = await fetch(`${BASE_URL}${path}?t=${Date.now()}`);
+        const url = path.startsWith('http') ? `${path}?t=${Date.now()}` : `${BASE_URL}${path}?t=${Date.now()}`;
+        const res = await fetch(url);
         if (res.ok) {
             const script = document.createElement('script');
             script.textContent = await res.text();
@@ -85,12 +88,13 @@
     }
 
     try {
-        // Najpierw pobierz i wdróż style!
+        // 1. Ładowanie stylów CSS
         await loadCSS();
 
-        // Dopiero po załadowaniu CSS buduj UI
+        // 2. Ładowanie pliku UI (panel.js)
         for (const file of UI_JS) await loadModule(file);
 
+        // 3. Pobranie konfiguracji skryptów
         const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
         let scripts = [];
         if (confRes.ok) {
@@ -98,14 +102,20 @@
             scripts = Array.isArray(json) ? json : (json.scripts || []);
         }
 
+        // 4. Inicjalizacja budowy okna panelu
         window.TCM_UI.initPanel(scripts, CATEGORIES, { 
             getScriptsState, 
             saveScriptState, 
             onToggleTheme: toggleDarkTheme 
         });
 
+        // 5. Wywołanie i załadowanie pliku menu z Twego linku z GitHuba
+        await loadModule(EXTERNAL_MENU_URL);
+
+        // 6. Uruchomienie pozostałych aktywnych skryptów
         await loadActiveScripts(scripts);
+
     } catch (e) {
         console.error("TCM Menedżer Błąd:", e);
     }
-})(); 
+})();
