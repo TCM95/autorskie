@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Wojsko - Rekru
+// @name          Kalkulator rekru
 // @version      3.2
 // @description  Zarządzanie rekrutacją wojsk (wersja bez licznika czasu)
 // @author       TCM
