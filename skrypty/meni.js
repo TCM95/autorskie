@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Menu skryptów (wersja podpięta)
+// @name         Men
 // @namespace    https://viayoo.com/
 // @version      1.5
 // @description  Ładuje listę skryptów, automatycznie naprawia UI i nadpisuje style rodzica
