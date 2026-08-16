@@ -2,7 +2,7 @@
 // @name         Menu skryptów (wersja podpięta)
 // @author       TCM
 // @namespace    https://viayoo.com/
-// @version      1.2
+// @version      1.3
 // @description  Ładuje listę skryptów do głównego panelu
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -55,7 +55,6 @@
         return true;
     }
 
-    // Bezpieczne ładowanie - jeśli kontener jeszcze nie istnieje, próbujemy co 50ms
     if (!initMenu()) {
         const checkInterval = setInterval(() => {
             if (initMenu()) {
