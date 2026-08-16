@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Meni Zewnętrzne (Auto-Run)
+// @name         Meni
 // @namespace    https://viayoo.com/
-// @version      2.0
-// @description  Czysty zielony przycisk z wbudowaną listą skryptów
+// @version      2.1
+// @description  Czysty zielony przycisk z wbudowaną listą skryptów (wersja slim z obramówką)
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -34,9 +34,9 @@
         btnWrapper.style.cssText = `
             position: relative;
             width: 100%;
-            height: 28px;
+            height: 22px; /* Zmniejszona wysokość */
             background: var(--btn-green-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid #5cad5c; /* Zielona obramówka dopasowana do gradientu */
             border-radius: 3px;
             display: flex;
             align-items: center;
@@ -48,7 +48,8 @@
         // Wizualny napis wewnątrz przycisku
         const label = document.createElement('span');
         label.innerText = scripts[0].name;
-        label.style.cssText = 'color: var(--title-color); font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px black; pointer-events: none;';
+        // Zmniejszony lekko font, by pasował do 22px wysokości
+        label.style.cssText = 'color: var(--title-color); font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px black; pointer-events: none;';
         btnWrapper.appendChild(label);
 
         // Niewidzialny select przejmujący kliknięcia palcem/myszką
@@ -63,7 +64,7 @@
             select.appendChild(opt);
         });
 
-        // Hover efekt używający Twoich globalnych zmiennych
+        // Hover efekt
         btnWrapper.onmouseenter = () => btnWrapper.style.background = 'var(--btn-green-hover)';
         btnWrapper.onmouseleave = () => btnWrapper.style.background = 'var(--btn-green-bg)';
 
