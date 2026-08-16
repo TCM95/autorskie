@@ -30,7 +30,7 @@
             --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
         }
 
-        /* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY (Tap Highlight) DLA WSZYSTKICH ELEMENTÓW W PANELU */
+        /* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY */
         #tcm-anchor, #tcm-anchor * {
             -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
             -webkit-tap-highlight-color: transparent !important;
@@ -48,19 +48,23 @@
             -webkit-tap-highlight-color: transparent !important;
         }
 
-        /* Ikona główna i pozycjonowanie */
+        /* GŁÓWNY KONTENER POZYCJONUJĄCY */
         #tcm-anchor {
             position: fixed !important;
             z-index: 99999 !important;
             display: flex !important;
             align-items: flex-start !important;
-            touch-action: none !important; /* Zapobiega scrollowaniu przy przeciąganiu */
+            touch-action: none !important;
         }
 
+        /* IKONA GŁÓWNA (KONTENER) */
         #tcm-trigger-icon {
             width: 40px !important;
             height: 40px !important;
             min-width: 40px !important;
+            max-width: 40px !important;
+            min-height: 40px !important;
+            max-height: 40px !important;
             background: var(--bg-main) !important;
             border: 2px solid var(--border-color) !important;
             border-radius: 8px !important;
@@ -71,6 +75,20 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.5) !important;
             position: relative !important;
             flex-shrink: 0 !important;
+            overflow: hidden !important; /* Blokuje rozlewanie się grafiki */
+        }
+
+        /* NAPRAWA OBRAZKA W IKONIE - ZABEZPIECZENIE PRZED ROZCIĄGANIEM */
+        #tcm-trigger-icon img,
+        #tcm-trigger-icon svg {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+            pointer-events: none !important; /* Obrazek nie przejmuje kliknięć */
+            display: block !important;
+            border-radius: 6px !important;
         }
 
         /* LED Indicator na ikonie */
@@ -185,196 +203,19 @@
             left: 50% !important;
             transform: translateX(-50%) !important;
             background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
-            color: var(--title-color) !important;
-            padding: 6px 10px !important;
-            font-size: 11px !important;
-            white-space: nowrap !important;
-            border-radius: 4px !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: opacity 0.2s !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
-            z-index: 2147483647 !important; 
-        }
-        [data-tooltip]:hover::before, [data-tooltip]:active::before { opacity: 1 !important; }
-        [data-tooltip].off::before { border-color: var(--border-off) !important; color: #ff8a80 !important; }
-        [data-tooltip].on::before { border-color: var(--border-on) !important; color: #b9f6ca !important; }
+            color: var(--title-colorWybacz, mój błąd! Najwyraźniej zapomniałem narzucić sztywnych limitów wielkości na tę ikonę w CSS, przez co przeglądarka (szczególnie na ekranie telefonu) postanowiła rozciągnąć ją na całą dostępną przestrzeń. 
 
-        /* Przycisk Dzwonka (Powiadomienia) */
-        .tcm-bell-btn {
-            color: #ffd700 !important; 
-            border: 1px solid var(--border-color) !important;
-            font-size: 13px !important;
-        }
-        .tcm-bell-btn.tcm-btn-active {
-            border-color: var(--neon-green) !important;
-            box-shadow: var(--neon-glow) !important;
-        }
-    `;
-    document.head.appendChild(style);
+### 🐛 Zidentyfikowany Błąd
+Brak sztywno zdefiniowanych parametrów `width`, `height` lub `max-width` dla elementu graficznego. Bez tych ograniczeń obrazek renderuje się w swojej natywnej rozdzielczości, ignorując układ kontenera i psując całe UI.
 
-    // Wczytanie pozycji z localStorage
-    const savedPos = JSON.parse(localStorage.getItem('tcm_panel_pos')) || { top: '50px', left: '50px' };
+### 💡 Proponowane Rozwiązanie
+Musimy ograniczyć ikonę do rozsądnych wymiarów, aby z powrotem pasowała do zgrabnego nagłówka. Podstawowa naprawa w CSS wygląda tak:
 
-    // Struktura DOM
-    const anchor = document.createElement('div');
-    anchor.id = 'tcm-anchor';
-    anchor.classList.add('closed'); // Startowo zamknięty
-    anchor.style.top = savedPos.top;
-    anchor.style.left = savedPos.left;
-
-    anchor.innerHTML = `
-        <div id="tcm-trigger-icon" data-tooltip="Przeciągnij lub kliknij" class="on">🛠️</div>
-        <div id="tcm-panel">
-            <div class="tcm-header">
-                <span style="color: var(--title-color); font-weight: bold;">Zarządca Skryptów</span>
-                <div class="tcm-controls">
-                    <div class="tcm-sq-btn tcm-bell-btn" data-tooltip="Powiadomienia">🔔</div>
-                    <div class="tcm-sq-btn min" data-tooltip="Minimalizuj panel">_</div>
-                    <div class="tcm-sq-btn close" data-tooltip="Zamknij całkowicie">X</div>
-                </div>
-            </div>
-
-            <div class="tcm-categories">
-                <div class="tcm-category-btn active" data-target="cat1">Zbierak</div>
-                <div class="tcm-category-btn" data-target="cat2">Kalkulator Wojsko</div>
-            </div>
-
-            <div id="cat1" class="tcm-script-list">
-                <div class="tcm-script-btn on" data-tooltip="Skrypt aktywny">Auto Zbieranie A</div>
-                <div class="tcm-script-btn off" data-tooltip="Skrypt wstrzymany">Szablony Zbieraka</div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(anchor);
-
-    // --- LOGIKA UI --- //
-    const triggerIcon = document.getElementById('tcm-trigger-icon');
-    const minBtn = anchor.querySelector('.tcm-sq-btn.min');
-    const closeBtn = anchor.querySelector('.tcm-sq-btn.close');
-    const panel = document.getElementById('tcm-panel');
-
-    let lastToggleTime = 0;
-    let isDragging = false;
-    let hasDragged = false; 
-
-    // Otwieranie / Zamykanie z zabezpieczeniem (Debounce)
-    function togglePanel(e) {
-        if (e) {
-            e.preventDefault(); 
-            e.stopPropagation();
-        }
-        
-        // Zabezpieczenie przed kliknięciem tuż po przeciągnięciu
-        if (hasDragged) return;
-
-        // Zabezpieczenie przed Ghost Clicks (podwójnym wywołaniem touch + click)
-        const now = Date.now();
-        if (now - lastToggleTime < 300) return;
-        lastToggleTime = now;
-
-        anchor.classList.toggle('closed');
-    }
-
-    triggerIcon.addEventListener('click', togglePanel);
-    triggerIcon.addEventListener('touchend', togglePanel);
-    minBtn.addEventListener('click', togglePanel);
-    minBtn.addEventListener('touchend', togglePanel);
-    closeBtn.addEventListener('click', () => anchor.remove());
-    closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); anchor.remove(); });
-
-    // Obsługa kategorii i skryptów
-    panel.addEventListener('click', (e) => {
-        if (e.target.classList.contains('tcm-category-btn')) {
-            panel.querySelectorAll('.tcm-category-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
-        }
-
-        if (e.target.classList.contains('tcm-script-btn')) {
-            if (e.target.classList.contains('on')) {
-                e.target.classList.replace('on', 'off');
-                e.target.setAttribute('data-tooltip', 'Skrypt wyłączony');
-            } else {
-                e.target.classList.replace('off', 'on');
-                e.target.setAttribute('data-tooltip', 'Skrypt włączony');
-            }
-        }
-        
-        if (e.target.classList.contains('tcm-bell-btn')) {
-             e.target.classList.toggle('tcm-btn-active');
-        }
-    });
-
-    // --- LOGIKA PRZECIĄGANIA (DRAG & DROP) --- //
-    let startX, startY, initialLeft, initialTop;
-
-    function dragStart(e) {
-        // Pozwól przeciągać łapiąc za ikonę lub pasek tytułowy
-        if (e.target !== triggerIcon && !e.target.closest('.tcm-header')) return;
-        
-        isDragging = true;
-        hasDragged = false;
-
-        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-
-        startX = clientX;
-        startY = clientY;
-
-        const rect = anchor.getBoundingClientRect();
-        initialLeft = rect.left;
-        initialTop = rect.top;
-    }
-
-    function drag(e) {
-        if (!isDragging) return;
-
-        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-
-        // Jeżeli przesunięcie jest znaczące, oznacz jako przeciąganie, by nie odpalić kliknięcia
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-            hasDragged = true;
-            e.preventDefault(); 
-        }
-
-        if (!hasDragged) return;
-
-        let newLeft = initialLeft + dx;
-        let newTop = initialTop + dy;
-
-        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - 40));
-        newTop = Math.max(0, Math.min(newTop, window.innerHeight - 40));
-
-        anchor.style.left = `${newLeft}px`;
-        anchor.style.top = `${newTop}px`;
-    }
-
-    function dragEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-
-        if (hasDragged) {
-            localStorage.setItem('tcm_panel_pos', JSON.stringify({
-                top: anchor.style.top,
-                left: anchor.style.left
-            }));
-            
-            // Zresetuj flagę hasDragged z minimalnym opóźnieniem
-            setTimeout(() => { hasDragged = false; }, 50);
-        }
-    }
-
-    anchor.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
-
-    anchor.addEventListener('touchstart', dragStart, { passive: false });
-    document.addEventListener('touchmove', drag, { passive: false });
-    document.addEventListener('touchend', dragEnd);
-
-})();
+```css
+.klasa-twojej-ikony {
+    width: 24px;  /* Zależnie od potrzeb, zazwyczaj 24px - 32px jest optymalne */
+    height: 24px;
+    object-fit: contain; /* Gwarantuje, że obrazek zachowa proporcje i się nie spłaszczy */
+    display: inline-block;
+    cursor: pointer;
+}
