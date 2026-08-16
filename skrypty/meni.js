@@ -2,14 +2,13 @@
 // @name         Menu skryptów (wersja podpięta)
 // @author       TCM
 // @namespace    https://viayoo.com/
-// @version      1.0
-// @description  Ładuje listę skryptów do głównego panelu
+// @version      1.1
+// @description  Ładuje listę skryptów do głównego panelu z zabezpieczeniem DOM
 // ==/UserScript==
 
 (function() {
     'use strict';
 
-    // Lista skryptów z Twojego oryginału
     const scripts = [
         { name: "Wybierz skrypt...", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
@@ -22,36 +21,45 @@
         { name: "Import grup", run: () => $.getScript("https://shinko-to-kuma.com/scripts/groupImport.js") }
     ];
 
-    // Szukamy pojemnika w głównym panelu
-    const container = document.getElementById('tcm-external-menu-container');
-    if (!container) return; 
+    function initMenu() {
+        const container = document.getElementById('tcm-external-menu-container');
+        if (!container) return false;
 
-    // Upewniamy się, że nie ładujemy tego podwójnie
-    container.innerHTML = '';
+        container.innerHTML = '';
 
-    // Budowa UI
-    const select = document.createElement('select');
-    select.style.cssText = 'flex-grow: 1; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; outline: none;';
-    
-    scripts.forEach((s, i) => {
-        let opt = document.createElement('option');
-        opt.value = i;
-        opt.innerText = s.name;
-        select.appendChild(opt);
-    });
+        const select = document.createElement('select');
+        select.style.cssText = 'flex-grow: 1; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; font-size: 13px; outline: none;';
+        
+        scripts.forEach((s, i) => {
+            let opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = s.name;
+            select.appendChild(opt);
+        });
 
-    const runBtn = document.createElement('button');
-    runBtn.className = 'tw-square-btn tw-btn-active'; // Korzystamy z Twojego stylowania klasy tw-square-btn z CSS głównego panelu
-    runBtn.innerText = '▶';
-    runBtn.style.padding = '4px 10px';
-    runBtn.title = 'Uruchom wybrany skrypt';
+        const runBtn = document.createElement('button');
+        runBtn.className = 'tw-square-btn tw-btn-active';
+        runBtn.innerText = '▶';
+        runBtn.style.padding = '4px 10px';
+        runBtn.title = 'Uruchom wybrany skrypt';
 
-    runBtn.onclick = () => {
-        const idx = select.value;
-        if (idx > 0) scripts[idx].run();
-    };
+        runBtn.onclick = () => {
+            const idx = select.value;
+            if (idx > 0) scripts[idx].run();
+        };
 
-    container.appendChild(select);
-    container.appendChild(runBtn);
+        container.appendChild(select);
+        container.appendChild(runBtn);
+        return true;
+    }
+
+    // Bezpieczne ładowanie - jeśli kontener jeszcze nie istnieje, próbujemy co 50ms
+    if (!initMenu()) {
+        const checkInterval = setInterval(() => {
+            if (initMenu()) {
+                clearInterval(checkInterval);
+            }
+        }, 50);
+    }
 
 })();
