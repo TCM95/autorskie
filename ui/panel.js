@@ -212,7 +212,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(externalMenuContainer);
 
     // PODMIEŃ LINK NA SWÓJ (TEN KTÓRY MA LISTĘ ROZWIJANĄ)
-    $.getScript('     https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/meni.js');
+    $.getScript('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/meni.js');
     // ------------------------------------
 
     document.body.appendChild(panel);
