@@ -1,8 +1,8 @@
-q// ==UserScript==
-// @name         Meni
+// ==UserScript==
+// @name         Meni Zewnętrzne (Auto-Run)
 // @namespace    https://viayoo.com/
-// @version      1.0
-// @description  Niewidzialny select
+// @version      2.0
+// @description  Czysty zielony przycisk z wbudowaną listą skryptów
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*
 // @grant        none
@@ -12,7 +12,7 @@ q// ==UserScript==
     'use strict';
 
     const scripts = [
-        { name: "vVv", run: () => {} },
+        { name: "Wybierz skrypt ▼", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
         { name: "Przegląd ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
         { name: "Filtry raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
@@ -28,66 +28,62 @@ q// ==UserScript==
         if (!container) return false;
 
         container.innerHTML = '';
-        // Dodajemy delikatny padding na dole kontenera, aby zielony cień (glow) miał miejsce i nie był ucięty
-        container.style.setProperty('padding-bottom', '12px', 'important');
 
-        // GŁÓWNY KONTENER GUZIKA (Odpowiada za neonowy zielony cień)
-        const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position: relative; width: 95%; max-width: 250px; height: 35px; margin: 0 auto; filter: drop-shadow(0 3px 5px #267326); transition: filter 0.2s; cursor: pointer;';
+        // Główny wrapper pełniący rolę zielonego przycisku
+        const btnWrapper = document.createElement('div');
+        btnWrapper.style.cssText = `
+            position: relative;
+            width: 100%;
+            height: 28px;
+            background: var(--btn-green-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        `;
 
-        // WARSTWA 1: ZIELONE OBRAMOWANIE (Kształt trapezu wycięty z gradientu)
-        const borderLayer = document.createElement('div');
-        // Kąty: lewy-górny (0,0), prawy-górny (100,0), prawy-dolny (85,100), lewy-dolny (15,100)
-        borderLayer.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--btn-green-hover); clip-path: polygon(0 0, 100% 0, 85% 100%, 15% 100%); pointer-events: none;';
-
-        // WARSTWA 2: CIEMNE TŁO WNĘTRZA (Zmniejszona o 2px względem obramowania)
-        const innerLayer = document.createElement('div');
-        innerLayer.style.cssText = 'position: absolute; top: 2px; left: 2px; width: calc(100% - 4px); height: calc(100% - 4px); background: var(--btn-bg); clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%); display: flex; align-items: center; justify-content: center; pointer-events: none;';
-
-        // TEKST NA ŚRODKU GUZIKA
+        // Wizualny napis wewnątrz przycisku
         const label = document.createElement('span');
-        label.innerText = 'WYBIERZ SKRYPT...';
-        label.style.cssText = 'color: var(--title-color); font-size: 11px; font-weight: bold; text-shadow: 1px 1px 2px black; letter-spacing: 1px; margin-top: -2px;';
+        label.innerText = scripts[0].name;
+        label.style.cssText = 'color: var(--title-color); font-size: 12px; font-weight: bold; text-shadow: 1px 1px 2px black; pointer-events: none;';
+        btnWrapper.appendChild(label);
 
-        innerLayer.appendChild(label);
-        wrapper.appendChild(borderLayer);
-        wrapper.appendChild(innerLayer);
-
-        // WARSTWA 3: NIEWIDZIALNY SELECT (Zbiera kliknięcia palcem)
+        // Niewidzialny select przejmujący kliknięcia palcem/myszką
         const select = document.createElement('select');
-        select.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: 10; cursor: pointer; appearance: none; -webkit-appearance: none;';
+        select.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; appearance: none; -webkit-appearance: none;';
 
         scripts.forEach((s, i) => {
             let opt = document.createElement('option');
             opt.value = i;
             opt.innerText = s.name;
-            opt.style.cssText = 'background: var(--bg-main) !important; color: var(--text-color) !important; text-align: center;';
+            opt.style.cssText = 'background: var(--bg-main) !important; color: var(--text-color) !important;';
             select.appendChild(opt);
         });
 
-        // Efekty "Glow" przy przytrzymaniu/najechaniu
-        wrapper.onmouseenter = () => wrapper.style.filter = 'drop-shadow(0 4px 8px #6bbf6b)';
-        wrapper.onmouseleave = () => wrapper.style.filter = 'drop-shadow(0 3px 5px #267326)';
+        // Hover efekt używający Twoich globalnych zmiennych
+        btnWrapper.onmouseenter = () => btnWrapper.style.background = 'var(--btn-green-hover)';
+        btnWrapper.onmouseleave = () => btnWrapper.style.background = 'var(--btn-green-bg)';
 
-        // Logika Auto-Run
+        // Logika Auto-Run po wybraniu opcji z listy
         select.onchange = () => {
-            const idx = select.value;
+            const idx = parseInt(select.value, 10);
             if (idx > 0) {
                 scripts[idx].run();
-                select.value = 0; // Wracamy do stanu wyjściowego
+                select.value = 0; // Od razu resetujemy wygląd po odpaleniu
             }
         };
 
-        wrapper.appendChild(select);
-        container.appendChild(wrapper);
+        btnWrapper.appendChild(select);
+        container.appendChild(btnWrapper);
         return true;
     }
 
     if (!initMenu()) {
         const checkInterval = setInterval(() => {
-            if (initMenu()) {
-                clearInterval(checkInterval);
-            }
+            if (initMenu()) clearInterval(checkInterval);
         }, 50);
     }
 
