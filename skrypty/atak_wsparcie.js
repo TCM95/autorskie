@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Atak/wsparcie (Shinko UI)
+// @name         kalkulator Atak/wsparcie (Shinko UI)
 // @version      1.0.0
 // @description  Zintegrowany system wysyłki w kompaktowym UI
 // @namespace    https://viayoo.com/
