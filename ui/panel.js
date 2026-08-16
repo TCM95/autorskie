@@ -208,10 +208,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
     const externalMenuContainer = document.createElement('div');
     externalMenuContainer.id = 'tcm-external-menu-container';
-    externalMenuContainer.style.cssText = 'padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: flex; gap: 5px;';
+    // NAPRAWA: Dodano box-sizing, sztywną szerokość 100% oraz ukrycie overflow, aby kontener nie wystawał poza panel
+    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: flex; gap: 5px;';
     panel.appendChild(externalMenuContainer);
 
-    // NAPRAWA: Ładowanie pliku poprzez jsDelivr CDN dla poprawnego typu MIME i użycie natywnego elementu <script>
+
+// NAPRAWA: Ładowanie pliku poprzez jsDelivr CDN dla poprawnego typu MIME i użycie natywnego elementu <script>
     const externalScript = document.createElement('script');
     externalScript.src = 'https://cdn.jsdelivr.net/gh/TCM95/autorskie@main/skrypty/meni.js?t=' + new Date().getTime();
     document.head.appendChild(externalScript);
