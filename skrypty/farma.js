@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         farma
+// @name         kalkulator farmy
 // @version      1.0
 // @description  Auto loot with FarmGodCopy and Autotrading-style controls.
 // @include      https://*/game.php*screen=am_farm*
