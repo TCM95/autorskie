@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Wybijak_Monet
+// @name         Monety
 // @namespace    https://viayoo.com/
 // @version      1.3
 // @description  Skrypt do masowego sterowania wybijaniem monet (Mini UI)
