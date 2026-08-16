@@ -7,8 +7,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
-        globalTooltip.style.display = 'none';
-        globalTooltip.style.position = 'absolute';
+        // NAPRAWA: Dodany z-index, by był najwyżej w hierarchii
+        globalTooltip.style.cssText = 'display: none; position: absolute; z-index: 1000000 !important; background: var(--bg-main); border-radius: 4px; padding: 10px; pointer-events: none;';
         document.body.appendChild(globalTooltip);
     }
 
@@ -163,19 +163,19 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function updateTooltipContent(script, isActive) {
         const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
-        const colorVar = isActive ? 'var(--neon-green)' : 'var(--neon-red)';
+        const colorVar = isActive ? 'var(--btn-green-hover)' : 'var(--btn-red-hover)';
         const statusText = isActive ? 'Aktywny' : 'Wyłączony';
 
-        globalTooltip.style.borderColor = `var(${isActive ? '--neon-green' : '--neon-red'})`;
-        globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 10px var(${isActive ? '--neon-green' : '--neon-red'})`;
+        globalTooltip.style.border = `1px solid ${colorVar}`;
+        globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 10px ${colorVar}`;
 
         globalTooltip.innerHTML = `
             <strong style="color: var(--title-color); font-size: 12px;">${script.name}</strong> 
             <span style="color: ${colorVar}; float: right; font-weight: bold; text-shadow: 0 0 4px ${colorVar};">[${statusText}]</span><br>
             <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 6px 0;">
             <div style="line-height: 1.4;">
-                <strong>Opis:</strong> ${script.description || 'Brak.'}<br>
-                <strong style="margin-top:4px; display:inline-block;">Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>
+                <strong style="color: var(--text-color);">Opis:</strong> <span style="color: var(--text-color);">${script.description || 'Brak.'}</span><br>
+                <strong style="margin-top:4px; display:inline-block; color: var(--text-color);">Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>
             </div>`;
     }
 
@@ -211,9 +211,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     externalMenuContainer.style.cssText = 'padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: flex; gap: 5px;';
     panel.appendChild(externalMenuContainer);
 
-    // PODMIEŃ LINK NA SWÓJ (TEN KTÓRY MA LISTĘ ROZWIJANĄ)
-    $.getScript('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/meni.js?t=' + new Date().getTime());
-
+    // NAPRAWA: Ładowanie pliku poprzez jsDelivr CDN dla poprawnego typu MIME i użycie natywnego elementu <script>
+    const externalScript = document.createElement('script');
+    externalScript.src = 'https://cdn.jsdelivr.net/gh/TCM95/autorskie@main/skrypty/meni.js?t=' + new Date().getTime();
+    document.head.appendChild(externalScript);
     // ------------------------------------
 
     document.body.appendChild(panel);
