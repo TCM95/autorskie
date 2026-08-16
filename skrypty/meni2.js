@@ -12,7 +12,7 @@
     'use strict';
 
     const scripts = [
-        { name: "Wybierz skrypt ▼", run: () => {} },
+        { name: "   ▼   ", run: () => {} },
         { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
         { name: "Przegląd ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
         { name: "Filtry raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
