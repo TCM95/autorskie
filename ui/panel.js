@@ -208,16 +208,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
        // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
     const externalMenuContainer = document.createElement('div');
     externalMenuContainer.id = 'tcm-external-menu-container';
-    
-    // ZWYKŁY BLOK 100% SZEROKOŚCI - Bez siatki Grid
-    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
+    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px 12px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
     panel.appendChild(externalMenuContainer);
 
-    // Cache buster dla pewności załadowania nowej wersji z Githuba
+    // Ładowanie nowego pliku meni2.js z całkowicie nowym adresem omijającym cache
     const externalScript = document.createElement('script');
-    externalScript.src = 'https://cdn.jsdelivr.net/gh/TCM95/autorskie@main/skrypty/meni.js?v=' + Math.random().toString(36).substring(2, 10);
+    externalScript.src = 'https://cdn.jsdelivr.net/gh/TCM95/autorskie@main/skrypty/meni2.js?v=' + Date.now();
     document.head.appendChild(externalScript);
     // ------------------------------------
+
 
     document.body.appendChild(panel);
 
