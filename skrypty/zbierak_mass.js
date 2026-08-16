@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         ZBIERACTWO M.
+// @name         kalkulator zbierak
 // @namespace    https://viayoo.com/
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
