@@ -202,52 +202,19 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         categoriesBar.appendChild(tab);
     });
 
-    // --- NOWA SEKCJA: Szybkie Menu (okienko ze strzałką) ---
-    const quickMenuContainer = document.createElement('div');
-    quickMenuContainer.style.cssText = 'padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); display: flex; gap: 5px; align-items: center; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;';
-    
-    const quickScripts = [
-        { name: "Wybierz narzędzie...", run: () => {} },
-        { name: "Health Check", run: () => $.getScript('https://twscripts.dev/scripts/defenseHealthCheck.js') },
-        { name: "Przegląd Ataków", run: () => { window.NOBLE_GAP = 100; window.FORMAT = '%unit% | %sent%'; $.getScript('https://twscripts.dev/scripts/incomingsOverview.js'); } },
-        { name: "Filtry Raportów", run: () => $.getScript('https://twscripts.dev/scripts/advancedReportFilters.js') },
-        { name: "Tekst na Notatkę", run: () => $.getScript('https://twscripts.dev/scripts/convertTextToNote.js') },
-        { name: "Menadżer Pamięci", run: () => $.getScript('https://twscripts.dev/scripts/localStorageManager.js') },
-        { name: "Statystyki Plemienia", run: () => $.getScript('https://twscripts.dev/scripts/tribeStatsTool.js') },
-        { name: "Pojedynczy Zbierak", run: () => { window.premiumBtnEnabled = false; $.getScript('https://shinko-to-kuma.com/scripts/scavengingFinal.js'); } },
-        { name: "Import Grup", run: () => $.getScript("https://shinko-to-kuma.com/scripts/groupImport.js") }
-    ];
-
-    const quickSelect = document.createElement('select');
-    quickSelect.style.cssText = 'flex-grow: 1; padding: 4px; background: var(--bg-main); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; outline: none; font-size: 13px;';
-    
-    quickScripts.forEach((s, i) => {
-        let opt = document.createElement('option');
-        opt.value = i;
-        opt.innerText = s.name;
-        quickSelect.appendChild(opt);
-    });
-
-    const runQuickBtn = document.createElement('button');
-    runQuickBtn.className = 'tw-square-btn tw-btn-active'; // Korzysta z Twojego systemu klas, by być na zielono/aktywnym
-    runQuickBtn.innerText = '▶';
-    runQuickBtn.style.padding = '4px 10px';
-    runQuickBtn.title = 'Uruchom wybrany skrypt';
-
-    runQuickBtn.onclick = () => {
-        const idx = quickSelect.value;
-        if (idx > 0) quickScripts[idx].run();
-    };
-
-    quickMenuContainer.appendChild(quickSelect);
-    quickMenuContainer.appendChild(runQuickBtn);
-    // -------------------------------------------------------
-
-    // Kolejność dodawania elementów do głównego panelu
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
-    panel.appendChild(quickMenuContainer); // Szybkie menu dodane zawsze na samym dole
-    
+
+    // --- MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
+    const externalMenuContainer = document.createElement('div');
+    externalMenuContainer.id = 'tcm-external-menu-container';
+    externalMenuContainer.style.cssText = 'padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: flex; gap: 5px;';
+    panel.appendChild(externalMenuContainer);
+
+    // PODMIEŃ LINK NA SWÓJ (TEN KTÓRY MA LISTĘ ROZWIJANĄ)
+    $.getScript('https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/twoj_skrypt_z_lista.js');
+    // ------------------------------------
+
     document.body.appendChild(panel);
 
     let wasDragged = false; 
