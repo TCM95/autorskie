@@ -1,11 +1,3 @@
-// ==UserScript==
-// @name         Panel UI Menedżera TCM
-// @namespace    https://viayoo.com/
-// @version      1.2
-// @description  Interfejs panelu z dynamiczną kontrolą kolorów kategorii, zielonym przyciskiem i zoptymalizowanym tooltipem.
-// @author       TCM
-// ==/UserScript==
-
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
