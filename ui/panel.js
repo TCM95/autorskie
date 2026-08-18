@@ -1,3 +1,11 @@
+// ==UserScript==
+// @name Panel TCM
+// @namespace https://viayoo.com/
+// @version 1.1
+// @description Główny panel zarządzania skryptami
+// @author TCM
+// ==/UserScript==
+
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
@@ -7,7 +15,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
-        globalTooltip.className = 'tw-tooltip';
+        globalTooltip.style.cssText = `
+            display: none; 
+            position: absolute; 
+            z-index: 1000000 !important; 
+            background: var(--bg-main); 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            padding: 10px; 
+            pointer-events: none; 
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        `;
         document.body.appendChild(globalTooltip);
     }
 
@@ -15,7 +33,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
-    opener.className = 'tw-opener-closed'; 
+    opener.className = 'tw-opener-closed';
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
@@ -42,18 +60,16 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     controls.style.gap = '4px';
 
     const bellBtn = document.createElement('button');
-    bellBtn.className = 'tw-square-btn tw-bell-btn'; 
+    bellBtn.className = 'tw-square-btn tw-bell-btn';
     bellBtn.innerText = '🔔';
-    bellBtn.onclick = () => console.log("Powiadomienia");
+    bellBtn.onclick = () => console.log("Kliknięto dzwonek powiadomień.");
 
     const closeBtn = document.createElement('button');
-    closeBtn.className = 'tw-close-btn';
+    closeBtn.className = 'tw-square-btn tw-btn-inactive';
     closeBtn.innerText = 'X';
-
-    closeBtn.onclick = () => { 
-        panel.style.setProperty('display', 'none', 'important'); 
-        opener.classList.remove('tw-opener-open');
-        opener.classList.add('tw-opener-closed');
+    closeBtn.onclick = () => {
+        panel.style.setProperty('display', 'none', 'important');
+        opener.classList.replace('tw-opener-open', 'tw-opener-closed');
         globalTooltip.style.display = 'none';
     };
 
@@ -80,15 +96,23 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             const scriptsInCat = scriptsArray.filter(s => (s.category || "Ogólne") === catName);
             if (scriptsInCat.length === 0) return;
             const anyActive = scriptsInCat.some(script => state[script.id] === true);
-            tab.classList.remove('cat-status-on', 'cat-status-off');
-            tab.classList.add(anyActive ? 'cat-status-on' : 'cat-status-off');
+            tab.classList.toggle('cat-status-on', anyActive);
+            tab.classList.toggle('cat-status-off', !anyActive);
         });
     }
 
     function renderScripts() {
         contentInner.innerHTML = '';
         const state = callbacks.getScriptsState();
-        let filtered = scriptsArray.filter(s => (s.category || "Ogólne") === currentCategory);
+        const filtered = scriptsArray.filter(s => (s.category || "Ogólne") === currentCategory);
+
+        if (filtered.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 8px;';
+            emptyMsg.innerText = 'Brak skryptów.';
+            contentInner.appendChild(emptyMsg);
+            return;
+        }
 
         filtered.forEach(script => {
             const isActive = state[script.id] === true;
@@ -121,7 +145,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-square-btn tw-btn-active';
             infoIcon.innerText = 'i';
-
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
                 if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
@@ -132,8 +155,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                     globalTooltip.style.display = 'block';
                     globalTooltip.dataset.activeId = script.id;
                     const rect = infoIcon.getBoundingClientRect();
-                    globalTooltip.style.top = (rect.top + window.scrollY - 10) + 'px';
-                    globalTooltip.style.left = (rect.right + window.scrollX + 10) + 'px';
+                    let topPos = rect.top + window.scrollY - 10;
+                    let leftPos = rect.right + window.scrollX + 10;
+                    if (rect.right + 250 > window.innerWidth) leftPos = rect.left + window.scrollX - 260;
+                    globalTooltip.style.top = topPos + 'px';
+                    globalTooltip.style.left = leftPos + 'px';
                 }
             };
 
@@ -145,15 +171,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     function updateTooltipContent(script, isActive) {
         const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
+        const borderColor = isActive ? 'var(--btn-green-bg)' : 'var(--btn-red-bg)';
         const statusText = isActive ? 'Aktywny' : 'Wyłączony';
-        globalTooltip.className = `tw-tooltip ${isActive ? 'tw-tooltip-active' : 'tw-tooltip-inactive'}`;
+
+        globalTooltip.style.borderColor = borderColor;
+        globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 5px ${borderColor}`;
         globalTooltip.innerHTML = `
             <strong style="color: var(--title-color); font-size: 12px;">${script.name}</strong> 
-            <span style="color: ${isActive ? 'var(--neon-green)' : 'var(--neon-red)'}; float: right; font-weight: bold;">[${statusText}]</span><br>
-            <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 6px 0;">
+            <span style="color: ${borderColor}; float: right; font-weight: bold;">[${statusText}]</span><br>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 6px 0;">
             <div style="line-height: 1.4;">
                 <strong style="color: var(--text-color);">Opis:</strong> <span style="color: var(--text-color);">${script.description || 'Brak.'}</span><br>
-                <strong style="margin-top:4px; display:inline-block; color: var(--text-color);">Strony:</strong> <span style="color: var(--title-color);">${screensInfo}</span>
+                <strong style="margin-top:4px; display:inline-block; color: var(--text-color);">Strony:</strong> <span style="color: ${borderColor};">${screensInfo}</span>
             </div>`;
     }
 
@@ -162,6 +191,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         tab.className = 'tw-tab';
         tab.innerText = cat;
         tab.onclick = () => {
+            globalTooltip.style.display = 'none';
             if (currentCategory === cat) {
                 currentCategory = null;
                 tab.classList.remove('active-tab');
@@ -179,6 +209,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
+
+    const externalMenuContainer = document.createElement('div');
+    externalMenuContainer.id = 'tcm-external-menu-container';
+    externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;';
+    panel.appendChild(externalMenuContainer);
+
     document.body.appendChild(panel);
     updateCategoryStatus();
+
+    // Logika draggingu i zamykania bez zmian (pozostawiona zgodnie z Twoim oryginałem)
+    // ... (pozostała logika dragStart/Move/End w Twoim kodzie jest poprawna)
 };
