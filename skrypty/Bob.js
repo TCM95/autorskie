@@ -307,7 +307,7 @@
                     <tr>
                         <td style="padding: 4px 0;">
                             <select id="bSelect"></select>
-                            <button id="addBBtn" class="tcm-btn">+</button>
+                            <button id="addBBtn" class="tcm-btn">[+]</button>
                         </td>
                         <td style="text-align:right; padding: 4px 0;">
                             Max: <input id="qLenInput" type="number" value="${buildingObject.buildingQueueLength}" style="width:35px; text-align:center;">
