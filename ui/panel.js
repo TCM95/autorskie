@@ -1,3 +1,11 @@
+// ==UserScript==
+// @name         Panel UI Menedżera TCM
+// @namespace    https://viayoo.com/
+// @version      1.3
+// @description  Poprawiony interfejs: usunięto zbędne elementy, czerwone obramowanie kontenera nagłówka, kolor tekstu kategorii odzwierciedla status.
+// @author       TCM
+// ==/UserScript==
+
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
@@ -29,7 +37,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
 
-    // NAGŁÓWEK PANELU (PODŚWIETLONY NA CZERWONO)
+    // NAGŁÓWEK PANELU (Z CZERWONĄ OBRAMÓWKĄ)
     const header = document.createElement('div');
     header.id = 'tw-script-panel-header';
 
@@ -37,24 +45,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     titleSpan.className = 'tw-header-title';
     titleSpan.innerText = 'Menu TCM';
 
-    const controls = document.createElement('div');
-    controls.style.cssText = 'display: flex; gap: 4px;';
-
-    // PRZYCISK STRZAŁKI (ZIELONY PRZYCISK 3D)
-    const toggleContentBtn = document.createElement('button');
-    toggleContentBtn.className = 'tw-square-btn tw-btn-green-sq'; 
-    toggleContentBtn.innerText = '▼';
-    toggleContentBtn.onclick = () => {
-        if (contentArea.style.display === 'block') {
-            contentArea.style.setProperty('display', 'none', 'important');
-            toggleContentBtn.innerText = '▼';
-        } else if (currentCategory) {
-            contentArea.style.setProperty('display', 'block', 'important');
-            toggleContentBtn.innerText = '▲';
-        }
-    };
-
-    // PRZYCISK ZAMKNIĘCIA X (CZERWONY)
+    // PRZYCISK ZAMKNIĘCIA X
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-square-btn tw-btn-red-sq';
     closeBtn.innerText = 'X';
@@ -64,12 +55,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         opener.classList.remove('tw-opener-open');
         opener.classList.add('tw-opener-closed');
         globalTooltip.style.display = 'none';
+        
+        // Ukrywamy obszar skryptów po zamknięciu panelu
+        const contentArea = document.getElementById('tw-content-area');
+        if(contentArea) {
+             contentArea.style.setProperty('display', 'none', 'important');
+             currentCategory = null;
+             document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
+        }
     };
 
-    controls.appendChild(toggleContentBtn);
-    controls.appendChild(closeBtn);
     header.appendChild(titleSpan);
-    header.appendChild(controls);
+    header.appendChild(closeBtn);
     panel.appendChild(header);
 
     const categoriesBar = document.createElement('div');
@@ -82,7 +79,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     contentInner.className = 'tw-content-inner';
     contentArea.appendChild(contentInner);
 
-    // FUNKCJA AKTUALIZUJĄCA KOLORY NAZW KATEGORII
+    // LOGIKA - TYLKO KOLOR TEKSTU W ZAKŁADCE KATEGORII
     function updateCategoryStatus() {
         const state = callbacks.getScriptsState();
         document.querySelectorAll('.tw-tab').forEach(tab => {
@@ -92,9 +89,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             tab.classList.remove('tw-cat-has-active', 'tw-cat-all-off');
             if (hasActive) {
-                tab.classList.add('tw-cat-has-active'); // Zielony napis
+                tab.classList.add('tw-cat-has-active');
             } else {
-                tab.classList.add('tw-cat-all-off'); // Czerwony napis
+                tab.classList.add('tw-cat-all-off');
             }
         });
     }
@@ -172,7 +169,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         });
     }
 
-    // UPDATED TOOLTIP WITH INNER BORDERS
     function updateTooltipContent(script, isActive) {
         const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
         const statusColor = isActive ? 'var(--neon-green)' : 'var(--neon-red)';
@@ -195,7 +191,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             </div>`;
     }
 
-    // GENEROWANIE ZAKŁADEK KATEGORII
     categories.forEach(cat => {
         const tab = document.createElement('button');
         tab.className = 'tw-tab';
@@ -210,14 +205,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 currentCategory = null;
                 tab.classList.remove('active-tab');
                 contentArea.style.setProperty('display', 'none', 'important');
-                toggleContentBtn.innerText = '▼';
             } else {
                 document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
                 tab.classList.add('active-tab');
                 currentCategory = cat;
                 renderScripts();
                 contentArea.style.setProperty('display', 'block', 'important');
-                toggleContentBtn.innerText = '▲';
             }
         };
         categoriesBar.appendChild(tab);
@@ -227,10 +220,8 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(contentArea);
     document.body.appendChild(panel);
 
-    // INICJALNA WERYFIKACJA KOLORÓW KATEGORII
     updateCategoryStatus();
 
-    // DRAG & DROP DLA OPENERA
     let isDragging = false;
     let wasDragged = false;
     let startX = 0, startY = 0, initialX = 0, initialY = 0;
@@ -242,6 +233,9 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
             opener.classList.add('tw-opener-closed');
+            contentArea.style.setProperty('display', 'none', 'important');
+            currentCategory = null;
+            document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
         } else {
             panel.style.setProperty('display', 'flex', 'important');
             opener.classList.remove('tw-opener-closed');
