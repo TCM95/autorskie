@@ -7,7 +7,17 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     if (!globalTooltip) {
         globalTooltip = document.createElement('div');
         globalTooltip.id = 'tw-global-tooltip';
-        globalTooltip.style.cssText = 'display: none; position: absolute; z-index: 1000000 !important; background: var(--bg-main); border-radius: 4px; padding: 10px; pointer-events: none;';
+        globalTooltip.style.cssText = `
+            display: none; 
+            position: absolute; 
+            z-index: 1000000 !important; 
+            background: var(--bg-main); 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            padding: 10px; 
+            pointer-events: none; 
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        `;
         document.body.appendChild(globalTooltip);
     }
 
@@ -75,7 +85,6 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     contentInner.className = 'tw-content-inner';
     contentArea.appendChild(contentInner);
 
-    // Funkcja aktualizująca kolorowanie kategorii w zależności od statusu skryptów
     function updateCategoryStatus() {
         const state = callbacks.getScriptsState();
         document.querySelectorAll('.tw-tab').forEach(tab => {
@@ -186,13 +195,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         const colorVar = isActive ? 'var(--btn-green-hover)' : 'var(--btn-red-hover)';
         const statusText = isActive ? 'Aktywny' : 'Wyłączony';
 
-        globalTooltip.style.border = `1px solid ${colorVar}`;
+        globalTooltip.style.borderColor = colorVar;
         globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 10px ${colorVar}`;
 
         globalTooltip.innerHTML = `
             <strong style="color: var(--title-color); font-size: 12px;">${script.name}</strong> 
             <span style="color: ${colorVar}; float: right; font-weight: bold; text-shadow: 0 0 4px ${colorVar};">[${statusText}]</span><br>
-            <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 6px 0;">
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 6px 0;">
             <div style="line-height: 1.4;">
                 <strong style="color: var(--text-color);">Opis:</strong> <span style="color: var(--text-color);">${script.description || 'Brak.'}</span><br>
                 <strong style="margin-top:4px; display:inline-block; color: var(--text-color);">Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>
@@ -225,16 +234,13 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     panel.appendChild(categoriesBar);
     panel.appendChild(contentArea);
 
-    // --- CZYSTE MIEJSCE NA ZEWNĘTRZNY SKRYPT ---
     const externalMenuContainer = document.createElement('div');
     externalMenuContainer.id = 'tcm-external-menu-container';
     externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
     panel.appendChild(externalMenuContainer);
-    // ------------------------------------
 
     document.body.appendChild(panel);
 
-    // Odśwież statusy kategorii na starcie
     updateCategoryStatus();
 
     let wasDragged = false; 
