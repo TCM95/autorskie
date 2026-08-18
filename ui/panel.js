@@ -1,11 +1,3 @@
-// ==UserScript==
-// @name Panel TCM
-// @namespace https://viayoo.com/
-// @version 1.1
-// @description Główny panel zarządzania skryptami
-// @author TCM
-// ==/UserScript==
-
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
