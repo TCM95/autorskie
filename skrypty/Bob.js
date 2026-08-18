@@ -1,20 +1,28 @@
 // ==UserScript==
-// @name         Kalkulator Budowy & Generator Szablonów
+// @name         Kalkulator Budowy PRO
 // @namespace    https://viayoo.com/
-// @version      2.1
-// @description  Zintegrowany system budowy, manualne szablony, ikona info, poprawiony UI
-// @author       TCM (Wsparcie: Kipi955)
+// @version      2.4
+// @description  Zintegrowany system budowy, trwałe notatki okienkowe, nowe UI 3D + Wbudowany Aktywator Bonusów
+// @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
-// @grant        GM_xmlhttpRequest
-// @connect      raw.githubusercontent.com
+// @grant        none
 // ==/UserScript==
 
-(function() {
+(async function() {
     'use strict';
 
     if (typeof $ === 'undefined' || typeof game_data === 'undefined') return;
 
-    // --- SYSTEM UI (CSS ROOT) ---
+    let daneSwiata = {};
+    if (typeof get_world_info === 'function') {
+        try {
+            daneSwiata = await get_world_info({
+                configs: ['config', 'building_info'],
+                entities: { 'village': ['id', 'name', 'points'] }
+            });
+        } catch (e) { console.log("Brak Biblioteki Hermitowskiego - pomijam ładowanie."); }
+    }
+
     const style = document.createElement('style');
     style.innerHTML = `
         :root {
@@ -22,63 +30,52 @@
             --bg-row-alt: #32353b;
             --bg-header: #202225;
             --border-color: #3e4147;
-            --text-color: white;
+            --text-color: #fff;
             --title-color: #ffffdf;
-            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, #000 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+            --neon-green: #74ff00;
+            --neon-glow: 0 0 8px rgba(116,255,0,.6), 0 0 15px rgba(116,255,0,.4);
+            --neon-red: #ff003c;
+            --neon-red-glow: 0 0 8px rgba(255,0,60,.6), 0 0 15px rgba(255,0,60,.4);
         }
-        #autoBuilderMain {
-            background-color: var(--bg-main) !important;
-            color: var(--text-color) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 4px;
-            padding: 8px;
-            margin: 10px 0;
-            max-width: 360px;
-            font-size: 12px;
-        }
-        #autoBuilderMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; }
-        .tcm-section-title { font-size: 11px; color: #aaa; text-transform: uppercase; margin: 10px 0 5px 0; border-bottom: 1px solid var(--border-color); padding-bottom: 2px; display: flex; justify-content: space-between; align-items: center;}
         
-        /* Wymuszenie czyszczenia stylów Plemion na nagłówkach w obrębie skryptu */
-        #autoBuilderMain th, #autoBuilderMain .vis th {
-            background-color: var(--bg-header) !important;
-            background-image: none !important;
-            border-bottom: 1px solid var(--border-color) !important;
-            color: var(--title-color) !important;
-        }
-
-        #autoBuilderMain select, #autoBuilderMain input {
-            background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color);
-            padding: 3px; border-radius: 3px; max-width: 120px;
-        }
-        .tcm-btn {
-            background: var(--btn-bg) !important; color: var(--text-color) !important;
-            border: 1px solid var(--border-color) !important; padding: 5px 8px;
-            border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px 1px; display: inline-block;
-        }
-        .tcm-btn:hover { background: var(--btn-hover) !important; color: var(--title-color) !important; }
-        .tcm-btn-active { border-color: #4caf50 !important; color: #8bc34a !important; }
-        .q-row-a { background-color: var(--bg-main); }
-        .q-row-b { background-color: var(--bg-row-alt); }
+        #autoBuilderMain * { box-sizing: border-box !important; outline: none !important; -webkit-tap-highlight-color: transparent !important; }
+        #autoBuilderMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 320px; font-size: 12px; }
+        #autoBuilderMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        #autoBuilderMain th, #autoBuilderMain .vis th { background-color: var(--bg-header) !important; background-image: none !important; border-bottom: 1px solid var(--border-color) !important; color: var(--title-color) !important; }
+        #autoBuilderMain select, #autoBuilderMain input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; max-width: 100px; }
         
-        /* Popup Generatora */
+        .tcm-btn { background: var(--btn-bg) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px 1px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.8); transition: all 0.2s ease; }
+        .tcm-btn:hover { background: var(--btn-hover) !important; color: var(--title-color) !important; box-shadow: 0 2px 6px rgba(0,0,0,0.8); transform: translateY(2px); }
+        .tcm-btn-active { border-color: var(--neon-green) !important; color: var(--neon-green) !important; text-shadow: var(--neon-glow); box-shadow: 0 4px 12px rgba(0,0,0,0.8), inset 0 0 5px rgba(116,255,0,.3); }
+        
+        .q-row-a { background-color: var(--bg-main); } .q-row-b { background-color: var(--bg-row-alt); }
+        
+        /* Popup Notatek */
         .tcm-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; }
-        .tcm-modal-content { background: var(--bg-main); width: 95%; max-width: 400px; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; color: var(--text-color); max-height: 85vh; overflow-y: auto; }
-        .tcm-modal-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:5px; margin-bottom:10px; }
+        .tcm-modal-content { background: var(--bg-main); width: 95%; max-width: 400px; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; color: var(--text-color); }
+        .tcm-modal-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:5px; margin-bottom:5px; }
         .tcm-modal-header h3 { margin:0; font-size:14px; color:var(--title-color); }
-        .tcm-instrukcja-line { padding: 4px; border-bottom: 1px dashed var(--border-color); font-size: 11px; color: #ccc; }
-        
-        #instrukcjeBtn { display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0 5px; color:#00bcd4; }
+        .tcm-modal-body { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
+        .tcm-modal-body::-webkit-scrollbar { width: 6px; }
+        .tcm-modal-body::-webkit-scrollbar-track { background: var(--bg-main); }
+        .tcm-modal-body::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        .tcm-instrukcja-line { padding: 6px 4px; border-bottom: 1px dashed var(--border-color); font-size: 11px; color: #ccc; }
+        #instrukcjeBtn { display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; color:#00bcd4; margin:0; box-shadow:none; }
     `;
     document.head.appendChild(style);
 
     // --- ZMIENNE ---
-    let buildingObject = { buildingQueue: [], buildingQueueLength: 5, status: false };
+    let buildingObject = { buildingQueue: [], buildingQueueLength: 5, status: false, instructions: [] };
     let isBuilding = false;
+    let isActivatingBonus = false; // Nowa zmienna dla aktywatora
     let isQueueMinimized = JSON.parse(localStorage.getItem('queueMinimized') || "false");
     let dynamicTranslateMap = {};
-    let extractedInstructions = []; 
 
     const LINKS = {
         eko1: "https://raw.githubusercontent.com/Kipi955/sprawdzian/5a0309cbf24521ba89655119d9543c2d9942b88e/EKO1",
@@ -175,7 +172,7 @@
                 <td style="text-align:right; padding: 4px;">
                     <button class="tcm-btn q-action" data-type="up" data-idx="${i}">▲</button>
                     <button class="tcm-btn q-action" data-type="down" data-idx="${i}">▼</button>
-                    <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="color: #f44336 !important;">X</button>
+                    <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">X</button>
                 </td>
             </tr>`;
             table.append(row);
@@ -183,12 +180,11 @@
         updateSelectOptions();
     }
 
-    // --- LOGIKA PARSERA ---
     function processTemplate(text) {
         let effLevels = getEffectiveLevels();
         let virtualSim = { ...effLevels };
         let addedCount = 0;
-        extractedInstructions = [];
+        let localInstructions = [];
 
         const lines = text.split('\n');
         
@@ -196,7 +192,6 @@
             const trimmed = line.trim();
             if(!trimmed) return;
             
-            // Pomijanie konstrukcji tabeli i rzędów z kosztami/czasem z tabel bbcode
             if (trimmed.match(/^\[\/?table\]$/i) || trimmed.match(/^\[\*\*?\].*\[\/\*\*?\]$/i)) return;
             if (trimmed.startsWith('[|]')) return; 
 
@@ -205,17 +200,13 @@
 
             const bKey = BUILDING_NAMES.find(name => tLower.includes(name));
             
-            // Jesli zawiera budynek i słowa kluczowe (poziom/pzm) lub tag [building] (nawet uszkodzony)
             if (bKey && (tLower.includes('building') || tLower.includes('poziom') || tLower.includes('pzm'))) {
-                
-                // Zabezpieczenie przed wrzucaniem instrukcji do kolejki
                 if(tLower.includes('szablon budowy') || tLower.includes('rekrutujemy')) {
-                    if (cleanText.length > 3) extractedInstructions.push(cleanText);
+                    if (cleanText.length > 3) localInstructions.push(cleanText);
                     return;
                 }
 
                 const gameCode = REVERSE_MAP[bKey];
-                
                 let targetLvl = null;
                 const lvlMatch = cleanText.match(/(?:poziom|pzm\.?|lvl\.?)\s*(\d+)/i);
                 if (lvlMatch) {
@@ -250,43 +241,60 @@
                 }
             } 
             else {
-                // Instrukcje i notatki z szablonu (pomijamy kreski puste linie)
                 if (cleanText.length > 3 && !cleanText.match(/^[-\|\/\\]+$/)) {
-                    extractedInstructions.push(cleanText);
+                    localInstructions.push(cleanText);
                 }
             }
         });
 
+        if (localInstructions.length > 0) {
+            buildingObject.instructions = [...buildingObject.instructions, ...localInstructions];
+        }
+
         if (addedCount > 0) {
             updateLocalStorage();
             reloadQueueDisplay();
-            UI.SuccessMessage(`Dodano ${addedCount} poziomów z szablonu (pominięto już wybudowane).`);
+            UI.SuccessMessage(`Dodano ${addedCount} pozycji z szablonu.`);
         } else {
-            UI.ErrorMessage("Nie dodano nic z szablonu - spełniasz już jego wymagania.");
+            UI.ErrorMessage("Nie dodano nic - spełniasz już wymagania lub błędny kod.");
         }
         
-        if (extractedInstructions.length > 0) {
+        if (buildingObject.instructions.length > 0) {
             $('#instrukcjeBtn').show();
-            UI.InfoMessage("Wczytano nowe instrukcje do szablonu!");
-        } else {
-            $('#instrukcjeBtn').hide();
+            UI.InfoMessage("Wczytano notatki!");
         }
     }
 
     function showInstructions() {
-        const content = extractedInstructions.map(i => `<div class="tcm-instrukcja-line">🔹 ${i}</div>`).join('');
-        $('#tcm-modal-inst').css('display', 'flex').find('#inst-content').html(content || '<div style="padding:10px; text-align:center;">Brak dodatkowych instrukcji.</div>');
+        const content = buildingObject.instructions.map(i => `<div class="tcm-instrukcja-line">🔹 ${i}</div>`).join('');
+        $('#tcm-modal-inst').css('display', 'flex').find('#inst-content').html(content || '<div style="padding:10px; text-align:center;">Brak notatek.</div>');
+    }
+
+    function fetchTemplate(url) {
+        UI.InfoMessage("Pobieranie...", 1000);
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error("Błąd pobierania");
+                return response.text();
+            })
+            .then(text => processTemplate(text))
+            .catch(error => {
+                UI.ErrorMessage("Wystąpił błąd podczas pobierania szablonu.");
+                console.error(error);
+            });
     }
 
     function init() {
         let storage = JSON.parse(localStorage.getItem('buildingObject') || "{}");
-        if (storage[game_data.village.id]) buildingObject = storage[game_data.village.id];
+        if (storage[game_data.village.id]) {
+            buildingObject = storage[game_data.village.id];
+            if (!buildingObject.instructions) buildingObject.instructions = [];
+        }
 
         let menuHtml = `
             <div id="autoBuilderMain">
-                <h4>Bob</h4>
+                <h4>🛠️ BOB 🛠️<button id="instrukcjeBtn" title="Pokaż notatki szablonu">ℹ️</button></h4>
                 
-                <div class="tcm-section-title"> Menu</div>
                 <table id="autoBuilderTable" style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td colspan="2" style="padding-bottom: 6px; text-align:center;">
@@ -299,10 +307,10 @@
                     <tr>
                         <td style="padding: 4px 0;">
                             <select id="bSelect"></select>
-                            <button id="addBBtn" class="tcm-btn">Dodaj</button>
+                            <button id="addBBtn" class="tcm-btn">+</button>
                         </td>
                         <td style="text-align:right; padding: 4px 0;">
-                            Limit: <input id="qLenInput" type="number" value="${buildingObject.buildingQueueLength}" style="width:35px; text-align:center;">
+                            Max: <input id="qLenInput" type="number" value="${buildingObject.buildingQueueLength}" style="width:35px; text-align:center;">
                         </td>
                     </tr>
                     <tr>
@@ -315,29 +323,25 @@
                     </tr>
                 </table>
                 
-                <div class="tcm-section-title" style="margin-top: 10px;">
-                    <span>Szablon</span>
-                    <button id="instrukcjeBtn" title="Pokaż notatki szablonu">ℹ️</button>
-                </div>
-                <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center;">
-                    <button id="btn-eko1" class="tcm-btn" style="flex: 1 1 30%;">EKO SHADOW</button>
-                    <button id="btn-eko2" class="tcm-btn" style="flex: 1 1 30%;">EKO 27 PAŁAC+</button>
+                <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin-top: 10px;">
+                    <button id="btn-eko1" class="tcm-btn" style="flex: 1 1 30%;">EKO</button>
+                    <button id="btn-eko2" class="tcm-btn" style="flex: 1 1 30%;">EKO27 PAŁAC+</button>
                     <button id="btn-manual" class="tcm-btn" style="flex: 1 1 30%; color: #00bcd4 !important;">WŁASNY +</button>
                 </div>
                 
                 <div id="manual-tpl-container" style="display:none; margin-top: 6px; flex-direction:column; gap:4px;">
-                    <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:95%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj kod BBCode."></textarea>
-                    <button id="btn-analyze-manual" class="tcm-btn" style="border-color:#00bcd4 !important;">Załaduj</button>
+                    <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:100%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj kod"></textarea>
+                    <button id="btn-analyze-manual" class="tcm-btn" style="border-color:#00bcd4 !important;">Importuj</button>
                 </div>
             </div>
             
             <div id="tcm-modal-inst" class="tcm-modal">
                 <div class="tcm-modal-content">
                     <div class="tcm-modal-header">
-                        <h3>📜 Instrukcje</h3>
-                        <button class="tcm-btn" onclick="$('#tcm-modal-inst').hide();" style="margin:0;">X</button>
+                        <h3>📜 Instrukcje Szablonu</h3>
+                        <button class="tcm-btn" onclick="$('#tcm-modal-inst').hide();" style="margin:0; background: var(--btn-red-bg) !important; border-color: #ff003c !important;">X</button>
                     </div>
-                    <div id="inst-content"></div>
+                    <div class="tcm-modal-body" id="inst-content"></div>
                 </div>
             </div>`;
 
@@ -346,8 +350,15 @@
 
         // --- Zdarzenia UI ---
         $('#clearQueueBtn').click(() => {
-            if(confirm("Wyczyścić całą kolejkę?")) { buildingObject.buildingQueue = []; updateLocalStorage(); reloadQueueDisplay(); }
+            if(confirm("Wyczyścić całą kolejkę oraz notatki?")) { 
+                buildingObject.buildingQueue = []; 
+                buildingObject.instructions = []; 
+                updateLocalStorage(); 
+                reloadQueueDisplay(); 
+                $('#instrukcjeBtn').hide(); 
+            }
         });
+        
         $('#addB10').click(() => { buildingObject.buildingQueue.push("Aktywuj 10% Wzmocnienie budowy na 24h"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addB30').click(() => { buildingObject.buildingQueue.push("Aktywuj 30% prędkości wydobycia na 48h"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addBBtn').click(() => { const v = $('#bSelect').val(); if(v) { buildingObject.buildingQueue.push(v); updateLocalStorage(); reloadQueueDisplay(); }});
@@ -370,12 +381,10 @@
         });
         $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); });
         
-        // Zdarzenia generatora
-        $('#btn-eko1').click(() => { UI.InfoMessage("Pobieranie...", 1000); GM_xmlhttpRequest({ method: "GET", url: LINKS.eko1, onload: (r) => processTemplate(r.responseText) }); });
-        $('#btn-eko2').click(() => { UI.InfoMessage("Pobieranie...", 1000); GM_xmlhttpRequest({ method: "GET", url: LINKS.eko2, onload: (r) => processTemplate(r.responseText) }); });
+        $('#btn-eko1').click(() => fetchTemplate(LINKS.eko1));
+        $('#btn-eko2').click(() => fetchTemplate(LINKS.eko2));
         $('#instrukcjeBtn').click(showInstructions);
         
-        // Zdarzenia ręcznego wklejania
         $('#btn-manual').click(function() { $('#manual-tpl-container').toggle(); });
         $('#btn-analyze-manual').click(function() {
             const text = $('#manual-tpl-input').val();
@@ -388,12 +397,78 @@
         reloadQueueDisplay();
         if (buildingObject.status) runAutoBuild();
         
-        // Przywracanie ikony instrukcji po załadowaniu strony
-        if(extractedInstructions.length > 0) $('#instrukcjeBtn').show();
+        if(buildingObject.instructions.length > 0) $('#instrukcjeBtn').show();
     }
 
+    // --- SEKCJA AKTYWATORA BONUSÓW ---
+    function activateBonusInBg(bonusText) {
+        if (isActivatingBonus) return;
+        isActivatingBonus = true;
+
+        let keyword = "";
+        let textLower = bonusText.toLowerCase();
+        
+        if (textLower.includes('budow')) keyword = "budow";
+        else if (textLower.includes('wydobyci')) keyword = "wydobyci";
+        else keyword = textLower.replace('aktywuj', '').trim();
+
+        UI.InfoMessage("Wykryto bonus! Szukam: " + keyword, 2000);
+
+        $.getJSON(`/game.php?village=${game_data.village.id}&screen=inventory&ajax=load_inventory`)
+        .done(function(r) {
+            let foundItemId = null;
+            if (r && r.dialog && r.dialog.inventory) {
+                let items = r.dialog.inventory;
+                for (let i = 0; i < items.length; i++) {
+                    let item = items[i];
+                    let name = (item.name || '').toLowerCase();
+                    let desc = (item.description || '').toLowerCase();
+                    if (name.includes(keyword) || desc.includes(keyword)) {
+                        foundItemId = item.id || item.item_id;
+                        break;
+                    }
+                }
+            }
+
+            if (foundItemId) {
+                $.ajax({
+                    url: `/game.php?village=${game_data.village.id}&screen=inventory&ajaxaction=use_item&h=${game_data.csrf}`,
+                    type: "post",
+                    data: { item_id: foundItemId, village_id: game_data.village.id },
+                    headers: { "TribalWars-Ajax": 1 }
+                }).done(function(res) {
+                    let response = typeof res === "string" ? JSON.parse(res) : res;
+                    if ((response.response && response.response.success) || response.success) {
+                        UI.SuccessMessage("Pomyślnie aktywowano bonus!");
+                    } else {
+                        UI.ErrorMessage("Problem z aktywacją bonusu po stronie serwera.");
+                    }
+                    finalizeBonus();
+                }).fail(function() {
+                    UI.ErrorMessage("Błąd połączenia podczas aktywacji.");
+                    finalizeBonus();
+                });
+            } else {
+                UI.ErrorMessage(`Nie znaleziono w inwentarzu: ${keyword}`);
+                finalizeBonus();
+            }
+        })
+        .fail(function() {
+            UI.ErrorMessage("Nie udało się pobrać danych inwentarza.");
+            isActivatingBonus = false;
+        });
+    }
+
+    function finalizeBonus() {
+        buildingObject.buildingQueue.shift();
+        updateLocalStorage();
+        isActivatingBonus = false;
+        setTimeout(() => location.reload(), 1500);
+    }
+    // ---------------------------------
+
     function runAutoBuild() {
-        if (!buildingObject.status || isBuilding) return;
+        if (!buildingObject.status || isBuilding || isActivatingBonus) return;
 
         const $freeBtn = $('.btn-instant-free:visible');
         if ($freeBtn.length) {
@@ -404,7 +479,14 @@
 
         if (buildingObject.buildingQueue.length > 0) {
             let nextItem = buildingObject.buildingQueue[0];
-            if (!nextItem.includes('Aktywuj')) {
+            
+            // Jesli element zawiera słowo Aktywuj, puszczamy logikę inwentarza i przerywamy zwykłą pętlę
+            if (typeof nextItem === 'string' && nextItem.includes('Aktywuj')) {
+                activateBonusInBg(nextItem);
+                return;
+            } 
+            // Standardowa budowa
+            else {
                 let currentQueue = $('#buildqueue tr[class*="buildorder_"]').length;
                 if (currentQueue < buildingObject.buildingQueueLength) {
                     const $buildBtn = $(`.btn-build[data-building="${nextItem}"]`);
