@@ -1,195 +1,182 @@
-[
-    {
-        "id": "ciemny_motyw",
-        "name": "ciemny motyw",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
-        "description": "Ułatwia wysyłanie farmy z poziomu placu.",
-        "screens": ["*"]
-    },
-    {
-        "id": "wybijak_monet",
-        "name": "Aktywator monet",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
-        "description": "aktywuje automatyczne wybijanie monet wchodzimy w pałac/wybijanie monet działa w aktualnie przeglądanej grupie.",
-        "screens": ["mode=coin"]
-    },
-    {
-        "id": "etykiety",
-        "name": "Etykiety",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
-        "description": "Etykiety z filtrami.",
-        "screens": ["mode=incomings"]
-    },
-    {
-        "id": "tager_przychodzace",
-        "name": "Tag(przychodzące)",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
-        "description": "Ataki przychodzące.",
-        "screens": ["mode=incomings"]
-    },
-    {
-        "id": "tager_wychodzace",
-        "name": "Tag(wychodzące)",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
-        "description": "Ataki wychodzące.",
-        "screens": ["mode=commands", "overview_villages", "report"]
-    },
-    {
-        "id": "edytor_nazw",
-        "name": "Zmaina nazw",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
-        "description": "Zmiana nazw wiosek.",
-        "screens": ["overview_villages"]
-    },     
-    {
-        "id": "komendy",
-        "name": "Komendy",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
-        "description": "Udostępnianie komend",
-        "screens": ["settings", "info_command"]
-    },
-    {
-        "id": "rank",
-        "name": "Ranking",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
-        "description": "Ranking zbieractwo/farma",
-        "screens": ["ranking"]
-    },
-    {
-        "id": "farma",
-        "name": "Farma",
-        "category": "Farma/zbieractwo",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
-        "description": "Automatyczne wspomaganie farmienia.",
-        "screens": ["am_farm"]
-    },
-    {
-        "id": "szablony_wojsk",
-        "name": "Szablony wojsk(Mk)",
-        "category": "Budowa/rekrutacja",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
-        "description": "Zarządzanie szablonami wojsk.",
-        "screens": ["am_troops", "train"]
-    },
-    {
-        "id": "mapa_kordy",
-        "name": "Kordy z mapy",
-        "category": "Mapa",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
-        "description": "Kopiowanie współrzędnych z mapy.",
-        "screens": ["map"]
-    },
-    {
-        "id": "atak_wsparcie",
-        "name": "Atak/Wsparcie",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
-        "description": "Szybkie przełączanie między atakiem i wsparciem.",
-        "screens": ["place"]
-    },
-    {
-        "id": "szablony_budowy",
-        "name": "Szablony budowy(MK)",
-        "category": "Budowa/rekrutacja",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
-        "description": "Zarządzanie szablonami budowy.",
-        "screens": ["memo"]
-    },
-    {
-        "id": "klin_cofka",
-        "name": "Klin z cofki",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
-        "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować.",
-        "screens": ["place", "info_command"]
-    },
-    {
-        "id": "zbierak_mass",
-        "name": "Zbierak mass",
-        "category": "Farma/zbieractwo",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
-        "description": "Masowe wysyłanie na zbieractwo.",
-        "screens": ["scavenge_mass"]
-    },
-    {
-        "id": "podswietlanie_wioski",
-        "name": "Podświetlenie wioski (Ataki)",
-        "category": "Mapa",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
-        "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków.",
-        "screens": ["map"]
-    },
-    {
-        "id": "znajomi",
-        "name": "Znajomi",
-        "category": "Inne",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
-        "description": "dodawanie/usuwanie znajomych ",
-        "screens": ["buddies"]
-    },
-    {
-        "id": "balancer",
-        "name": "Balancer",
-        "category": "Surowce",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
-        "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
-       "screens": ["mode=prod"]
-    },
-    {
-        "id": "feje",
-        "name": "Fejkomat",
-        "category": "Atak/obrona",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
-        "description": "...",
-       "screens": ["place"]
-    },
-    {
-        "id": "kalk_surowce",
-        "name": "Kalkulator",
-        "category": "Surowce",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
-        "description": "oblicza zapotrzebowanie budynki/monety/szlachta",
-       "screens": ["main", "snob", "market"]
-    },
-    {
-        "id": "kalk_surowce_w",
-        "name": "Kalkulator(handlarz)",
-        "category": "Surowce",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
-        "description": "wypełnia formularze i wysyłki na rynku",
-       "screens": ["market"]
-    },
-    {
-        "id": "bob",
-        "name": "Budowlaniec",
-        "category": "Budowa/rekrutacja",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Bob.js",
-        "description": "budowa wioski gotwe szablony mozliwosc wrzucenia wlasnego",
-       "screens": ["main"]
-    },
-    {
-        "id": "rek",
-        "name": "Rekruter",
-        "category": "Budowa/rekrutacja",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
-        "description": "Rekrutacja wojsk",
-       "screens": ["train", "barracks"]
-    },
-    {
-        "id": "dyspo",
-        "name": "Dysponent",
-        "category": "Surowce",
-        "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/dyspo.js",
-        "description": "Przesyłanie surowców A>B>C",
-       "screens": ["mode=combined", "mode=call"]
-    }
-
-]
+{
+    "Atak/obrona": [
+        {
+            "id": "tager_przychodzace",
+            "name": "Tag(przychodzące)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
+            "description": "Ataki przychodzące.",
+            "screens": ["mode=incomings"]
+        },
+        {
+            "id": "tager_wychodzace",
+            "name": "Tag(wychodzące)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
+            "description": "Ataki wychodzące.",
+            "screens": ["mode=commands", "overview_villages", "report"]
+        },
+        {
+            "id": "etykiety",
+            "name": "Etykiety",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
+            "description": "Etykiety z filtrami.",
+            "screens": ["mode=incomings"]
+        },
+        {
+            "id": "atak_wsparcie",
+            "name": "Atak/Wsparcie",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
+            "description": "Szybkie przełączanie między atakiem i wsparciem.",
+            "screens": ["place"]
+        },
+        {
+            "id": "klin_cofka",
+            "name": "Klin z cofki",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/klin_cofka.js",
+            "description": "Najpierw wysyłasz atak, później w placu zaznaczasz atak, który chcesz klinować.",
+            "screens": ["place", "info_command"]
+        },
+        {
+            "id": "feje",
+            "name": "Fejkomat",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
+            "description": "...",
+            "screens": ["place"]
+        }
+    ],
+    "Budowa/rekrutacja": [
+        {
+            "id": "szablony_wojsk",
+            "name": "Szablony wojsk(Mk)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_wojsk.js",
+            "description": "Zarządzanie szablonami wojsk.",
+            "screens": ["am_troops", "train"]
+        },
+        {
+            "id": "szablony_budowy",
+            "name": "Szablony budowy(MK)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/szablony_budowy.js",
+            "description": "Zarządzanie szablonami budowy.",
+            "screens": ["memo"]
+        },
+        {
+            "id": "bob",
+            "name": "Budowlaniec",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Bob.js",
+            "description": "budowa wioski gotwe szablony mozliwosc wrzucenia wlasnego",
+            "screens": ["main"]
+        },
+        {
+            "id": "rek",
+            "name": "Rekruter",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
+            "description": "Rekrutacja wojsk",
+            "screens": ["train", "barracks"]
+        }
+    ],
+    "Farma/zbieractwo": [
+        {
+            "id": "farma",
+            "name": "Farma",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/farma.js",
+            "description": "Automatyczne wspomaganie farmienia.",
+            "screens": ["am_farm"]
+        },
+        {
+            "id": "zbierak_mass",
+            "name": "Zbierak mass",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
+            "description": "Masowe wysyłanie na zbieractwo.",
+            "screens": ["scavenge_mass"]
+        }
+    ],
+    "Surowce": [
+        {
+            "id": "balancer",
+            "name": "Balancer",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
+            "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
+            "screens": ["mode=prod"]
+        },
+        {
+            "id": "kalk_surowce",
+            "name": "Kalkulator",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
+            "description": "oblicza zapotrzebowanie budynki/monety/szlachta",
+            "screens": ["main", "snob", "market"]
+        },
+        {
+            "id": "kalk_surowce_w",
+            "name": "Kalkulator(handlarz)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
+            "description": "wypełnia formularze i wysyłki na rynku",
+            "screens": ["market"]
+        },
+        {
+            "id": "dyspo",
+            "name": "Dysponent",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/dyspo.js",
+            "description": "Przesyłanie surowców A>B>C",
+            "screens": ["mode=combined", "mode=call"]
+        }
+    ],
+    "Mapa": [
+        {
+            "id": "mapa_kordy",
+            "name": "Kordy z mapy",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/mapa_kordy.js",
+            "description": "Kopiowanie współrzędnych z mapy.",
+            "screens": ["map"]
+        },
+        {
+            "id": "podswietlanie_wioski",
+            "name": "Podświetlenie wioski (Ataki)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/podswietlanie_wioski.js",
+            "description": "(MAPA) Podświetla wioski na różne kolory w zależności od nadchodzących ataków.",
+            "screens": ["map"]
+        }
+    ],
+    "Inne": [
+        {
+            "id": "ciemny_motyw",
+            "name": "ciemny motyw",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
+            "description": "Ułatwia wysyłanie farmy z poziomu placu.",
+            "screens": ["*"]
+        },
+        {
+            "id": "wybijak_monet",
+            "name": "Aktywator monet",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
+            "description": "aktywuje automatyczne wybijanie monet wchodzimy w pałac/wybijanie monet działa w aktualnie przeglądanej grupie.",
+            "screens": ["mode=coin"]
+        },
+        {
+            "id": "edytor_nazw",
+            "name": "Zmaina nazw",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
+            "description": "Zmiana nazw wiosek.",
+            "screens": ["overview_villages"]
+        },     
+        {
+            "id": "komendy",
+            "name": "Komendy",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
+            "description": "Udostępnianie komend",
+            "screens": ["settings", "info_command"]
+        },
+        {
+            "id": "rank",
+            "name": "Ranking",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
+            "description": "Ranking zbieractwo/farma",
+            "screens": ["ranking"]
+        },
+        {
+            "id": "znajomi",
+            "name": "Znajomi",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
+            "description": "dodawanie/usuwanie znajomych ",
+            "screens": ["buddies"]
+        }
+    ]
+}
