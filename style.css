@@ -1,636 +1,330 @@
-(function() {
-    'use strict';
-
-    // 1. INICJALIZACJA STYLÓW (Zintegrowane wszystkie Twoje style fabryczne + poprawki mobile)
-    const styleId = 'tcm-ui-styles';
-    if (!document.getElementById(styleId)) {
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.innerHTML = `
-            :root {
-                --bg-main: #36393f;
-                --bg-row-alt: #32353b;
-                --bg-header: #202225;
-                --border-color: #3e4147;
-                --text-color: white;
-                --title-color: #ffffdf;
-                --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-                --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-                --btn-bg-green: linear-gradient(#5da832 0%, #3d781b 30%, #224a0d 80%, black 100%);
-                --neon-green: #74ff00;
-                --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-                --neon-red: #ff003c;
-                --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
-            }
-
-            #tw-script-panel *, #tw-panel-opener *, #tw-global-tooltip * {
-                box-sizing: border-box !important;
-                font-family: Verdana, Arial, sans-serif !important;
-                color: var(--text-color) !important;
-                -webkit-tap-highlight-color: transparent !important;
-                outline: none !important;
-            }
-
-            /* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY (Tap Highlight) */
-            #tw-script-panel button, #tw-panel-opener, #tw-script-panel a, .tw-tab, .tw-square-btn {
-                -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
-                -webkit-tap-highlight-color: transparent !important;
-                outline: none !important;
-            }
-
-            #tw-script-panel button:focus, #tw-script-panel button:active, #tw-panel-opener:focus, #tw-panel-opener:active {
-                outline: none !important;
-            }
-
-            /* IKONA (OPENER) */
-            #tw-panel-opener {
-                position: absolute !important;
-                z-index: 999999 !important;
-                cursor: pointer !important;
-                width: 50px !important;
-                height: 50px !important;
-                display: flex !important;
-                justify-content: center !important;
-                align-items: center !important;
-                background-image: var(--btn-bg) !important;
-                border-radius: 50% !important;
-                user-select: none !important;
-                touch-action: none !important;
-                padding: 0 !important;
-                overflow: hidden !important;
-                transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
-            }
-            .tw-opener-closed {
-                border: 2px solid var(--neon-green) !important;
-                box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
-                animation: neon-pulse 2s infinite alternate ease-in-out !important;
-            }
-            .tw-opener-open {
-                border: 2px solid var(--border-color) !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
-                filter: brightness(0.7) !important;
-            }
-            @keyframes neon-pulse {
-                0% { box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8); }
-                100% { box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8); }
-            }
-            #tw-panel-opener img {
-                width: 100% !important;
-                height: 100% !important;
-                max-width: 50px !important;
-                max-height: 50px !important;
-                object-fit: contain !important;
-                pointer-events: none !important;
-            }
-
-            /* PANEL I KATEGORIE */
-            #tw-script-panel {
-                position: absolute !important;
-                z-index: 999998 !important;
-                width: 140px !important;
-                background-color: var(--bg-main) !important;
-                border: 2px solid var(--border-color) !important;
-                border-radius: 4px !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-                display: none;
-                flex-direction: column !important;
-            }
-            #tw-script-panel-header {
-                background-color: var(--bg-header) !important;
-                color: var(--title-color) !important;
-                padding: 8px !important;
-                font-weight: bold !important;
-                font-size: 12px !important;
-                border-bottom: 2px solid var(--border-color) !important;
-                user-select: none !important;
-                text-align: center !important;
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-            }
-            #tw-categories-bar {
-                display: flex !important;
-                flex-direction: column !important;
-                padding: 4px !important;
-                gap: 4px !important;
-                background-color: var(--bg-main) !important;
-            }
-
-            /* ZAKŁADKI KATEGORII Z PASKIEM STATUSU */
-            .tw-tab {
-                background-image: var(--btn-bg) !important;
-                color: var(--text-color) !important;
-                border: 1px solid var(--border-color) !important;
-                border-left: 3px solid var(--border-color) !important; /* Domyślny lewy pasek */
-                border-radius: 3px !important;
-                cursor: pointer !important;
-                font-size: 11px !important;
-                font-weight: bold !important;
-                padding: 5px !important;
-                text-align: center !important;
-                display: block !important;
-                width: 100% !important;
-                text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-                transition: 0.15s !important;
-            }
-            .tw-tab:hover { background-image: var(--btn-hover) !important; }
-            .tw-tab.active-tab {
-                background-image: var(--btn-bg-green) !important;
-                border-color: var(--neon-green) !important;
-                color: var(--title-color) !important;
-                text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
-                box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
-            }
-            
-            /* KLASY STATUSÓW DLA ZAKŁADEK */
-            .tw-tab.cat-status-on { border-left-color: var(--neon-green) !important; }
-            .tw-tab.cat-status-off { border-left-color: var(--neon-red) !important; }
-
-            /* OBSZAR SKRYPTÓW */
-            #tw-content-area {
-                display: none;
-                position: absolute !important;
-                top: -2px !important;
-                left: 100% !important;
-                margin-left: 5px !important;
-                width: 270px !important;
-                background-color: var(--bg-row-alt) !important;
-                border: 2px solid var(--border-color) !important;
-                border-radius: 4px !important;
-                box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
-                z-index: 999997 !important;
-            }
-            .tw-content-inner {
-                max-height: 280px !important;
-                overflow-y: auto !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 6px !important;
-                padding: 6px !important;
-            }
-            .tw-script-item {
-                background-color: var(--bg-main) !important;
-                border-radius: 3px !important;
-                padding: 5px 8px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                transition: border-color 0.2s, box-shadow 0.2s !important;
-            }
-            .tw-item-off {
-                border: 1px solid var(--neon-red) !important;
-                box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1) !important;
-            }
-            .tw-item-on {
-                border: 1px solid var(--neon-green) !important;
-                box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1) !important;
-            }
-            .tw-game-btn {
-                display: flex !important;
-                align-items: center !important;
-                gap: 6px !important;
-                cursor: pointer !important;
-                flex-grow: 1 !important;
-                background: transparent !important;
-                border: none !important;
-                padding: 0 !important;
-                text-align: left !important;
-            }
-            .tw-script-name {
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                font-size: 11px !important;
-                font-weight: bold !important;
-                color: var(--title-color) !important;
-            }
-            .tw-status-icon {
-                width: 10px !important;
-                height: 10px !important;
-                border-radius: 50% !important;
-                flex-shrink: 0 !important;
-                display: inline-block !important;
-            }
-            .tw-status-on { 
-                background: var(--neon-green) !important; 
-                box-shadow: var(--neon-glow) !important; 
-                border: 1px solid rgba(255,255,255,0.4) !important;
-            }
-            .tw-status-off { 
-                background: var(--neon-red) !important; 
-                box-shadow: var(--neon-red-glow) !important;
-                border: 1px solid rgba(255,255,255,0.4) !important;
-            }
-
-            /* PRZYCISKI KWADRATOWE (Dzwonek, Close, Info) */
-            .tw-square-btn {
-                background-image: var(--btn-bg) !important;
-                border-radius: 3px !important;
-                cursor: pointer !important;
-                font-size: 11px !important;
-                font-weight: bold !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                width: 20px !important;
-                height: 20px !important;
-                padding: 0 !important;
-                margin-left: 4px !important;
-                text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
-                transition: all 0.2s ease-in-out !important;
-                border: 1px solid var(--border-color) !important;
-            }
-            .tw-square-btn:hover { background-image: var(--btn-hover) !important; }
-            .tw-btn-active { color: var(--neon-green) !important; border-color: var(--neon-green) !important; box-shadow: var(--neon-glow) !important; }
-            .tw-btn-inactive { color: var(--neon-red) !important; border-color: var(--neon-red) !important; box-shadow: var(--neon-red-glow) !important; }
-            
-            .tw-bell-btn { color: #ffd700 !important; font-size: 13px !important; }
-            .tw-bell-btn.tw-btn-active { border-color: var(--neon-green) !important; box-shadow: var(--neon-glow) !important; }
-
-            /* TOOLTIP GLOBALNY */
-            #tw-global-tooltip {
-                background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
-                color: var(--title-color) !important;
-                border: 1px solid var(--border-color) !important;
-                border-radius: 6px !important;
-                padding: 10px 12px !important;
-                width: 220px !important;
-                font-size: 11px !important;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
-                z-index: 2147483647 !important; 
-                transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // 2. LOGIKA UI
-    window.TCM_UI = window.TCM_UI || {};
-
-    window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
-        let currentCategory = null;
-
-        // Tooltip
-        let globalTooltip = document.getElementById('tw-global-tooltip');
-        if (!globalTooltip) {
-            globalTooltip = document.createElement('div');
-            globalTooltip.id = 'tw-global-tooltip';
-            globalTooltip.style.cssText = 'display: none; position: absolute; background: var(--bg-main); border-radius: 4px; padding: 10px; pointer-events: none;';
-            document.body.appendChild(globalTooltip);
-        }
-
-        const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
-
-        // Opener
-        const opener = document.createElement('button');
-        opener.id = 'tw-panel-opener';
-        opener.className = 'tw-opener-closed'; 
-        opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-        opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
-
-        if (savedOpenerPos) {
-            opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
-            opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
-        }
-        document.body.appendChild(opener);
-
-        // Panel
-        const panel = document.createElement('div');
-        panel.id = 'tw-script-panel';
-
-        const header = document.createElement('div');
-        header.id = 'tw-script-panel-header';
-        header.style.cssText = 'touch-action: none; -webkit-touch-callout: none; user-select: none;';
-
-        const titleSpan = document.createElement('span');
-        titleSpan.innerText = 'Menu'; // Czysty napis Menu
-        titleSpan.style.cssText = 'font-style: italic; letter-spacing: 1px;';
-
-        const controls = document.createElement('div');
-        controls.style.display = 'flex';
-        controls.style.gap = '4px';
-
-        // Dzwonek
-        const bellBtn = document.createElement('button');
-        bellBtn.className = 'tw-square-btn tw-bell-btn'; 
-        bellBtn.innerText = '🔔';
-        bellBtn.onclick = () => console.log("Kliknięto dzwonek powiadomień.");
-
-        // Zamknięcie
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'tw-square-btn tw-btn-inactive';
-        closeBtn.innerText = 'X';
-        closeBtn.onclick = () => { 
-            panel.style.setProperty('display', 'none', 'important'); 
-            opener.classList.remove('tw-opener-open');
-            opener.classList.add('tw-opener-closed');
-            globalTooltip.style.display = 'none';
-        };
-
-        controls.appendChild(bellBtn);
-        controls.appendChild(closeBtn);
-        header.appendChild(titleSpan);
-        header.appendChild(controls);
-        panel.appendChild(header);
-
-        const categoriesBar = document.createElement('div');
-        categoriesBar.id = 'tw-categories-bar';
-
-        const contentArea = document.createElement('div');
-        contentArea.id = 'tw-content-area';
-
-        const contentInner = document.createElement('div');
-        contentInner.className = 'tw-content-inner';
-        contentArea.appendChild(contentInner);
-
-        // Funkcja aktualizująca KOLORY ZAKŁADEK (Nowość zaimplementowana)
-        function updateCategoryStatus() {
-            const state = callbacks.getScriptsState();
-            document.querySelectorAll('.tw-tab').forEach(tab => {
-                const catName = tab.innerText;
-                const scriptsInCat = scriptsArray.filter(s => (s.category || "Ogólne") === catName);
-                if (scriptsInCat.length === 0) return;
-
-                const anyActive = scriptsInCat.some(script => state[script.id] === true);
-                
-                tab.classList.remove('cat-status-on', 'cat-status-off');
-                if (anyActive) {
-                    tab.classList.add('cat-status-on');
-                } else {
-                    tab.classList.add('cat-status-off');
-                }
-            });
-        }
-
-        function renderScripts() {
-            contentInner.innerHTML = '';
-            const state = callbacks.getScriptsState();
-            let filtered = scriptsArray.filter(s => (s.category || "Ogólne") === currentCategory);
-
-            if (filtered.length === 0) {
-                const emptyMsg = document.createElement('div');
-                emptyMsg.style.cssText = 'text-align: center; color: #666; font-style: italic; padding: 8px;';
-                emptyMsg.innerText = 'Brak skryptów.';
-                contentInner.appendChild(emptyMsg);
-                return;
-            }
-
-            filtered.forEach(script => {
-                const isActive = state[script.id] === true;
-                const item = document.createElement('div');
-                item.className = `tw-script-item ${isActive ? 'tw-item-on' : 'tw-item-off'}`;
-
-                const gameBtn = document.createElement('div');
-                gameBtn.className = 'tw-game-btn';
-
-                const statusIcon = document.createElement('span');
-                statusIcon.className = `tw-status-icon ${isActive ? 'tw-status-on' : 'tw-status-off'}`;
-
-                const nameLabel = document.createElement('span');
-                nameLabel.className = 'tw-script-name';
-                nameLabel.innerText = script.name;
-
-                gameBtn.appendChild(statusIcon);
-                gameBtn.appendChild(nameLabel);
-
-                gameBtn.onclick = () => {
-                    const newState = !state[script.id];
-                    callbacks.saveScriptState(script.id, newState);
-
-                    statusIcon.className = `tw-status-icon ${newState ? 'tw-status-on' : 'tw-status-off'}`;
-                    item.className = `tw-script-item ${newState ? 'tw-item-on' : 'tw-item-off'}`;
-                    state[script.id] = newState;
-
-                    if (globalTooltip.dataset.activeId === script.id) {
-                        updateTooltipContent(script, newState);
-                    }
-                    
-                    // Po kliknięciu odświeżamy kolor bocznego paska kategorii
-                    updateCategoryStatus();
-                };
-
-                const infoIcon = document.createElement('button');
-                infoIcon.className = 'tw-square-btn tw-btn-active';
-                infoIcon.innerText = 'i';
-
-                infoIcon.onclick = (e) => {
-                    e.stopPropagation();
-                    if (globalTooltip.dataset.activeId === script.id && globalTooltip.style.display === 'block') {
-                        globalTooltip.style.display = 'none';
-                        globalTooltip.dataset.activeId = '';
-                    } else {
-                        updateTooltipContent(script, state[script.id] === true);
-                        globalTooltip.style.display = 'block';
-                        globalTooltip.dataset.activeId = script.id;
-
-                        const rect = infoIcon.getBoundingClientRect();
-                        const tooltipWidth = 250; 
-                        let topPos = rect.top + window.scrollY - 10;
-                        let leftPos = rect.right + window.scrollX + 10;
-
-                        if (rect.right + tooltipWidth > window.innerWidth) {
-                            leftPos = rect.left + window.scrollX - tooltipWidth - 10;
-                        }
-
-                        const tooltipHeight = globalTooltip.offsetHeight;
-                        if (rect.top + tooltipHeight > window.innerHeight) {
-                            topPos = rect.top + window.scrollY - tooltipHeight + rect.height;
-                        }
-
-                        globalTooltip.style.top = topPos + 'px';
-                        globalTooltip.style.left = leftPos + 'px';
-                    }
-                };
-
-                item.appendChild(gameBtn);
-                item.appendChild(infoIcon);
-                contentInner.appendChild(item);
-            });
-        }
-
-        function updateTooltipContent(script, isActive) {
-            const screensInfo = script.screens && script.screens.length > 0 ? script.screens.join(', ') : 'Wszystkie';
-            const colorVar = isActive ? 'var(--btn-green-hover)' : 'var(--btn-red-hover)';
-            const statusText = isActive ? 'Aktywny' : 'Wyłączony';
-
-            globalTooltip.style.border = `1px solid ${colorVar}`;
-            globalTooltip.style.boxShadow = `0 4px 15px rgba(0,0,0,0.9), 0 0 10px ${colorVar}`;
-            globalTooltip.innerHTML = `
-                <strong style="color: var(--title-color); font-size: 12px;">${script.name}</strong> 
-                <span style="color: ${colorVar}; float: right; font-weight: bold; text-shadow: 0 0 4px ${colorVar};">[${statusText}]</span><br>
-                <hr style="border: 0; border-bottom: 1px solid var(--border-color); margin: 6px 0;">
-                <div style="line-height: 1.4;">
-                    <strong style="color: var(--text-color);">Opis:</strong> <span style="color: var(--text-color);">${script.description || 'Brak.'}</span><br>
-                    <strong style="margin-top:4px; display:inline-block; color: var(--text-color);">Strony:</strong> <span style="color: ${colorVar};">${screensInfo}</span>
-                </div>`;
-        }
-
-        categories.forEach(cat => {
-            const tab = document.createElement('button');
-            tab.className = 'tw-tab';
-            tab.innerText = cat;
-            tab.onclick = () => {
-                globalTooltip.style.display = 'none';
-                globalTooltip.dataset.activeId = '';
-
-                if (currentCategory === cat) {
-                    currentCategory = null;
-                    tab.classList.remove('active-tab');
-                    contentArea.style.setProperty('display', 'none', 'important');
-                } else {
-                    document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
-                    tab.classList.add('active-tab');
-                    currentCategory = cat;
-                    renderScripts();
-                    contentArea.style.setProperty('display', 'block', 'important');
-                }
-            };
-            categoriesBar.appendChild(tab);
-        });
-
-        panel.appendChild(categoriesBar);
-        panel.appendChild(contentArea);
-
-        // --- CZYSTE MIEJSCE NA ZEWNĘTRZNY SKRYPT (Przywrócone bez pytania) ---
-        const externalMenuContainer = document.createElement('div');
-        externalMenuContainer.id = 'tcm-external-menu-container';
-        externalMenuContainer.style.cssText = 'box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 6px 8px; border-top: 1px solid var(--border-color); background: var(--bg-row-alt); border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; display: block !important;';
-        panel.appendChild(externalMenuContainer);
-        // ------------------------------------
-
-        document.body.appendChild(panel);
-
-        // Wywołujemy pierwsze nałożenie kolorów na kategorie
-        updateCategoryStatus();
-
-        let wasDragged = false; 
-
-        opener.onclick = (e) => { 
-            if (wasDragged) {
-                wasDragged = false; 
-                return; 
-            }
-
-            if (panel.style.display === 'flex') {
-                panel.style.setProperty('display', 'none', 'important');
-                opener.classList.remove('tw-opener-open');
-                opener.classList.add('tw-opener-closed');
-            } else {
-                panel.style.setProperty('display', 'flex', 'important');
-                opener.classList.remove('tw-opener-closed');
-                opener.classList.add('tw-opener-open');
-
-                const absoluteLeft = parseInt(opener.style.left) || 0;
-                const absoluteTop = parseInt(opener.style.top) || 0;
-
-                panel.style.setProperty('left', (absoluteLeft + 55) + 'px', 'important');
-                panel.style.setProperty('top', absoluteTop + 'px', 'important');
-            }
-        };
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.classList.contains('tw-square-btn')) {
-                globalTooltip.style.display = 'none';
-                globalTooltip.dataset.activeId = '';
-            }
-
-            const clickedInsidePanel = e.target.closest('#tw-script-panel');
-            const clickedOpener = e.target.closest('#tw-panel-opener');
-
-            if (!clickedInsidePanel && !clickedOpener && panel.style.display !== 'none') {
-                if (contentArea.style.display === 'block') {
-                    currentCategory = null;
-                    document.querySelectorAll('.tw-tab').forEach(t => t.classList.remove('active-tab'));
-                    contentArea.style.setProperty('display', 'none', 'important');
-                } else {
-                    panel.style.setProperty('display', 'none', 'important');
-                    opener.classList.remove('tw-opener-open');
-                    opener.classList.add('tw-opener-closed');
-                }
-            }
-        });
-
-        // DRAG & DROP
-        let isDragging = false;
-        let draggedElement = null;
-        let initialX = 0, initialY = 0;
-        let startX = 0, startY = 0;
-
-        function dragStart(e) {
-            if (e.currentTarget !== opener) return;
-
-            draggedElement = opener;
-            wasDragged = false; 
-
-            if (e.type === "touchstart") {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-            } else {
-                startX = e.clientX;
-                startY = e.clientY;
-            }
-
-            const rect = draggedElement.getBoundingClientRect();
-            initialX = rect.left;
-            initialY = rect.top;
-
-            isDragging = true;
-
-            panel.style.setProperty('display', 'none', 'important');
-            opener.classList.remove('tw-opener-open');
-            opener.classList.add('tw-opener-closed');
-            globalTooltip.style.display = 'none';
-
-            document.addEventListener('mousemove', dragMove, { passive: false });
-            document.addEventListener('touchmove', dragMove, { passive: false });
-            document.addEventListener('mouseup', dragEnd);
-            document.addEventListener('touchend', dragEnd);
-        }
-
-        function dragMove(e) {
-            if (!isDragging || !draggedElement) return;
-            if (e.cancelable) e.preventDefault(); 
-            window.getSelection().removeAllRanges(); 
-
-            let currentX, currentY;
-            if (e.type === "touchmove") {
-                currentX = e.touches[0].clientX;
-                currentY = e.touches[0].clientY;
-            } else {
-                currentX = e.clientX;
-                currentY = e.clientY;
-            }
-
-            const dx = currentX - startX;
-            const dy = currentY - startY;
-
-            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-                wasDragged = true; 
-            }
-
-            draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
-            draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
-        }
-
-        function dragEnd() {
-            if (!isDragging) return;
-
-            localStorage.setItem('tw_opener_pos', JSON.stringify({
-                x: parseInt(opener.style.left) || 0,
-                y: parseInt(opener.style.top) || 0
-            }));
-
-            isDragging = false;
-            draggedElement = null;
-
-            document.removeEventListener('mousemove', dragMove);
-            document.removeEventListener('touchmove', dragMove);
-            document.removeEventListener('mouseup', dragEnd);
-            document.removeEventListener('touchend', dragEnd);
-        }
-
-        opener.addEventListener('mousedown', dragStart, { passive: false });
-        opener.addEventListener('touchstart', dragStart, { passive: false });
-    };
-
-})();
+:root {
+    --bg-main: #36393f;
+    --bg-row-alt: #32353b;
+    --bg-header: #202225;
+    --border-color: #3e4147;
+    --text-color: white;
+    --title-color: #ffffdf;
+
+    /* Standardowe szare tło 3D */
+    --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+    --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+
+    /* ZIELONE tło 3D dla aktywnych kategorii */
+    --btn-bg-green: linear-gradient(#5da832 0%, #3d781b 30%, #224a0d 80%, black 100%);
+
+    --neon-green: #74ff00;
+    --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
+
+    --neon-red: #ff003c;
+    --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
+}
+
+#tw-script-panel *, 
+#tw-panel-opener *,
+#tw-global-tooltip * {
+    box-sizing: border-box !important;
+    font-family: Verdana, Arial, sans-serif !important;
+    color: var(--text-color) !important;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+/* AGRESYWNY RESET NIEBIESKIEJ POŚWIATY (Tap Highlight) */
+#tw-script-panel button, 
+#tw-panel-opener,
+#tw-script-panel a,
+.tw-tab,
+.tw-square-btn {
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+#tw-script-panel button:focus, 
+#tw-script-panel button:active, 
+#tw-panel-opener:focus,
+#tw-panel-opener:active {
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* =========================================================
+   IKONA (OPENER) - STAN LED
+========================================================= */
+#tw-panel-opener {
+    position: absolute !important;
+    z-index: 999999 !important;
+    cursor: pointer !important;
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background-image: var(--btn-bg) !important;
+    border-radius: 50% !important;
+    user-select: none !important;
+    touch-action: none !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
+}
+
+/* Panel ZAMKNIĘTY = LED zaświecony (zielony) */
+.tw-opener-closed {
+    border: 2px solid var(--neon-green) !important;
+    box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8) !important;
+    animation: neon-pulse 2s infinite alternate ease-in-out !important;
+}
+
+/* Panel OTWARTY = LED wygaszony (ciemnoszary) */
+.tw-opener-open {
+    border: 2px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.8) !important;
+    animation: none !important;
+    filter: brightness(0.7) !important;
+}
+
+@keyframes neon-pulse {
+    0% { box-shadow: 0 0 4px rgba(116, 255, 0, 0.4), 0 4px 12px rgba(0,0,0,0.8); }
+    100% { box-shadow: var(--neon-glow), 0 4px 12px rgba(0,0,0,0.8); }
+}
+
+#tw-panel-opener img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 50px !important;
+    max-height: 50px !important;
+    object-fit: contain !important;
+    pointer-events: none !important;
+}
+
+/* =========================================================
+   PANEL I KATEGORIE
+========================================================= */
+#tw-script-panel {
+    position: absolute !important;
+    z-index: 999998 !important;
+    width: 140px !important;
+    background-color: var(--bg-main) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+    display: none;
+    flex-direction: column !important;
+}
+
+#tw-categories-bar {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 4px !important;
+    gap: 4px !important;
+    background-color: var(--bg-main) !important;
+}
+
+#tw-content-area {
+    display: none;
+    position: absolute !important;
+    top: -2px !important;
+    left: 100% !important;
+    margin-left: 5px !important;
+    width: 270px !important;
+    background-color: var(--bg-row-alt) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.8) !important;
+    z-index: 999997 !important;
+}
+
+.tw-content-inner {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding: 6px !important;
+    background-color: var(--bg-row-alt) !important;
+}
+
+/* =========================================================
+   ZAKŁADKI KATEGORII (Z PODŚWIETLANIEM STATUSU)
+========================================================= */
+.tw-tab {
+    background-image: var(--btn-bg) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-left: 3px solid var(--border-color) !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    padding: 5px !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
+    transition: 0.15s !important;
+}
+
+.tw-tab:hover {
+    background-image: var(--btn-hover) !important;
+}
+
+/* Dynamiczne podświetlenie boku zakładki w zależności od statusu skryptów */
+.tw-tab.cat-status-on {
+    border-left-color: var(--neon-green) !important;
+}
+
+.tw-tab.cat-status-off {
+    border-left-color: var(--neon-red) !important;
+}
+
+/* Aktywna kategoria */
+.tw-tab.active-tab {
+    background-image: var(--btn-bg-green) !important;
+    border-color: var(--neon-green) !important;
+    color: var(--title-color) !important;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+    box-shadow: inset 0 0 8px rgba(116, 255, 0, 0.3) !important;
+}
+
+/* =========================================================
+   SKRYPTY I OBRAMÓWKI STANÓW
+========================================================= */
+.tw-script-item {
+    background-color: var(--bg-main) !important;
+    border-radius: 3px !important;
+    padding: 5px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
+}
+
+.tw-item-off {
+    border: 1px solid var(--neon-red) !important;
+    box-shadow: inset 0 0 4px rgba(255, 0, 60, 0.1) !important;
+}
+
+.tw-item-on {
+    border: 1px solid var(--neon-green) !important;
+    box-shadow: inset 0 0 4px rgba(116, 255, 0, 0.1) !important;
+}
+
+/* =========================================================
+   KWADRATOWE IKONY AKCJI
+========================================================= */
+.tw-square-btn {
+    background-image: var(--btn-bg) !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+    margin-left: 4px !important;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.8) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.tw-square-btn:hover {
+    background-image: var(--btn-hover) !important;
+}
+
+.tw-btn-active {
+    color: var(--neon-green) !important; 
+    border: 1px solid var(--neon-green) !important;
+    box-shadow: var(--neon-glow) !important;
+}
+
+.tw-btn-inactive {
+    color: var(--neon-red) !important; 
+    border: 1px solid var(--neon-red) !important;
+    box-shadow: var(--neon-red-glow) !important;
+}
+
+.tw-bell-btn {
+    color: #ffd700 !important;
+    border: 1px solid var(--border-color) !important;
+    font-size: 13px !important;
+}
+
+.tw-bell-btn.tw-btn-active {
+    border-color: var(--neon-green) !important;
+    box-shadow: var(--neon-glow) !important;
+}
+
+/* =========================================================
+   POZOSTAŁE ELEMENTY
+========================================================= */
+#tw-script-panel-header {
+    background-color: var(--bg-header) !important;
+    color: var(--title-color) !important;
+    padding: 8px !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    user-select: none !important;
+    text-align: center !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.tw-game-btn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    flex-grow: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    text-align: left !important;
+}
+
+.tw-script-name {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    color: var(--title-color) !important;
+}
+
+.tw-status-icon {
+    width: 10px !important;
+    height: 10px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+}
+
+.tw-status-on { 
+    background: var(--neon-green) !important; 
+    box-shadow: var(--neon-glow) !important; 
+    border: 1px solid rgba(255,255,255,0.4) !important;
+}
+
+.tw-status-off { 
+    background: var(--neon-red) !important; 
+    box-shadow: var(--neon-red-glow) !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+}
+
+#tw-global-tooltip {
+    background: linear-gradient(145deg, #36393f 0%, #202225 100%) !important;
+    color: var(--title-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    padding: 10px 12px !important;
+    width: 220px !important;
+    font-size: 11px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.9) !important;
+    z-index: 2147483647 !important; 
+    transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
