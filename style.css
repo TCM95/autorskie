@@ -6,13 +6,17 @@
     --text-color: white;
     --title-color: #ffffdf;
 
+    /* Ustandaryzowane zmienne gradientów */
     --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
     --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-    --btn-bg-green: linear-gradient(#5da832 0%, #3d781b 30%, #224a0d 80%, black 100%);
+    --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+    --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+    --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+    --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
 
+    /* Neony */
     --neon-green: #74ff00;
     --neon-glow: 0 0 8px rgba(116, 255, 0, 0.6), 0 0 15px rgba(116, 255, 0, 0.4);
-
     --neon-red: #ff003c;
     --neon-red-glow: 0 0 8px rgba(255, 0, 60, 0.6), 0 0 15px rgba(255, 0, 60, 0.4);
 }
@@ -29,11 +33,10 @@
    IKONA (OPENER)
 ========================================================= */
 #tw-panel-opener {
-    position: absolute !important; z-index: 999999 !important;
     cursor: pointer !important; width: 50px !important; height: 50px !important;
     display: flex !important; justify-content: center !important; align-items: center !important;
     background-image: var(--btn-bg) !important; border-radius: 50% !important;
-    user-select: none !important; touch-action: none !important; padding: 0 !important;
+    user-select: none !important; padding: 0 !important;
     overflow: hidden !important; transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
 }
 
@@ -55,14 +58,14 @@
 }
 
 /* =========================================================
-   PANEL GŁÓWNY
+   PANEL GŁÓWNY I PRZYCISKI W NAGŁÓWKU
 ========================================================= */
 #tw-script-panel {
     position: absolute !important; z-index: 999998 !important;
     width: 140px !important; background-color: var(--bg-main) !important;
     border: 2px solid var(--border-color) !important; border-radius: 4px !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
-    display: none; flex-direction: column !important;
+    flex-direction: column !important;
 }
 
 #tw-script-panel-header {
@@ -73,26 +76,34 @@
     display: flex !important; justify-content: space-between !important; align-items: center !important;
 }
 
-.tw-close-btn {
-    background: var(--bg-header) !important; color: var(--neon-red) !important;
-    border: 1px solid var(--neon-red) !important; box-shadow: var(--neon-red-glow) !important;
+.tw-square-btn {
+    background: var(--bg-header) !important; 
+    border: 1px solid var(--border-color) !important; 
     border-radius: 3px !important; cursor: pointer !important; width: 22px !important; height: 22px !important;
     display: flex !important; justify-content: center !important; align-items: center !important;
-    font-weight: bold !important; transition: all 0.2s ease-in-out !important;
+    font-weight: bold !important; transition: all 0.2s ease-in-out !important; font-size: 11px !important;
 }
-.tw-close-btn:hover { background: var(--neon-red) !important; color: white !important; }
 
+.tw-square-btn:hover { background-image: var(--btn-hover) !important; }
+
+.tw-btn-inactive {
+    color: var(--neon-red) !important;
+    border-color: var(--neon-red) !important;
+    box-shadow: var(--neon-red-glow) !important;
+}
+.tw-btn-inactive:hover { background: var(--neon-red) !important; color: white !important; }
+
+/* =========================================================
+   KATEGORIE I TREŚĆ
+========================================================= */
 #tw-categories-bar {
     display: flex !important; flex-direction: column !important;
     padding: 4px !important; gap: 4px !important; background-color: var(--bg-main) !important;
     border-top: 1px solid var(--border-color) !important;
 }
 
-/* =========================================================
-   TREŚĆ PANELU
-========================================================= */
 #tw-content-area {
-    display: none; position: absolute !important; top: -2px !important; left: 100% !important;
+    position: absolute !important; top: -2px !important; left: 100% !important;
     margin-left: 5px !important; width: 270px !important;
     background-color: var(--bg-row-alt) !important;
     border: 2px solid var(--border-color) !important; border-top: 2px solid var(--neon-red) !important;
@@ -107,21 +118,41 @@
 }
 
 .tw-tab.active-tab {
-    background-image: var(--btn-bg-green) !important; border-color: var(--neon-green) !important;
+    background-image: var(--btn-green-bg) !important; border-color: var(--neon-green) !important;
     color: var(--title-color) !important;
 }
 
+/* =========================================================
+   ELEMENTY LISTY SKRYPTÓW (JS: .tw-script-item, .tw-game-btn)
+========================================================= */
 .tw-script-item {
     background-color: var(--bg-main) !important; border-radius: 3px !important;
-    padding: 5px 8px !important; display: flex !important; align-items: center !important;
-    justify-content: space-between !important;
+    margin: 4px !important; padding: 4px 6px !important; 
+    display: flex !important; align-items: center !important; justify-content: space-between !important;
 }
 
 .tw-item-off { border: 1px solid var(--neon-red) !important; }
 .tw-item-on { border: 1px solid var(--neon-green) !important; }
 
+.tw-game-btn {
+    display: flex !important; align-items: center !important; gap: 6px !important;
+    cursor: pointer !important; flex-grow: 1 !important; user-select: none !important;
+}
+
+.tw-status-icon {
+    width: 10px !important; height: 10px !important; border-radius: 50% !important;
+}
+.tw-status-on { background-color: var(--neon-green) !important; box-shadow: var(--neon-glow) !important; }
+.tw-status-off { background-color: var(--neon-red) !important; }
+
+.tw-script-name { font-size: 11px !important; font-weight: bold !important; }
+
+/* =========================================================
+   TOOLTIP
+========================================================= */
 #tw-global-tooltip {
-    background: #000 !important; color: var(--title-color) !important;
-    border: 1px solid var(--border-color) !important; border-radius: 6px !important;
-    padding: 10px !important; width: 220px !important; font-size: 11px !important;
+    /* Usunięto background: #000 !important, obsługiwane w JS */
+    color: var(--title-color) !important;
+    border-radius: 6px !important;
+    width: 220px !important; font-size: 11px !important;
 }
