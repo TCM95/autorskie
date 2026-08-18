@@ -1,11 +1,3 @@
-// ==UserScript==
-// @name         Panel UI Menedżera TCM
-// @namespace    https://viayoo.com/
-// @version      1.3
-// @description  Poprawiony interfejs: usunięto zbędne elementy, czerwone obramowanie kontenera nagłówka, kolor tekstu kategorii odzwierciedla status.
-// @author       TCM
-// ==/UserScript==
-
 window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
