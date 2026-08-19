@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name          Kalkulator rekru
-// @version      3.2
-// @description  Zarządzanie rekrutacją wojsk (wersja bez licznika czasu)
-// @author       TCM
 // @namespace    https://viayoo.com/
+// @version      3.3
+// @description  Zarządzanie rekrutacją wojsk
+// @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=train*
 // @match        *://*.plemiona.pl/game.php?*screen=barracks*
 // @grant        none
@@ -42,30 +42,41 @@
           --title-color: #ffffdf;
           --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
           --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+          --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+          --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+          --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+          --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+        }
+
+        #tcm-rekrutacja-ui *, #tcm-rekrutacja-ui {
+            box-sizing: border-box !important;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
 
         #tcm-rekrutacja-ui { 
             position: absolute !important; 
-            top: 150px; 
+            top: 130px; 
             left: 10px; 
             z-index: 999999 !important; 
             background: var(--bg-main) !important; 
             border: 2px solid var(--border-color) !important; 
             border-radius: 6px; 
-            padding: 8px; 
-            width: 335px; 
-            box-shadow: 0 6px 16px rgba(0,0,0,0.8); 
+            padding: 6px; 
+            width: 320px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.8); 
             font-family: Verdana,Arial,sans-serif; 
             color: var(--text-color);
             display: block !important;
         }
+
         #tcm-rekrutacja-header { 
             background: var(--bg-header) !important; 
             color: var(--title-color) !important;
-            padding: 8px; 
+            padding: 6px 8px; 
             cursor: move; 
             font-weight: bold; 
-            text-align: center; 
+            font-size: 12px;
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
@@ -74,28 +85,70 @@
             border-radius: 4px;
             border-bottom: 1px solid var(--border-color);
         }
+
         .tcm-pin { 
             cursor: pointer; 
-            padding: 3px 6px; 
+            padding: 2px 6px; 
             background: var(--btn-bg); 
             border: 1px solid var(--border-color); 
             border-radius: 3px; 
-            font-size: 12px; 
+            font-size: 11px; 
             color: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .tcm-pin.pinned { background: linear-gradient(#b52b2b 0%, #7d1515 100%); }
-        #tcm-rtable { width: 100%; margin-top: 6px; border-collapse: collapse; }
-        #tcm-rtable td { text-align: center; padding: 4px; background: var(--bg-row-alt); border: 1px solid var(--border-color); }
-        input.tcm-ri { width: 100%; min-width: 24px; max-width: 32px; font-size: 11px; box-sizing: border-box; text-align: center; background: #222; color: white; border: 1px solid #555; border-radius: 2px; }
-        .tcm-label { font-size: 9px; font-weight: bold; background: var(--bg-header) !important; color: var(--title-color); text-align: center; padding: 4px !important; }
+        .tcm-pin.pinned { background: var(--btn-red-bg); }
+
+        #tcm-rtable { width: 100%; margin-top: 4px; border-collapse: collapse; }
+        #tcm-rtable td { text-align: center; padding: 2px; background: var(--bg-row-alt); border: 1px solid var(--border-color); }
+        
+        input.tcm-ri { 
+            width: 100%; 
+            font-size: 11px; 
+            text-align: center; 
+            background: #111; 
+            color: white; 
+            border: 1px solid var(--border-color); 
+            border-radius: 3px; 
+            padding: 2px 0;
+        }
+
+        .tcm-status-val { font-size: 10px; font-weight: bold; color: var(--title-color); }
+
+        .tcm-controls-bar { 
+            margin-top: 6px; 
+            padding: 4px 6px; 
+            background: var(--bg-row-alt); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+        }
+
+        .tcm-queue-inline {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .tcm-queue-inline input {
+            width: 35px;
+            text-align: center;
+            font-size: 11px;
+            background: #111;
+            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 2px;
+        }
+
         .tcm-btn { 
-            margin-top: 8px; 
-            width: 48%; 
-            padding: 7px; 
+            padding: 5px 10px; 
             font-weight: bold; 
+            font-size: 11px;
             cursor: pointer; 
-            display: inline-block; 
             background: var(--btn-bg); 
             color: white; 
             border: 1px solid var(--border-color);
@@ -103,9 +156,10 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
         .tcm-btn:hover { background: var(--btn-hover); }
-        .tcm-status-val { font-size: 11px; font-weight: bold; color: #ffffdf; }
-        .tcm-queue-row { margin-top: 8px; padding: 6px; background: var(--bg-row-alt); font-size: 11px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border: 1px solid var(--border-color); border-radius: 3px; }
-        .tcm-queue-row input { width: 45px; text-align: center; font-size: 11px; background: #222; color: white; border: 1px solid #555; border-radius: 2px; }
+        .tcm-btn-start { background: var(--btn-green-bg) !important; }
+        .tcm-btn-start:hover { background: var(--btn-green-hover) !important; }
+        .tcm-btn-stop { background: var(--btn-red-bg) !important; }
+        .tcm-btn-stop:hover { background: var(--btn-red-hover) !important; }
     `);
 
     const iconUrl = (unit) => `https://dsen.innogamescdn.com/asset/10d39b3d/graphic/unit/unit_${unit}.png`;
@@ -113,7 +167,7 @@
     const uiHtml = `
     <div id="tcm-rekrutacja-ui">
         <div id="tcm-rekrutacja-header">
-            <span>Rekrutacja</span>
+            <span>Kalkulator Rekrutacji</span>
             <span class="tcm-pin" id="tcm-pin-btn">📌</span>
         </div>
         <table id="tcm-rtable">
@@ -128,7 +182,6 @@
                     <td><img src="${iconUrl('ram')}"></td>
                     <td><img src="${iconUrl('catapult')}"></td>
                 </tr>
-                <tr><td colspan="8" class="tcm-label">OBECNIE (Wraz z kolejką)</td></tr>
                 <tr>
                     <td id="tcm-curr-spear" class="tcm-status-val">0</td>
                     <td id="tcm-curr-sword" class="tcm-status-val">0</td>
@@ -139,7 +192,6 @@
                     <td id="tcm-curr-ram" class="tcm-status-val">0</td>
                     <td id="tcm-curr-catapult" class="tcm-status-val">0</td>
                 </tr>
-                <tr><td colspan="8" class="tcm-label">LIMIT DOCELOWY</td></tr>
                 <tr>
                     <td><input class="tcm-ri limit-in" data-unit="spear" type="number"></td>
                     <td><input class="tcm-ri limit-in" data-unit="sword" type="number"></td>
@@ -150,7 +202,6 @@
                     <td><input class="tcm-ri limit-in" data-unit="ram" type="number"></td>
                     <td><input class="tcm-ri limit-in" data-unit="catapult" type="number"></td>
                 </tr>
-                <tr><td colspan="8" class="tcm-label">PACZKA (Wielkość)</td></tr>
                 <tr>
                     <td><input class="tcm-ri paczka-in" data-unit="spear" type="number"></td>
                     <td><input class="tcm-ri paczka-in" data-unit="sword" type="number"></td>
@@ -163,15 +214,16 @@
                 </tr>
             </tbody>
         </table>
-        
-        <div class="tcm-queue-row">
-            <span>Maks. kolejek:</span>
-            <input type="number" id="tcm-queue-size-in" min="1" max="20">
-        </div>
 
-        <div style="display: flex; justify-content: space-between;">
-            <button id='tcm-toggle-btn' class='tcm-btn'>Start</button>
-            <button id='tcm-save-btn' class='tcm-btn'>Zapisz</button>
+        <div class="tcm-controls-bar">
+            <div class="tcm-queue-inline">
+                <span>Kolejka:</span>
+                <input type="number" id="tcm-queue-size-in" min="1" max="20">
+            </div>
+            <div>
+                <button id='tcm-save-btn' class='tcm-btn'>Zapisz</button>
+                <button id='tcm-toggle-btn' class='tcm-btn'>Start</button>
+            </div>
         </div>
     </div>`;
 
@@ -300,8 +352,13 @@
             $('.limit-in').each(function() { $(this).val(limitData[$(this).data('unit')] || ''); });
             $('.paczka-in').each(function() { $(this).val(unitData[$(this).data('unit')] || ''); });
             $('#tcm-queue-size-in').val(maxQueueSize);
-            $('#tcm-toggle-btn').text(isActive === 1 ? 'Stop' : 'Start');
-            $('#tcm-toggle-btn').css('background', isActive === 1 ? 'linear-gradient(#b52b2b 0%, #7d1515 100%)' : 'var(--btn-bg)');
+            
+            const btn = $('#tcm-toggle-btn');
+            if (isActive === 1) {
+                btn.text('Stop').removeClass('tcm-btn-start').addClass('tcm-btn-stop');
+            } else {
+                btn.text('Start').removeClass('tcm-btn-stop').addClass('tcm-btn-start');
+            }
             
             getVillageUnits();
         };
@@ -324,11 +381,16 @@
         $('.paczka-in').on('input', function() { unitData[$(this).data('unit')] = parseInt($(this).val()) || 0; });
         $('#tcm-queue-size-in').on('input', function() { maxQueueSize = parseInt($(this).val()) || 4; });
 
-        $('#tcm-save-btn').click(() => {
+        $('#tcm-save-btn').click(function() {
             localStorage.setItem(keyUnitData, JSON.stringify(unitData));
             localStorage.setItem(keyLimitData, JSON.stringify(limitData));
             localStorage.setItem(keyQueueSize, maxQueueSize);
-            alert(`Zapisano ustawienia dla wioski ${villageId}!`);
+            
+            let btn = $(this);
+            btn.text('Zapisano!').addClass('tcm-btn-start');
+            setTimeout(() => {
+                btn.text('Zapisz').removeClass('tcm-btn-start');
+            }, 1200);
         });
 
         const recruitIfPossible = () => {
