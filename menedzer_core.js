@@ -110,7 +110,7 @@
             } else {
                 // Obsługa starej płaskiej tablicy w razie potrzeby
                 scripts = json;
-                categories = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Raporty", "Tagi", "Surowce", "Mapa", "Inne"];
+                categories = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Raporty", "Etykiety", "Surowce", "Mapa", "Inne"];
             }
         }
 
