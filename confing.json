@@ -193,6 +193,6 @@
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rep.js",
             "description": "Sortowanie/Filtrowanie raportów informacje dotyczące poparcia/wojska w wioskach(trzeba przejrzeć raporty lub je importować)",
             "screens": ["report"]
-        },
+        }
           ]
 }
