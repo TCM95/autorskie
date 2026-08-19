@@ -79,7 +79,7 @@
         {
             "id": "menu_rep",
             "name": "Menu Raportów",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rep.js",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rap.js",
             "description": "Sortowanie i filtrowanie raportów, informacje o poparciu oraz wojskach w wioskach.",
             "screens": ["report"]
         }
