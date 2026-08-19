@@ -39,7 +39,7 @@
             "id": "feje",
             "name": "Fejkomat",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/feje.js",
-            "description": "...",
+            "description": "Automatyzacja wysyłania ataków pozorowanych.",
             "screens": ["place"]
         }
     ],
@@ -62,14 +62,14 @@
             "id": "bob",
             "name": "Budowlaniec",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/Bob.js",
-            "description": "budowa wioski gotwe szablony mozliwosc wrzucenia wlasnego",
+            "description": "Budowa wioski, gotowe szablony z możliwością wrzucenia własnego.",
             "screens": ["main"]
         },
         {
             "id": "rek",
             "name": "Rekruter",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
-            "description": "Rekrutacja wojsk",
+            "description": "Rekrutacja wojsk.",
             "screens": ["train", "barracks"]
         }
     ],
@@ -94,28 +94,28 @@
             "id": "balancer",
             "name": "Balancer",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/balancer.js",
-            "description": "podgląd produkcja/wyrównuje surowce w aktualnej grupie",
-            "screens": ["mode=prod"]
+            "description": "Podgląd produkcji i wyrównywanie surowców w aktualnej grupie.",
+            "screens": ["mode=prod", "overview_villages"]
         },
         {
             "id": "kalk_surowce",
             "name": "Kalkulator",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/loader.js",
-            "description": "oblicza zapotrzebowanie budynki/monety/szlachta",
+            "description": "Oblicza zapotrzebowanie na budynki/monety/szlachtę.",
             "screens": ["main", "snob", "market"]
         },
         {
             "id": "kalk_surowce_w",
             "name": "Kalkulator(handlarz)",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/kalkulator/handel.js",
-            "description": "wypełnia formularze i wysyłki na rynku",
+            "description": "Wypełnia formularze i wysyłki na rynku.",
             "screens": ["market"]
         },
         {
             "id": "dyspo",
             "name": "Dysponent",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/dyspo.js",
-            "description": "Przesyłanie surowców A>B>C",
+            "description": "Przesyłanie surowców A>B>C.",
             "screens": ["mode=combined", "mode=call"]
         }
     ],
@@ -138,61 +138,61 @@
     "Inne": [
         {
             "id": "ciemny_motyw",
-            "name": "ciemny motyw",
+            "name": "Ciemny motyw",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
-            "description": "Ułatwia wysyłanie farmy z poziomu placu.",
+            "description": "Włącza ciemny motyw interfejsu gry.",
             "screens": ["*"]
         },
         {
             "id": "wybijak_monet",
             "name": "Aktywator monet",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/monety.js",
-            "description": "aktywuje automatyczne wybijanie monet wchodzimy w pałac/wybijanie monet działa w aktualnie przeglądanej grupie.",
-            "screens": ["mode=coin"]
+            "description": "Aktywuje automatyczne wybijanie monet w Pałacu w aktualnie przeglądanej grupie.",
+            "screens": ["snob", "mode=coin"]
         },
         {
             "id": "edytor_nazw",
-            "name": "Zmaina nazw",
+            "name": "Zmiana nazw",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/nazwy_wiosek.js",
-            "description": "Zmiana nazw wiosek.",
+            "description": "Masowa zmiana nazw wiosek.",
             "screens": ["overview_villages"]
-        },     
+        },
         {
             "id": "komendy",
             "name": "Komendy",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/komendy.js",
-            "description": "Udostępnianie komend",
+            "description": "Udostępnianie komend.",
             "screens": ["settings", "info_command"]
         },
         {
             "id": "rank",
             "name": "Ranking",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/ranking.js",
-            "description": "Ranking zbieractwo/farma",
+            "description": "Ranking zbieractwa i farmienia.",
             "screens": ["ranking"]
         },
         {
             "id": "znajomi",
             "name": "Znajomi",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
-            "description": "dodawanie/usuwanie znajomych ",
+            "description": "Szybkie dodawanie/usuwanie znajomych.",
             "screens": ["buddies"]
         }
     ],
-"Raporty": [
+    "Raporty": [
         {
             "id": "notka",
             "name": "(Menu)Notatki",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_note.js",
-            "description": "notatkowanie/filtrowanie raportow z dzisiejszego dnia/czyszczenie zbędnych śmieci.",
+            "description": "Notatkowanie, filtrowanie raportów z dzisiejszego dnia i czyszczenie zbędnych danych.",
             "screens": ["report"]
         },
         {
             "id": "menu_rep",
             "name": "Menu Raportów",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rep.js",
-            "description": "Sortowanie/Filtrowanie raportów informacje dotyczące poparcia/wojska w wioskach(trzeba przejrzeć raporty lub je importować)",
+            "description": "Sortowanie i filtrowanie raportów, informacje o poparciu oraz wojskach w wioskach.",
             "screens": ["report"]
         }
-          ]
+    ]
 }
