@@ -234,7 +234,7 @@
     document.body.appendChild(ui);
 
     // --- EVENTY UI ---
-    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">⚙️</a></td>`);
+    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">🦄</a></td>`);
     $('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
     $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
 
