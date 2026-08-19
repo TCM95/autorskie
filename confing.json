@@ -114,7 +114,7 @@
             "screens": ["mode=combined", "mode=call"]
         }
     ],
-    "Tagi": [
+    "Etykiety": [
         {
             "id": "tager_przychodzace",
             "name": "Tag(przychodzące)",
