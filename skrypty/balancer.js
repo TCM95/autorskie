@@ -110,8 +110,8 @@
             return;
         }
 
-        if (statusDisplay) statusDisplay.textContent = isManual ? "Wysyłanie ręczne..." : "Wysyłanie w pętli...";
-        if (isManual) $('#top_start_btn').text("⚙️...").css("background", "#444");
+        if (statusDisplay) statusDisplay.textContent = isManual ? "Ręczny" : "Pętla";
+        if (isManual) $('#top_start_btn').text("🔄...").css("background", "#444");
 
         for (let i = 0; i < sendButtons.length; i++) {
             if (!isManual && !isRunning) {
