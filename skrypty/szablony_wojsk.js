@@ -22,7 +22,6 @@
         spy: 'staj', light: 'staj', marcher: 'staj', heavy: 'staj',
         ram: 'wars', catapult: 'wars'
     };
-    // Zmodyfikowane lekko kolory pod ciemny motyw, aby były czytelne
     const koloryBudynkow = { kosz: '#ff6666', staj: '#66b3ff', wars: '#d2a679' };
 
     const ikony = {
@@ -74,7 +73,9 @@
 
     let uiState = JSON.parse(localStorage.getItem(`kreator_ui_${urlKey}`)) || { top: '10%', left: '50%' };
     
-    // Wstrzykiwanie wzorca CSS
+    // Zmienna przechowująca czasy bazowe dla uniknięcia błędu wielokrotnego mnożenia
+    const baseUnitTimes = {};
+
     const css = `
         :root {
             --bg-main: #36393f;
@@ -136,7 +137,8 @@
             const val = parseInt(input.value, 10) || 0;
             const timeCell = document.getElementById(`c_time_${u}`);
             
-            const unitSec = getUnitTimeInSeconds(u);
+            // OPTYMALIZACJA: Pobiera czas ze stałego cache (bazy), a nie z nadpisanego DOMu
+            const unitSec = baseUnitTimes[u] || 0;
 
             if (unitSec > 0) {
                 const totalUnitTime = val * unitSec;
@@ -222,9 +224,9 @@
         const content = document.getElementById('szablony-content-main');
         content.innerHTML = ""; 
 
-        const sOff = stworzBlok('#cc0000'); // Wyraźniejsze obramowanie dla OFF
-        const sDef = stworzBlok('#3399ff'); // Wyraźniejsze obramowanie dla DEFF
-        const sBurz = stworzBlok('#b36b00'); // Wyraźniejsze obramowanie dla Burzaków
+        const sOff = stworzBlok('#cc0000'); 
+        const sDef = stworzBlok('#3399ff'); 
+        const sBurz = stworzBlok('#b36b00'); 
 
         let saved = JSON.parse(localStorage.getItem(`tcm_custom_templates_${urlKey}`)) || [];
         let allTemplates = [...szablony, ...saved];
@@ -439,6 +441,10 @@
     };
 
     setTimeout(() => {
+        // Cache wartości bazowych ZANIM jakikolwiek input zostanie nadpisany
+        Object.keys(ikony).forEach(u => {
+            baseUnitTimes[u] = getUnitTimeInSeconds(u);
+        });
         renderKafelki();
         stworzUIKalkulatora();
     }, 600);
