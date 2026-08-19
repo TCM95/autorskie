@@ -1,27 +1,6 @@
 {
     "Atak/obrona": [
         {
-            "id": "tager_przychodzace",
-            "name": "Tag(przychodzące)",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
-            "description": "Ataki przychodzące.",
-            "screens": ["mode=incomings"]
-        },
-        {
-            "id": "tager_wychodzace",
-            "name": "Tag(wychodzące)",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
-            "description": "Ataki wychodzące.",
-            "screens": ["mode=commands", "overview_villages", "report"]
-        },
-        {
-            "id": "etykiety",
-            "name": "Etykiety",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
-            "description": "Etykiety z filtrami.",
-            "screens": ["mode=incomings"]
-        },
-        {
             "id": "atak_wsparcie",
             "name": "Atak/Wsparcie",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
@@ -89,6 +68,22 @@
             "screens": ["scavenge_mass"]
         }
     ],
+    "Raporty": [
+        {
+            "id": "notka",
+            "name": "(Menu)Notatki",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_note.js",
+            "description": "Notatkowanie, filtrowanie raportów z dzisiejszego dnia i czyszczenie zbędnych danych.",
+            "screens": ["report"]
+        },
+        {
+            "id": "menu_rep",
+            "name": "Menu Raportów",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rep.js",
+            "description": "Sortowanie i filtrowanie raportów, informacje o poparciu oraz wojskach w wioskach.",
+            "screens": ["report"]
+        }
+    ],
     "Surowce": [
         {
             "id": "balancer",
@@ -119,6 +114,29 @@
             "screens": ["mode=combined", "mode=call"]
         }
     ],
+    "Tagi": [
+        {
+            "id": "tager_przychodzace",
+            "name": "Tag(przychodzące)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/przychodzace.js",
+            "description": "Ataki przychodzące.",
+            "screens": ["mode=incomings"]
+        },
+        {
+            "id": "tager_wychodzace",
+            "name": "Tag(wychodzące)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/tagi/wychodzace.js",
+            "description": "Ataki wychodzące.",
+            "screens": ["mode=commands", "overview_villages", "report"]
+        },
+        {
+            "id": "etykiety",
+            "name": "Etykiety",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/etykieta.js",
+            "description": "Etykiety z filtrami.",
+            "screens": ["mode=incomings"]
+        }
+    ],
     "Mapa": [
         {
             "id": "mapa_kordy",
@@ -136,13 +154,6 @@
         }
     ],
     "Inne": [
-        {
-            "id": "ciemny_motyw",
-            "name": "Ciemny motyw",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/css/ciemny_motyw.js",
-            "description": "Włącza ciemny motyw interfejsu gry.",
-            "screens": ["*"]
-        },
         {
             "id": "wybijak_monet",
             "name": "Aktywator monet",
@@ -177,22 +188,6 @@
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/znajomi.js",
             "description": "Szybkie dodawanie/usuwanie znajomych.",
             "screens": ["buddies"]
-        }
-    ],
-    "Raporty": [
-        {
-            "id": "notka",
-            "name": "(Menu)Notatki",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_note.js",
-            "description": "Notatkowanie, filtrowanie raportów z dzisiejszego dnia i czyszczenie zbędnych danych.",
-            "screens": ["report"]
-        },
-        {
-            "id": "menu_rep",
-            "name": "Menu Raportów",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/menu_rep.js",
-            "description": "Sortowanie i filtrowanie raportów, informacje o poparciu oraz wojskach w wioskach.",
-            "screens": ["report"]
         }
     ]
 }
