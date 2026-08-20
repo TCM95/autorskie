@@ -234,9 +234,9 @@
     document.body.appendChild(ui);
 
     // --- EVENTY UI ---
-    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">♘</a></td>`);
-    $('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
-    $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
+    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="text-decoration:none; padding: 0 5px;"><img src="${window.image_base}unit/unit_spy.png" style="vertical-align: middle; width: 18px; height: 18px;" alt="zwiadowca"></a></td>`);
+$('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
+$('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
 
     $('#pin_fejk').click(() => {
         isPinned = !isPinned;
