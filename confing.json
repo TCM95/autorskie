@@ -9,7 +9,7 @@
         },
         {
             "id": "klin_cofka_m",
-            "name": "Klin z cofki(masz)",
+            "name": "Klin z cofki(mass)",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/cofka_mass.js",
             "description": "Najpierw wysyłasz atak wybierasz numer  później w placu wybierasz w przybywających ten sam numer, który chcesz klinować.",
             "screens": ["place", "info_command"]
