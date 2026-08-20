@@ -42,8 +42,8 @@
         container.className = 'tcm-mini-panel';
         container.innerHTML = `
             <div class="tcm-btn-row">
-                <button id="tcm-start" class="tcm-mini-btn tcm-btn-start">✓</button>
-                <button id="tcm-stop" class="tcm-mini-btn tcm-btn-stop">✖</button>
+                <button id="tcm-start" class="tcm-mini-btn tcm-btn-start">✅️</button>
+                <button id="tcm-stop" class="tcm-mini-btn tcm-btn-stop">❎️</button>
             </div>
             <div id="tcm-status" class="tcm-status">- / -</div>
         `;
