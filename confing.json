@@ -4,8 +4,15 @@
             "id": "atak_wsparcie",
             "name": "Atak/Wsparcie",
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/atak_wsparcie.js",
-            "description": "Szybkie przełączanie między atakiem i wsparciem.",
+            "description": "Szybkie przełączanie między atakiem i wsparciem dokładna wysyłka.",
             "screens": ["place"]
+        },
+        {
+            "id": "klin_cofka_m",
+            "name": "Klin z cofki(masz)",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/cofka_mass.js",
+            "description": "Najpierw wysyłasz atak wybierasz numer  później w placu wybierasz w przybywających ten sam numer, który chcesz klinować.",
+            "screens": ["place", "info_command"]
         },
         {
             "id": "klin_cofka",
