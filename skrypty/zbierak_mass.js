@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.6
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Poprawiony CORS)
+// @version      1.7
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Naprawione ładowanie)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -86,18 +86,9 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        // Zmodyfikowana metoda wstrzykiwania omijająca blokady CORS
-        function injectCleanScript(url, isAutoSend = false) {
-            // Usuń starą wtyczkę, żeby nie zapętlić Shinko getAll
-            if (typeof $.getAll === 'function') {
-                $.getAll = undefined; 
-            }
-            
-            const script = document.createElement("script");
-            script.type = "text/javascript";
-            script.src = url + "?_=" + new Date().getTime(); // Cache buster
-            
-            script.onload = function() {
+        // Naprawiony loader - wracamy do standardowego $.getScript
+        function loadExternalScript(url, isAutoSend = false) {
+            $.getScript(url).done(function() {
                 if (isAutoSend) {
                     setTimeout(() => {
                         const sendMassButton = document.getElementById('sendMass');
@@ -118,13 +109,9 @@
 
                     }, randomDelay(1000, 3000));
                 }
-            };
-
-            script.onerror = function() {
-                console.error("Kalkulator Zbierak: Nie udało się pobrać skryptu z " + url);
-            };
-
-            document.head.appendChild(script);
+            }).fail(function() {
+                console.error("Kalkulator Zbierak: Błąd pobierania skryptu z " + url);
+            });
         }
 
         function createDraggableUI() {
@@ -220,17 +207,17 @@
             const btnManualRun = document.createElement('button');
             btnManualRun.textContent = '🚀 Uruchom Zbierak';
             btnManualRun.className = 'scav-btn scav-btn-blue';
-            btnManualRun.onclick = () => { injectCleanScript('https://shinko-to-kuma.com/scripts/massScavenge.js', false); };
+            btnManualRun.onclick = () => { loadExternalScript('https://shinko-to-kuma.com/scripts/massScavenge.js', false); };
 
             const btnOverview = document.createElement('button');
             btnOverview.textContent = 'ℹ️ Pokaż Czasy';
             btnOverview.className = 'scav-btn';
-            btnOverview.onclick = () => { injectCleanScript('https://shinko-to-kuma.com/scripts/scavengingOverview.js', false); };
+            btnOverview.onclick = () => { loadExternalScript('https://shinko-to-kuma.com/scripts/scavengingOverview.js', false); };
 
             const btnUnlock = document.createElement('button');
             btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
             btnUnlock.className = 'scav-btn scav-btn-blue';
-            btnUnlock.onclick = () => { injectCleanScript('https://twscripts.dev/scripts/massUnlockScav.js', false); };
+            btnUnlock.onclick = () => { loadExternalScript('https://twscripts.dev/scripts/massUnlockScav.js', false); };
 
             const btnStart = document.createElement('button');
             btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
@@ -385,7 +372,7 @@
 
                         if (hasReadyVillages) {
                             clock.textContent = "Urun. wysyłkę!";
-                            injectCleanScript('https://shinko-to-kuma.com/scripts/massScavenge.js', true);
+                            loadExternalScript('https://shinko-to-kuma.com/scripts/massScavenge.js', true);
                         } else if (minTime !== Infinity) {
                             let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
                             let targetTime = minTime + addedSeconds;
