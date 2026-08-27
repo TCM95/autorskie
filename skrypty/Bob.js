@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Budowy PRO
 // @namespace    https://viayoo.com/
-// @version      2.4
+// @version      2.5
 // @description  Zintegrowany system budowy, trwałe notatki okienkowe, nowe UI 3D + Wbudowany Aktywator Bonusów
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -73,13 +73,13 @@
     // --- ZMIENNE ---
     let buildingObject = { buildingQueue: [], buildingQueueLength: 5, status: false, instructions: [] };
     let isBuilding = false;
-    let isActivatingBonus = false; // Nowa zmienna dla aktywatora
+    let isActivatingBonus = false;
     let isQueueMinimized = JSON.parse(localStorage.getItem('queueMinimized') || "false");
     let dynamicTranslateMap = {};
 
     const LINKS = {
         eko1: "https://raw.githubusercontent.com/Kipi955/sprawdzian/5a0309cbf24521ba89655119d9543c2d9942b88e/EKO1",
-        eko2: "https://raw.githubusercontent.com/Kipi955/sprawdzian/refs/heads/main/EKO/Eko2"
+        eko2: "https://raw.githubusercontent.com/Kipi955/sprawdzian/main/EKO/Eko2"
     };
     const REVERSE_MAP = {
         "ratusz": "main", "koszary": "barracks", "stajnia": "stable", "warsztat": "garage", 
@@ -115,7 +115,9 @@
         const inQueueCounts = getInQueueCounts();
         let scriptQueueCounts = {};
         buildingObject.buildingQueue.forEach(item => {
-            if (!item.includes('Aktywuj')) scriptQueueCounts[item] = (scriptQueueCounts[item] || 0) + 1;
+            if (typeof item === 'string' && !item.includes('Aktywuj')) {
+                scriptQueueCounts[item] = (scriptQueueCounts[item] || 0) + 1;
+            }
         });
 
         let effLevels = {};
@@ -135,7 +137,7 @@
         if (!$select.length) return;
         const effLevels = getEffectiveLevels();
         let optionsHtml = '';
-        
+
         if (typeof BuildingMain !== 'undefined' && BuildingMain.buildings) {
             for (let bCode in BuildingMain.buildings) {
                 const b = BuildingMain.buildings[bCode];
@@ -147,12 +149,11 @@
         $select.html(optionsHtml);
     }
 
-        function reloadQueueDisplay() {
+    function reloadQueueDisplay() {
         const table = $('#autoBuilderTable');
         if (!table.length) return;
         table.find('.q-row').remove();
 
-        // Słownik awaryjny po polsku, żeby nazwy nigdy nie były po angielsku
         const plNames = {
             "wood": "Tartak", "stone": "Cegielnia", "iron": "Huta żelaza",
             "main": "Ratusz", "farm": "Zagroda", "storage": "Spichlerz",
@@ -169,7 +170,6 @@
 
         buildingObject.buildingQueue.forEach((b, i) => {
             const isBonus = typeof b === 'string' && b.includes('Aktywuj');
-            // Tłumaczenie: najpierw słownik polski, potem gra, na końcu surowy kod
             let label = plNames[b] || dynamicTranslateMap[b] || b;
 
             if (!isBonus && simulatedLevels[b] !== undefined) {
@@ -190,19 +190,19 @@
         updateSelectOptions();
     }
 
-
     function processTemplate(text) {
         let effLevels = getEffectiveLevels();
         let virtualSim = { ...effLevels };
         let addedCount = 0;
         let localInstructions = [];
 
-        const lines = text.split('\n');
-        
+        // Normalizacja znaków końca linii
+        const lines = text.replace(/\r\n/g, '\n').split('\n');
+
         lines.forEach(line => {
             const trimmed = line.trim();
             if(!trimmed) return;
-            
+
             if (trimmed.match(/^\[\/?table\]$/i) || trimmed.match(/^\[\*\*?\].*\[\/\*\*?\]$/i)) return;
             if (trimmed.startsWith('[|]')) return; 
 
@@ -210,9 +210,8 @@
             const cleanText = trimmed.replace(/\[.*?\]/g, '').trim(); 
 
             const bKey = BUILDING_NAMES.find(name => tLower.includes(name));
-            
-            if (bKey) {
 
+            if (bKey) {
                 if(tLower.includes('szablon budowy') || tLower.includes('rekrutujemy')) {
                     if (cleanText.length > 3) localInstructions.push(cleanText);
                     return;
@@ -227,7 +226,7 @@
                     const nums = cleanText.match(/\b([1-9]|[1-2][0-9]|30)\b/);
                     if (nums) targetLvl = parseInt(nums[1], 10);
                 }
-                
+
                 let shouldAdd = false;
                 if (targetLvl !== null) {
                     if (targetLvl > virtualSim[gameCode]) {
@@ -235,7 +234,10 @@
                         virtualSim[gameCode] = targetLvl;
                     }
                 } else {
-                    if (virtualSim[gameCode] < BuildingMain.buildings[gameCode].max_level) {
+                    const maxLvl = (BuildingMain && BuildingMain.buildings && BuildingMain.buildings[gameCode]) 
+                        ? BuildingMain.buildings[gameCode].max_level 
+                        : 30;
+                    if (virtualSim[gameCode] < maxLvl) {
                         shouldAdd = true;
                         virtualSim[gameCode]++;
                     }
@@ -270,7 +272,7 @@
         } else {
             UI.ErrorMessage("Nie dodano nic - spełniasz już wymagania lub błędny kod.");
         }
-        
+
         if (buildingObject.instructions.length > 0) {
             $('#instrukcjeBtn').show();
             UI.InfoMessage("Wczytano notatki!");
@@ -284,16 +286,19 @@
 
     function fetchTemplate(url) {
         UI.InfoMessage("Pobieranie...", 1000);
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error("Błąd pobierania");
-                return response.text();
-            })
-            .then(text => processTemplate(text))
-            .catch(error => {
-                UI.ErrorMessage("Wystąpił błąd podczas pobierania szablonu.");
-                console.error(error);
-            });
+        $.ajax({
+            url: url,
+            type: 'GET',
+            cache: false,
+            dataType: 'text'
+        })
+        .done(function(text) {
+            processTemplate(text);
+        })
+        .fail(function(xhr, status, error) {
+            UI.ErrorMessage("Wystąpił błąd podczas pobierania szablonu.");
+            console.error("Błąd pobierania szablonu:", status, error);
+        });
     }
 
     function init() {
@@ -370,7 +375,7 @@
                 $('#instrukcjeBtn').hide(); 
             }
         });
-        
+
         $('#addB10').click(() => { buildingObject.buildingQueue.push("Aktywuj 10% Wzmocnienie budowy na 24h"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addB30').click(() => { buildingObject.buildingQueue.push("Aktywuj 30% prędkości wydobycia na 48h"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addBBtn').click(() => { const v = $('#bSelect').val(); if(v) { buildingObject.buildingQueue.push(v); updateLocalStorage(); reloadQueueDisplay(); }});
@@ -392,11 +397,11 @@
             updateLocalStorage(); reloadQueueDisplay();
         });
         $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); });
-        
+
         $('#btn-eko1').click(() => fetchTemplate(LINKS.eko1));
         $('#btn-eko2').click(() => fetchTemplate(LINKS.eko2));
         $('#instrukcjeBtn').click(showInstructions);
-        
+
         $('#btn-manual').click(function() { $('#manual-tpl-container').toggle(); });
         $('#btn-analyze-manual').click(function() {
             const text = $('#manual-tpl-input').val();
@@ -408,7 +413,7 @@
 
         reloadQueueDisplay();
         if (buildingObject.status) runAutoBuild();
-        
+
         if(buildingObject.instructions.length > 0) $('#instrukcjeBtn').show();
     }
 
@@ -419,7 +424,7 @@
 
         let keyword = "";
         let textLower = bonusText.toLowerCase();
-        
+
         if (textLower.includes('budow')) keyword = "budow";
         else if (textLower.includes('wydobyci')) keyword = "wydobyci";
         else keyword = textLower.replace('aktywuj', '').trim();
@@ -477,7 +482,6 @@
         isActivatingBonus = false;
         setTimeout(() => location.reload(), 1500);
     }
-    // ---------------------------------
 
     function runAutoBuild() {
         if (!buildingObject.status || isBuilding || isActivatingBonus) return;
@@ -491,13 +495,11 @@
 
         if (buildingObject.buildingQueue.length > 0) {
             let nextItem = buildingObject.buildingQueue[0];
-            
-            // Jesli element zawiera słowo Aktywuj, puszczamy logikę inwentarza i przerywamy zwykłą pętlę
+
             if (typeof nextItem === 'string' && nextItem.includes('Aktywuj')) {
                 activateBonusInBg(nextItem);
                 return;
             } 
-            // Standardowa budowa
             else {
                 let currentQueue = $('#buildqueue tr[class*="buildorder_"]').length;
                 if (currentQueue < buildingObject.buildingQueueLength) {
