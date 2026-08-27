@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.7
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Naprawione ładowanie)
+// @version      1.8
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -86,31 +86,37 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        // Naprawiony loader - wracamy do standardowego $.getScript
+        // Stabilna i bezpieczna funkcja ładująca skrypty zewnętrze
         function loadExternalScript(url, isAutoSend = false) {
-            $.getScript(url).done(function() {
-                if (isAutoSend) {
-                    setTimeout(() => {
-                        const sendMassButton = document.getElementById('sendMass');
-                        if (sendMassButton) sendMassButton.click();
-
-                        const clickerInterval = setInterval(() => {
-                            const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                            if (sendMassButton2) {
-                                sendMassButton2.click();
-                                $(sendMassButton2).trigger('click');
-                            }
-                        }, randomDelay(1000, 2000));
-
+            $.ajax({
+                url: url,
+                dataType: "script",
+                cache: true,
+                success: function() {
+                    if (isAutoSend) {
                         setTimeout(() => {
-                            clearInterval(clickerInterval);
-                            location.reload();
-                        }, 6000);
+                            const sendMassButton = document.getElementById('sendMass');
+                            if (sendMassButton) sendMassButton.click();
 
-                    }, randomDelay(1000, 3000));
+                            const clickerInterval = setInterval(() => {
+                                const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                                if (sendMassButton2) {
+                                    sendMassButton2.click();
+                                    $(sendMassButton2).trigger('click');
+                                }
+                            }, randomDelay(1000, 2000));
+
+                            setTimeout(() => {
+                                clearInterval(clickerInterval);
+                                location.reload();
+                            }, 6000);
+
+                        }, randomDelay(1000, 3000));
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.error("Kalkulator Zbierak: Błąd ładowania skryptu: " + textStatus, errorThrown);
                 }
-            }).fail(function() {
-                console.error("Kalkulator Zbierak: Błąd pobierania skryptu z " + url);
             });
         }
 
