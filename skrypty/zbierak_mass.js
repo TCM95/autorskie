@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.4
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
+// @version      1.5
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (wersja dla Master Panelu)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -10,446 +10,434 @@
 (function () {
     'use strict';
 
-    // Dodanie systemowych styli CSS
-    const style = document.createElement('style');
-    style.innerHTML = `
-        :root {
-            --bg-main: #36393f;
-            --bg-row-alt: #32353b;
-            --bg-header: #202225;
-            --border-color: #3e4147;
-            --text-color: white;
-            --title-color: #ffffdf;
-            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
-            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
-            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
-            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
-            --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
-            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
-        }
-        #scav-container {
-            position: fixed;
-            z-index: 99999;
-            background-color: var(--bg-main);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 5px;
-            color: var(--text-color);
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            font-family: Verdana, Arial, sans-serif;
-            font-size: 12px;
-            user-select: none;
-            width: 200px;
-        }
-        .scav-btn {
-            width: 100%;
-            padding: 6px;
-            margin-bottom: 5px;
-            cursor: pointer;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            background: var(--btn-bg);
-            font-weight: bold;
-        }
-        .scav-btn:hover { background: var(--btn-hover); }
-        .scav-btn-blue { background: var(--btn-blue-bg); }
-        .scav-btn-blue:hover { background: var(--btn-blue-hover); }
-        .scav-btn-green { background: var(--btn-green-bg); }
-        .scav-btn-green:hover { background: var(--btn-green-hover); }
-        .scav-btn-red { background: var(--btn-red-bg); }
-        .scav-btn-red:hover { background: var(--btn-red-hover); }
-        .scav-input {
-            width: 35px;
-            background: var(--bg-row-alt);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            text-align: center;
-            border-radius: 3px;
-        }
-    `;
-    document.head.appendChild(style);
-
-    const urlKey = window.location.hostname.split('.')[0];
-    let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
-
-    let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
-    let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '20px' };
-
-    let URLReq = typeof game_data !== 'undefined' && game_data.player.sitter > 0 
-        ? `game.php?t=${game_data.player.id}&screen=place&mode=scavenge_mass` 
-        : "game.php?&screen=place&mode=scavenge_mass";
-
-    function randomDelay(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    // Bezpieczna logika automatycznego klikania z pollingiem
-    function executeAutoClick() {
-        let attempts = 0;
+    // Całą logikę zamykamy w funkcji, aby wymusić czekanie na załadowanie DOM
+    function initScavengeScript() {
         
-        const checkBtnInterval = setInterval(() => {
-            attempts++;
-            const sendMassButton = document.getElementById('sendMass');
-            
-            if (sendMassButton) {
-                clearInterval(checkBtnInterval); // Przycisk istnieje, zatrzymujemy skaner
-                
-                setTimeout(() => {
+        // Dodanie systemowych styli CSS (bezpiecznie do head)
+        const style = document.createElement('style');
+        style.innerHTML = `
+            :root {
+                --bg-main: #36393f;
+                --bg-row-alt: #32353b;
+                --bg-header: #202225;
+                --border-color: #3e4147;
+                --text-color: white;
+                --title-color: #ffffdf;
+                --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+                --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+                --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+                --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+                --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+                --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+                --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+                --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
+            }
+            #scav-container {
+                position: fixed;
+                z-index: 99999;
+                background-color: var(--bg-main);
+                border: 1px solid var(--border-color);
+                padding: 10px;
+                border-radius: 5px;
+                color: var(--text-color);
+                box-shadow: 0 0 10px rgba(0,0,0,0.5);
+                font-family: Verdana, Arial, sans-serif;
+                font-size: 12px;
+                user-select: none;
+                width: 200px;
+            }
+            .scav-btn {
+                width: 100%;
+                padding: 6px;
+                margin-bottom: 5px;
+                cursor: pointer;
+                color: var(--text-color);
+                border: 1px solid var(--border-color);
+                border-radius: 3px;
+                background: var(--btn-bg);
+                font-weight: bold;
+            }
+            .scav-btn:hover { background: var(--btn-hover); }
+            .scav-btn-blue { background: var(--btn-blue-bg); }
+            .scav-btn-blue:hover { background: var(--btn-blue-hover); }
+            .scav-btn-green { background: var(--btn-green-bg); }
+            .scav-btn-green:hover { background: var(--btn-green-hover); }
+            .scav-btn-red { background: var(--btn-red-bg); }
+            .scav-btn-red:hover { background: var(--btn-red-hover); }
+            .scav-input {
+                width: 35px;
+                background: var(--bg-row-alt);
+                color: var(--text-color);
+                border: 1px solid var(--border-color);
+                text-align: center;
+                border-radius: 3px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const urlKey = window.location.hostname.split('.')[0];
+        let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
+
+        let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
+        let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '20px' };
+
+        // Bezpieczne sprawdzanie game_data (zapobiega crashom z panelu)
+        let URLReq = (typeof game_data !== 'undefined' && game_data.player.sitter > 0)
+            ? `game.php?t=${game_data.player.id}&screen=place&mode=scavenge_mass`
+            : "game.php?&screen=place&mode=scavenge_mass";
+
+        function randomDelay(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Logika klikająca wyizolowana dla lepszej kontroli
+        function triggerAutoClick() {
+            setTimeout(() => {
+                const sendMassButton = document.getElementById('sendMass');
+                if (sendMassButton) {
                     sendMassButton.click();
-                    
-                    // Drugie kliknięcie (ostateczne wysłanie) po przeliczeniu przez oryginalny skrypt
-                    setTimeout(() => {
-                        const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                        if (sendMassButton2) {
-                            sendMassButton2.click();
-                            if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
-                            
-                            // Odświeżenie po wykonanej akcji
-                            setTimeout(() => location.reload(), 2000);
-                        }
-                    }, randomDelay(1000, 2000));
-                    
-                }, randomDelay(1000, 3000));
-
-            } else if (attempts > 30) {
-                // Po 15 sekundach bez znalezienia przycisku awaryjny restart
-                clearInterval(checkBtnInterval);
-                console.error("Zbyt długi czas oczekiwania na wyrenderowanie przycisku wysyłki.");
-                location.reload();
-            }
-        }, 500);
-    }
-
-    // Natywne pobieranie skryptu - omija błąd z `document.currentScript` i konflikty z panelami
-    function loadShinkoMassScavenge(autoClick = false) {
-        let scriptUrl = 'https://shinko-to-kuma.com/scripts/massScavenge.js';
-        let existingScript = document.querySelector(`script[src="${scriptUrl}"]`);
-
-        // Jeśli skryptu jeszcze nie ma na stronie, dodaj go
-        if (!existingScript) {
-            const script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = scriptUrl;
-            
-            // Tylko jak skrypt fizycznie pobierze się i załaduje, wykonaj akcję
-            script.onload = function() {
-                if (autoClick) {
-                    executeAutoClick();
                 }
-            };
-            
-            document.body.appendChild(script);
-        } else {
-            // Jeśli został np. już kliknięty z paska skrótów, od razu przejdź do akcji
-            if (autoClick) {
-                executeAutoClick();
+
+                const clickerInterval = setInterval(() => {
+                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                    if (sendMassButton2) {
+                        sendMassButton2.click();
+                        if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click');
+                    }
+                }, randomDelay(1000, 2000));
+
+                setTimeout(() => {
+                    clearInterval(clickerInterval);
+                    location.reload();
+                }, 6000);
+
+            }, randomDelay(1000, 3000));
+        }
+
+        // Ładowanie skryptu Shinko
+        function loadShinkoMassScavenge(autoClick = false) {
+            if (!document.getElementById('massScavengeScript')) {
+                const script = document.createElement('script');
+                script.id = 'massScavengeScript';
+                script.src = 'https://shinko-to-kuma.com/scripts/massScavenge.js';
+                script.type = 'text/javascript';
+                
+                // Czekamy fizycznie, aż kod docelowy się załaduje
+                script.onload = () => {
+                    if (autoClick) triggerAutoClick();
+                };
+                
+                document.head.appendChild(script);
+            } else {
+                if (autoClick) triggerAutoClick();
             }
         }
-    }
 
-    function loadVisualTable() {
-        let scriptUrl = 'https://shinko-to-kuma.com/scripts/scavengingOverview.js';
-        if (!document.querySelector(`script[src="${scriptUrl}"]`)) {
+        function loadVisualTable() {
             const s = document.createElement('script');
-            s.src = scriptUrl;
-            document.body.appendChild(s);
-        }
-    }
-
-    function createDraggableUI() {
-        const div = document.createElement('div');
-        div.id = 'scav-container';
-
-        div.style.top = uiState.top;
-        div.style.left = uiState.left;
-        if(uiState.top === 'auto') {
-            div.style.bottom = uiState.bottom;
-            div.style.right = uiState.right;
+            s.src = 'https://shinko-to-kuma.com/scripts/scavengingOverview.js';
+            document.head.appendChild(s);
         }
 
-        const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.marginBottom = '8px';
-        header.style.borderBottom = '1px solid var(--border-color)';
-        header.style.paddingBottom = '4px';
+        function createDraggableUI() {
+            const div = document.createElement('div');
+            div.id = 'scav-container';
 
-        const title = document.createElement('span');
-        title.textContent = 'Kalkulator Zbierak';
-        title.style.fontWeight = 'bold';
-        title.style.color = 'var(--title-color)';
-        title.style.cursor = uiState.pinned ? 'default' : 'move';
+            div.style.top = uiState.top;
+            div.style.left = uiState.left;
+            if(uiState.top === 'auto') {
+                div.style.bottom = uiState.bottom;
+                div.style.right = uiState.right;
+            }
 
-        const pinBtn = document.createElement('span');
-        pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
-        pinBtn.style.cursor = 'pointer';
-        pinBtn.onclick = () => {
-            uiState.pinned = !uiState.pinned;
-            pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
+            const header = document.createElement('div');
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.marginBottom = '8px';
+            header.style.borderBottom = '1px solid var(--border-color)';
+            header.style.paddingBottom = '4px';
+
+            const title = document.createElement('span');
+            title.textContent = 'Kalkulator Zbierak';
+            title.style.fontWeight = 'bold';
+            title.style.color = 'var(--title-color)';
             title.style.cursor = uiState.pinned ? 'default' : 'move';
-            localStorage.setItem(`scav_ui_${urlKey}`, JSON.stringify(uiState));
-        };
 
-        header.appendChild(title);
-        header.appendChild(pinBtn);
+            const pinBtn = document.createElement('span');
+            pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
+            pinBtn.style.cursor = 'pointer';
+            pinBtn.onclick = () => {
+                uiState.pinned = !uiState.pinned;
+                pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
+                title.style.cursor = uiState.pinned ? 'default' : 'move';
+                localStorage.setItem(`scav_ui_${urlKey}`, JSON.stringify(uiState));
+            };
 
-        const clock = document.createElement('div');
-        clock.id = 'scav-clock'; 
-        clock.style.textAlign = 'center'; 
-        clock.style.fontSize = '14px';
-        clock.style.fontWeight = 'bold';
-        clock.style.color = '#5cb85c';
-        clock.style.marginBottom = '8px';
-        clock.textContent = isRunning ? "Inicjalizacja..." : "Wyłączony";
+            header.appendChild(title);
+            header.appendChild(pinBtn);
 
-        const delayRow = document.createElement('div');
-        delayRow.style.display = 'flex';
-        delayRow.style.alignItems = 'center';
-        delayRow.style.justifyContent = 'space-between';
-        delayRow.style.marginBottom = '8px';
+            const clock = document.createElement('div');
+            clock.id = 'scav-clock';
+            clock.style.textAlign = 'center';
+            clock.style.fontSize = '14px';
+            clock.style.fontWeight = 'bold';
+            clock.style.color = '#5cb85c';
+            clock.style.marginBottom = '8px';
+            clock.textContent = isRunning ? "Inicjalizacja..." : "Wyłączony";
 
-        const delayLabel = document.createElement('span');
-        delayLabel.textContent = 'Opóźnienie (s):';
+            const delayRow = document.createElement('div');
+            delayRow.style.display = 'flex';
+            delayRow.style.alignItems = 'center';
+            delayRow.style.justifyContent = 'space-between';
+            delayRow.style.marginBottom = '8px';
 
-        const delayInputs = document.createElement('div');
-        delayInputs.style.display = 'flex';
-        delayInputs.style.gap = '4px';
+            const delayLabel = document.createElement('span');
+            delayLabel.textContent = 'Opóźnienie (s):';
 
-        const minInput = document.createElement('input');
-        minInput.type = 'number';
-        minInput.id = 'scav-min-delay';
-        minInput.className = 'scav-input';
-        minInput.value = delayConfig.min;
+            const delayInputs = document.createElement('div');
+            delayInputs.style.display = 'flex';
+            delayInputs.style.gap = '4px';
 
-        const maxInput = document.createElement('input');
-        maxInput.type = 'number';
-        maxInput.id = 'scav-max-delay';
-        maxInput.className = 'scav-input';
-        maxInput.value = delayConfig.max;
+            const minInput = document.createElement('input');
+            minInput.type = 'number';
+            minInput.id = 'scav-min-delay';
+            minInput.className = 'scav-input';
+            minInput.value = delayConfig.min;
 
-        const saveDelay = () => {
-            let minVal = parseInt(minInput.value) || 0;
-            let maxVal = parseInt(maxInput.value) || 0;
-            if (minVal > maxVal) maxVal = minVal;
-            delayConfig = { min: minVal, max: maxVal };
-            localStorage.setItem(`scav_delay_${urlKey}`, JSON.stringify(delayConfig));
-        };
+            const maxInput = document.createElement('input');
+            maxInput.type = 'number';
+            maxInput.id = 'scav-max-delay';
+            maxInput.className = 'scav-input';
+            maxInput.value = delayConfig.max;
 
-        minInput.addEventListener('input', saveDelay);
-        maxInput.addEventListener('input', saveDelay);
+            const saveDelay = () => {
+                let minVal = parseInt(minInput.value) || 0;
+                let maxVal = parseInt(maxInput.value) || 0;
+                if (minVal > maxVal) maxVal = minVal;
+                delayConfig = { min: minVal, max: maxVal };
+                localStorage.setItem(`scav_delay_${urlKey}`, JSON.stringify(delayConfig));
+            };
 
-        delayInputs.appendChild(minInput);
-        delayInputs.appendChild(document.createTextNode('-'));
-        delayInputs.appendChild(maxInput);
-        delayRow.appendChild(delayLabel);
-        delayRow.appendChild(delayInputs);
+            minInput.addEventListener('input', saveDelay);
+            maxInput.addEventListener('input', saveDelay);
 
-        const btnManualRun = document.createElement('button');
-        btnManualRun.textContent = '🚀 Uruchom Zbierak';
-        btnManualRun.className = 'scav-btn scav-btn-blue';
-        btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
+            delayInputs.appendChild(minInput);
+            delayInputs.appendChild(document.createTextNode('-'));
+            delayInputs.appendChild(maxInput);
+            delayRow.appendChild(delayLabel);
+            delayRow.appendChild(delayInputs);
 
-        const btnOverview = document.createElement('button');
-        btnOverview.textContent = 'ℹ️ Pokaż Czasy';
-        btnOverview.className = 'scav-btn';
-        btnOverview.onclick = () => { loadVisualTable(); };
+            const btnManualRun = document.createElement('button');
+            btnManualRun.textContent = '🚀 Uruchom Zbierak';
+            btnManualRun.className = 'scav-btn scav-btn-blue';
+            btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
 
-        const btnUnlock = document.createElement('button');
-        btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
-        btnUnlock.className = 'scav-btn scav-btn-blue';
-        btnUnlock.onclick = () => {
-            $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
-        };
+            const btnOverview = document.createElement('button');
+            btnOverview.textContent = 'ℹ️ Pokaż Czasy';
+            btnOverview.className = 'scav-btn';
+            btnOverview.onclick = () => { loadVisualTable(); };
 
-        const btnStart = document.createElement('button');
-        btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
-        btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
+            const btnUnlock = document.createElement('button');
+            btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
+            btnUnlock.className = 'scav-btn scav-btn-blue';
+            btnUnlock.onclick = () => {
+                $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
+            };
 
-        btnStart.onclick = () => { 
-            isRunning = !isRunning; 
-            localStorage.setItem(`scav_run_${urlKey}`, isRunning); 
-            location.reload(); 
-        };
+            const btnStart = document.createElement('button');
+            btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
+            btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
 
-        div.appendChild(header);
-        div.appendChild(clock);
-        div.appendChild(delayRow); 
-        div.appendChild(btnManualRun);
-        div.appendChild(btnOverview); 
-        div.appendChild(btnUnlock); 
-        div.appendChild(btnStart); 
-        document.body.appendChild(div);
+            btnStart.onclick = () => {
+                isRunning = !isRunning;
+                localStorage.setItem(`scav_run_${urlKey}`, isRunning);
+                location.reload();
+            };
 
-        let isDragging = false;
-        let startX, startY, initialX, initialY;
+            div.appendChild(header);
+            div.appendChild(clock);
+            div.appendChild(delayRow);
+            div.appendChild(btnManualRun);
+            div.appendChild(btnOverview);
+            div.appendChild(btnUnlock);
+            div.appendChild(btnStart);
+            
+            document.body.appendChild(div);
 
-        const startDrag = (e) => {
-            if (uiState.pinned || e.target === pinBtn || e.target === btnStart || e.target === btnOverview || e.target === btnUnlock || e.target === btnManualRun || e.target === minInput || e.target === maxInput) return;
-            isDragging = true;
-            let event = e.type.includes('mouse') ? e : e.touches[0];
-            startX = event.clientX;
-            startY = event.clientY;
-            initialX = div.offsetLeft;
-            initialY = div.offsetTop;
-            div.style.bottom = 'auto';
-            div.style.right = 'auto';
-        };
+            let isDragging = false;
+            let startX, startY, initialX, initialY;
 
-        const onDrag = (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            let event = e.type.includes('mouse') ? e : e.touches[0];
-            let dx = event.clientX - startX;
-            let dy = event.clientY - startY;
-            div.style.left = (initialX + dx) + 'px';
-            div.style.top = (initialY + dy) + 'px';
-        };
+            const startDrag = (e) => {
+                if (uiState.pinned || e.target === pinBtn || e.target === btnStart || e.target === btnOverview || e.target === btnUnlock || e.target === btnManualRun || e.target === minInput || e.target === maxInput) return;
+                isDragging = true;
+                let event = e.type.includes('mouse') ? e : e.touches[0];
+                startX = event.clientX;
+                startY = event.clientY;
+                initialX = div.offsetLeft;
+                initialY = div.offsetTop;
+                div.style.bottom = 'auto';
+                div.style.right = 'auto';
+            };
 
-        const stopDrag = () => {
-            if (!isDragging) return;
-            isDragging = false;
-            uiState.top = div.style.top;
-            uiState.left = div.style.left;
-            uiState.bottom = 'auto';
-            uiState.right = 'auto';
-            localStorage.setItem(`scav_ui_${urlKey}`, JSON.stringify(uiState));
-        };
+            const onDrag = (e) => {
+                if (!isDragging) return;
+                e.preventDefault();
+                let event = e.type.includes('mouse') ? e : e.touches[0];
+                let dx = event.clientX - startX;
+                let dy = event.clientY - startY;
+                div.style.left = (initialX + dx) + 'px';
+                div.style.top = (initialY + dy) + 'px';
+            };
 
-        header.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', onDrag);
-        document.addEventListener('mouseup', stopDrag);
+            const stopDrag = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                uiState.top = div.style.top;
+                uiState.left = div.style.left;
+                uiState.bottom = 'auto';
+                uiState.right = 'auto';
+                localStorage.setItem(`scav_ui_${urlKey}`, JSON.stringify(uiState));
+            };
 
-        header.addEventListener('touchstart', startDrag, {passive: false});
-        document.addEventListener('touchmove', onDrag, {passive: false});
-        document.addEventListener('touchend', stopDrag);
-    }
+            header.addEventListener('mousedown', startDrag);
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', stopDrag);
 
-    function sophieGetAll(urls, onLoad, onDone) {
-        let numDone = 0;
-        let lastRequestTime = 0;
-        let minWaitTime = 1050; 
+            header.addEventListener('touchstart', startDrag, {passive: false});
+            document.addEventListener('touchmove', onDrag, {passive: false});
+            document.addEventListener('touchend', stopDrag);
+        }
 
-        loadNext();
+        function sophieGetAll(urls, onLoad, onDone) {
+            let numDone = 0;
+            let lastRequestTime = 0;
+            let minWaitTime = 1050;
 
-        function loadNext() {
-            if (numDone == urls.length) { onDone(); return; }
-            let now = Date.now();
-            let timeElapsed = now - lastRequestTime;
-            if (timeElapsed < minWaitTime) {
-                setTimeout(loadNext, minWaitTime - timeElapsed);
+            loadNext();
+
+            function loadNext() {
+                if (numDone == urls.length) { onDone(); return; }
+                let now = Date.now();
+                let timeElapsed = now - lastRequestTime;
+                if (timeElapsed < minWaitTime) {
+                    setTimeout(loadNext, minWaitTime - timeElapsed);
+                    return;
+                }
+                lastRequestTime = now;
+                $.get(urls[numDone])
+                    .done((data) => {
+                        try { onLoad(numDone, data); ++numDone; loadNext(); }
+                        catch (e) { console.error(e); }
+                    }).fail(() => { setTimeout(loadNext, 1000); });
+            }
+        }
+
+        function checkScavengeData() {
+            const clock = document.getElementById('scav-clock');
+            if (!isRunning) {
+                clock.textContent = "Wyłączony";
                 return;
             }
-            lastRequestTime = now;
-            $.get(urls[numDone])
-                .done((data) => {
-                    try { onLoad(numDone, data); ++numDone; loadNext(); } 
-                    catch (e) { console.error(e); }
-                }).fail(() => { setTimeout(loadNext, 1000); });
-        }
-    }
+            clock.textContent = "Skanowanie...";
 
-    function checkScavengeData() {
-        const clock = document.getElementById('scav-clock');
-        if (!isRunning) { 
-            clock.textContent = "Wyłączony"; 
-            return; 
-        }
-        clock.textContent = "Skanowanie...";
+            $.get(URLReq, function (data) {
+                let amountOfPages = 0;
+                if ($(data).find(".paged-nav-item").length > 0) {
+                    amountOfPages = parseInt($(data).find(".paged-nav-item")[$(data).find(".paged-nav-item").length - 1].href.match(/page=(\d+)/)[1]);
+                }
+                let URLs = [];
+                for (let i = 0; i <= amountOfPages; i++) URLs.push(URLReq + "&page=" + i);
 
-        $.get(URLReq, function (data) {
-            let amountOfPages = 0;
-            if ($(data).find(".paged-nav-item").length > 0) {
-                amountOfPages = parseInt($(data).find(".paged-nav-item")[$(data).find(".paged-nav-item").length - 1].href.match(/page=(\d+)/)[1]);
-            }
-            let URLs = [];
-            for (let i = 0; i <= amountOfPages; i++) URLs.push(URLReq + "&page=" + i);
+                let arrayWithData = "[";
 
-            let arrayWithData = "[";
+                sophieGetAll(URLs, (i, here) => {
+                    let thisPageData = $(here).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[2];
+                    arrayWithData += thisPageData + ",";
+                }, () => {
+                    arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1) + "]";
 
-            sophieGetAll(URLs, (i, here) => {
-                let thisPageData = $(here).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[2];
-                arrayWithData += thisPageData + ",";
-            }, () => {
-                arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1) + "]";
+                    try {
+                        let scavengeInfo = JSON.parse(arrayWithData);
+                        let minTime = Infinity;
+                        let hasReadyVillages = false;
 
-                try {
-                    let scavengeInfo = JSON.parse(arrayWithData);
-                    let minTime = Infinity;
-                    let hasReadyVillages = false;
+                        $.each(scavengeInfo, function (villageNr) {
+                            let units = scavengeInfo[villageNr]["unit_counts_home"];
+                            let hasTroops = false;
+                            if (units) {
+                                let totalUnits = (parseInt(units.spear || 0)) +
+                                                 (parseInt(units.sword || 0)) +
+                                                 (parseInt(units.axe || 0)) +
+                                                 (parseInt(units.archer || 0)) +
+                                                 (parseInt(units.light || 0)) +
+                                                 (parseInt(units.marcher || 0)) +
+                                                 (parseInt(units.heavy || 0)) +
+                                                 (parseInt(units.knight || 0));
 
-                    $.each(scavengeInfo, function (villageNr) {
-                        let units = scavengeInfo[villageNr]["unit_counts_home"];
-                        let hasTroops = false;
-                        if (units) {
-                            let totalUnits = (parseInt(units.spear || 0)) + 
-                                             (parseInt(units.sword || 0)) + 
-                                             (parseInt(units.axe || 0)) + 
-                                             (parseInt(units.archer || 0)) + 
-                                             (parseInt(units.light || 0)) + 
-                                             (parseInt(units.marcher || 0)) + 
-                                             (parseInt(units.heavy || 0)) + 
-                                             (parseInt(units.knight || 0));
-
-                            if (totalUnits >= 10) { 
+                                if (totalUnits >= 10) {
+                                    hasTroops = true;
+                                }
+                            } else {
                                 hasTroops = true;
                             }
-                        } else {
-                            hasTroops = true;
-                        }
 
-                        $.each(scavengeInfo[villageNr]["options"], function (villageCategoryNr) {
-                            let option = scavengeInfo[villageNr]["options"][villageCategoryNr];
-                            if (option["is_locked"] !== true) {
-                                if (option["scavenging_squad"] == null) {
-                                    if (hasTroops) {
-                                        hasReadyVillages = true;
+                            $.each(scavengeInfo[villageNr]["options"], function (villageCategoryNr) {
+                                let option = scavengeInfo[villageNr]["options"][villageCategoryNr];
+                                if (option["is_locked"] !== true) {
+                                    if (option["scavenging_squad"] == null) {
+                                        if (hasTroops) {
+                                            hasReadyVillages = true;
+                                        }
+                                    } else {
+                                        let endTime = parseInt(option["scavenging_squad"]["return_time"]);
+                                        if (endTime < minTime) minTime = endTime;
                                     }
-                                } else {
-                                    let endTime = parseInt(option["scavenging_squad"]["return_time"]);
-                                    if (endTime < minTime) minTime = endTime;
                                 }
-                            }
+                            });
                         });
-                    });
 
-                    if (hasReadyVillages) {
-                        clock.textContent = "Urun. wysyłkę!";
-                        loadShinkoMassScavenge(true); // Wywołanie nowej funkcji
-                    } else if (minTime !== Infinity) {
-                        let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
-                        let targetTime = minTime + addedSeconds;
+                        if (hasReadyVillages) {
+                            clock.textContent = "Urun. wysyłkę!";
+                            loadShinkoMassScavenge(true);
+                        } else if (minTime !== Infinity) {
+                            let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
+                            let targetTime = minTime + addedSeconds;
 
-                        const interval = setInterval(() => {
-                            let currentNow = Math.floor(Date.now() / 1000);
-                            let diff = targetTime - currentNow;
-                            if (diff <= 0) {
-                                clearInterval(interval);
-                                clock.textContent = "Odświeżanie...";
-                                location.reload();
-                            } else {
-                                let mins = Math.floor(diff / 60);
-                                let secs = diff % 60;
-                                clock.textContent = `Zegarek: ${mins}:${secs.toString().padStart(2, '0')}`;
-                            }
-                        }, 1000);
-                    } else {
-                        clock.textContent = "Brak ruchu (60s)";
-                        setTimeout(() => { location.reload(); }, 60000);
+                            const interval = setInterval(() => {
+                                let currentNow = Math.floor(Date.now() / 1000);
+                                let diff = targetTime - currentNow;
+                                if (diff <= 0) {
+                                    clearInterval(interval);
+                                    clock.textContent = "Odświeżanie...";
+                                    location.reload();
+                                } else {
+                                    let mins = Math.floor(diff / 60);
+                                    let secs = diff % 60;
+                                    clock.textContent = `Zegarek: ${mins}:${secs.toString().padStart(2, '0')}`;
+                                }
+                            }, 1000);
+                        } else {
+                            clock.textContent = "Brak ruchu (60s)";
+                            setTimeout(() => { location.reload(); }, 60000);
+                        }
+                    } catch (err) {
+                        console.error("Błąd parsowania: ", err);
+                        clock.textContent = "Błąd struktury";
                     }
-                } catch (err) {
-                    console.error("Błąd parsowania: ", err);
-                    clock.textContent = "Błąd struktury";
-                }
+                });
             });
-        });
+        }
+
+        // Inicjalizacja po załadowaniu
+        createDraggableUI();
+        checkScavengeData();
     }
 
-    // Inicjalizacja interfejsu
-    createDraggableUI();
+    // Bezpieczne wywołanie - blokuje błędy przy wstrzykiwaniu z panelu zewnętrznego
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScavengeScript);
+    } else {
+        initScavengeScript();
+    }
 
-    // Skanowanie uruchamiane tylko gdy flaga isRunning jest aktywna
-    checkScavengeData();
 })();
