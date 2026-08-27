@@ -147,10 +147,19 @@
         $select.html(optionsHtml);
     }
 
-    function reloadQueueDisplay() {
+        function reloadQueueDisplay() {
         const table = $('#autoBuilderTable');
         if (!table.length) return;
         table.find('.q-row').remove();
+
+        // Słownik awaryjny po polsku, żeby nazwy nigdy nie były po angielsku
+        const plNames = {
+            "wood": "Tartak", "stone": "Cegielnia", "iron": "Huta żelaza",
+            "main": "Ratusz", "farm": "Zagroda", "storage": "Spichlerz",
+            "hide": "Schowek", "wall": "Mur", "barracks": "Koszary",
+            "stable": "Stajnia", "garage": "Warsztat", "smith": "Kuźnia",
+            "market": "Rynek", "snob": "Pałac", "watchtower": "Wieża strażnicza"
+        };
 
         const inQueueCounts = getInQueueCounts();
         let simulatedLevels = {};
@@ -159,8 +168,9 @@
         }
 
         buildingObject.buildingQueue.forEach((b, i) => {
-            const isBonus = b.includes('Aktywuj');
-            let label = translate(b);
+            const isBonus = typeof b === 'string' && b.includes('Aktywuj');
+            // Tłumaczenie: najpierw słownik polski, potem gra, na końcu surowy kod
+            let label = plNames[b] || dynamicTranslateMap[b] || b;
 
             if (!isBonus && simulatedLevels[b] !== undefined) {
                 simulatedLevels[b]++;
@@ -179,6 +189,7 @@
         });
         updateSelectOptions();
     }
+
 
     function processTemplate(text) {
         let effLevels = getEffectiveLevels();
