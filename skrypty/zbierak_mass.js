@@ -1,6 +1,8 @@
 // ==UserScript==
-// @name         kalkulator zbierak
+// @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
+// @version      1.0
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -8,10 +10,71 @@
 (function () {
     'use strict';
 
+    // Dodanie systemowych styli CSS
+    const style = document.createElement('style');
+    style.innerHTML = `
+        :root {
+            --bg-main: #36393f;
+            --bg-row-alt: #32353b;
+            --bg-header: #202225;
+            --border-color: #3e4147;
+            --text-color: white;
+            --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+            --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
+        }
+        #scav-container {
+            position: fixed;
+            z-index: 99999;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 5px;
+            color: var(--text-color);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            font-family: Verdana, Arial, sans-serif;
+            font-size: 12px;
+            user-select: none;
+            width: 200px;
+        }
+        .scav-btn {
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background: var(--btn-bg);
+            font-weight: bold;
+        }
+        .scav-btn:hover { background: var(--btn-hover); }
+        .scav-btn-blue { background: var(--btn-blue-bg); }
+        .scav-btn-blue:hover { background: var(--btn-blue-hover); }
+        .scav-btn-green { background: var(--btn-green-bg); }
+        .scav-btn-green:hover { background: var(--btn-green-hover); }
+        .scav-btn-red { background: var(--btn-red-bg); }
+        .scav-btn-red:hover { background: var(--btn-red-hover); }
+        .scav-input {
+            width: 35px;
+            background: var(--bg-row-alt);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            border-radius: 3px;
+        }
+    `;
+    document.head.appendChild(style);
+
     const urlKey = window.location.hostname.split('.')[0];
     let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
-    
-    // Pobranie zapisanych czasów opóźnienia lub ustawienie domyślnych 5-10s
+
     let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
     let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '20px' };
 
@@ -32,16 +95,7 @@
     function createDraggableUI() {
         const div = document.createElement('div');
         div.id = 'scav-container';
-        div.style.position = 'fixed'; 
-        div.style.zIndex = '99999';
-        div.style.backgroundColor = '#222'; 
-        div.style.padding = '12px'; 
-        div.style.borderRadius = '5px'; 
-        div.style.color = '#fff';
-        div.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-        div.style.fontFamily = 'monospace';
-        div.style.userSelect = 'none';
-        
+
         div.style.top = uiState.top;
         div.style.left = uiState.left;
         if(uiState.top === 'auto') {
@@ -53,12 +107,13 @@
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
         header.style.marginBottom = '8px';
-        header.style.borderBottom = '1px solid #444';
+        header.style.borderBottom = '1px solid var(--border-color)';
         header.style.paddingBottom = '4px';
 
         const title = document.createElement('span');
-        title.textContent = 'Licznik zbieraka.';
+        title.textContent = 'Kalkulator Zbierak';
         title.style.fontWeight = 'bold';
+        title.style.color = 'var(--title-color)';
         title.style.cursor = uiState.pinned ? 'default' : 'move';
 
         const pinBtn = document.createElement('span');
@@ -73,23 +128,21 @@
 
         header.appendChild(title);
         header.appendChild(pinBtn);
-        
+
         const clock = document.createElement('div');
         clock.id = 'scav-clock'; 
         clock.style.textAlign = 'center'; 
-        clock.style.fontSize = '15px';
+        clock.style.fontSize = '14px';
         clock.style.fontWeight = 'bold';
-        clock.style.color = '#5cb85c'; // Zegar na zielono
+        clock.style.color = '#5cb85c';
         clock.style.marginBottom = '8px';
-        clock.textContent = "Inicjalizacja...";
+        clock.textContent = isRunning ? "Inicjalizacja..." : "Wyłączony";
 
-        // Sekcja konfiguracji dodatkowego opóźnienia (Min - Max)
         const delayRow = document.createElement('div');
         delayRow.style.display = 'flex';
         delayRow.style.alignItems = 'center';
         delayRow.style.justifyContent = 'space-between';
         delayRow.style.marginBottom = '8px';
-        delayRow.style.fontSize = '11px';
 
         const delayLabel = document.createElement('span');
         delayLabel.textContent = 'Opóźnienie (s):';
@@ -101,26 +154,15 @@
         const minInput = document.createElement('input');
         minInput.type = 'number';
         minInput.id = 'scav-min-delay';
+        minInput.className = 'scav-input';
         minInput.value = delayConfig.min;
-        minInput.style.width = '35px';
-        minInput.style.background = '#333';
-        minInput.style.color = '#fff';
-        minInput.style.border = '1px solid #555';
-        minInput.style.textAlign = 'center';
-        minInput.style.borderRadius = '3px';
 
         const maxInput = document.createElement('input');
         maxInput.type = 'number';
         maxInput.id = 'scav-max-delay';
+        maxInput.className = 'scav-input';
         maxInput.value = delayConfig.max;
-        maxInput.style.width = '35px';
-        maxInput.style.background = '#333';
-        maxInput.style.color = '#fff';
-        maxInput.style.border = '1px solid #555';
-        maxInput.style.textAlign = 'center';
-        maxInput.style.borderRadius = '3px';
 
-        // Zapisywanie zmian w locie po wpisaniu wartości
         const saveDelay = () => {
             let minVal = parseInt(minInput.value) || 0;
             let maxVal = parseInt(maxInput.value) || 0;
@@ -137,46 +179,23 @@
         delayInputs.appendChild(maxInput);
         delayRow.appendChild(delayLabel);
         delayRow.appendChild(delayInputs);
-        
-        const btnOverview = document.createElement('button');
-        btnOverview.textContent = "Pokaż Czasy";
-        btnOverview.style.width = '100%';
-        btnOverview.style.padding = '6px';
-        btnOverview.style.marginBottom = '6px';
-        btnOverview.style.cursor = 'pointer';
-        btnOverview.style.backgroundColor = '#f0ad4e';
-        btnOverview.style.color = '#fff';
-        btnOverview.style.border = 'none';
-        btnOverview.style.borderRadius = '3px';
-        btnOverview.onclick = () => {
-            loadVisualTable();
-        };
 
-        // Przycisk odblokowania zbieraka
+        const btnOverview = document.createElement('button');
+        btnOverview.textContent = 'ℹ️ Pokaż Czasy';
+        btnOverview.className = 'scav-btn';
+        btnOverview.onclick = () => { loadVisualTable(); };
+
         const btnUnlock = document.createElement('button');
-        btnUnlock.textContent = "Odblokuj Zbierak";
-        btnUnlock.style.width = '100%';
-        btnUnlock.style.padding = '6px';
-        btnUnlock.style.marginBottom = '6px';
-        btnUnlock.style.cursor = 'pointer';
-        btnUnlock.style.backgroundColor = '#337ab7';
-        btnUnlock.style.color = '#fff';
-        btnUnlock.style.border = 'none';
-        btnUnlock.style.borderRadius = '3px';
+        btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
+        btnUnlock.className = 'scav-btn scav-btn-blue';
         btnUnlock.onclick = () => {
             $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
         };
 
         const btnStart = document.createElement('button');
-        btnStart.textContent = isRunning ? "Stop ZBIERACTWO" : "Start ZBIERACTWO";
-        btnStart.style.width = '100%';
-        btnStart.style.padding = '6px';
-        btnStart.style.cursor = 'pointer';
-        btnStart.style.backgroundColor = isRunning ? '#d9534f' : '#5cb85c';
-        btnStart.style.color = '#fff';
-        btnStart.style.border = 'none';
-        btnStart.style.borderRadius = '3px';
-        
+        btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
+        btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
+
         btnStart.onclick = () => { 
             isRunning = !isRunning; 
             localStorage.setItem(`scav_run_${urlKey}`, isRunning); 
@@ -260,7 +279,10 @@
 
     function checkScavengeData() {
         const clock = document.getElementById('scav-clock');
-        if (!isRunning) { clock.textContent = "Wyłączony"; return; }
+        if (!isRunning) { 
+            clock.textContent = "Wyłączony"; 
+            return; 
+        }
         clock.textContent = "Skanowanie...";
 
         $.get(URLReq, function (data) {
@@ -278,7 +300,7 @@
                 arrayWithData += thisPageData + ",";
             }, () => {
                 arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1) + "]";
-                
+
                 try {
                     let scavengeInfo = JSON.parse(arrayWithData);
                     let minTime = Infinity;
@@ -296,7 +318,7 @@
                                              (parseInt(units.marcher || 0)) + 
                                              (parseInt(units.heavy || 0)) + 
                                              (parseInt(units.knight || 0));
-                            
+
                             if (totalUnits >= 10) { 
                                 hasTroops = true;
                             }
@@ -323,10 +345,9 @@
                         clock.textContent = "Urun. wysyłkę!";
                         triggerMassScavenge();
                     } else if (minTime !== Infinity) {
-                        // Losowanie sekund do dopisania (zamiast sztywnego +10)
                         let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
                         let targetTime = minTime + addedSeconds;
-                        
+
                         const interval = setInterval(() => {
                             let currentNow = Math.floor(Date.now() / 1000);
                             let diff = targetTime - currentNow;
@@ -382,8 +403,9 @@
         }, randomDelay(2000, 5000));
     }
 
+    // UI montowane zawsze
     createDraggableUI();
-    if (isRunning) {
-        checkScavengeData();
-    }
+    
+    // Skanowanie uruchamiane w zależności od flagi runs
+    checkScavengeData();
 })();
