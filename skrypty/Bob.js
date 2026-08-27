@@ -200,7 +200,8 @@
 
             const bKey = BUILDING_NAMES.find(name => tLower.includes(name));
             
-            if (bKey && (tLower.includes('building') || tLower.includes('poziom') || tLower.includes('pzm'))) {
+            if (bKey) {
+
                 if(tLower.includes('szablon budowy') || tLower.includes('rekrutujemy')) {
                     if (cleanText.length > 3) localInstructions.push(cleanText);
                     return;
