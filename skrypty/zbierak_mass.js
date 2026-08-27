@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.2
+// @version      1.3
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -86,44 +86,55 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Ładowanie skryptu Shinko
+    // Wyrównana logika pobierania zewnętrznego skryptu i klikania
     function loadShinkoMassScavenge(autoClick = false) {
-        if (!document.getElementById('massScavengeScript')) {
-            const script = document.createElement('script');
-            script.id = 'massScavengeScript';
-            script.src = 'https://shinko-to-kuma.com/scripts/massScavenge.js';
-            script.type = 'text/javascript';
-            document.body.appendChild(script);
-        }
-
-        if (autoClick) {
-            setTimeout(() => {
-                const sendMassButton = document.getElementById('sendMass');
-                if (sendMassButton) {
-                    sendMassButton.click();
-                }
-
-                const clickerInterval = setInterval(() => {
-                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                    if (sendMassButton2) {
-                        sendMassButton2.click();
-                        if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
+        // Użycie jQuery getScript jest bezpieczniejsze przy nakładkach ładujących
+        $.getScript('https://shinko-to-kuma.com/scripts/massScavenge.js').done(function() {
+            if (autoClick) {
+                let attempts = 0;
+                
+                // Polling - czekanie aż skrypt wygeneruje przycisk, zamiast strzelania na ślepo
+                const checkBtnInterval = setInterval(() => {
+                    attempts++;
+                    const sendMassButton = document.getElementById('sendMass');
+                    
+                    if (sendMassButton) {
+                        clearInterval(checkBtnInterval);
+                        
+                        setTimeout(() => {
+                            sendMassButton.click();
+                            
+                            // Oczekanie na drugi przycisk i wykonanie ostatecznego wysłania
+                            setTimeout(() => {
+                                const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                                if (sendMassButton2) {
+                                    sendMassButton2.click();
+                                    if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
+                                    
+                                    // Odświeżenie po udanej wysyłce
+                                    setTimeout(() => location.reload(), 2000);
+                                }
+                            }, randomDelay(1000, 2000));
+                            
+                        }, randomDelay(1000, 3000));
+                    } else if (attempts > 30) {
+                        // Jeśli po 15 sekundach (30 prób * 500ms) przycisk się nie wygeneruje - restart (zabezpieczenie przed zawieszeniem)
+                        clearInterval(checkBtnInterval);
+                        console.error("Zbyt długi czas oczekiwania na przycisk sendMass.");
+                        location.reload();
                     }
-                }, randomDelay(1000, 2000));
-
-                setTimeout(() => {
-                    clearInterval(clickerInterval);
-                    location.reload();
-                }, 6000);
-
-            }, randomDelay(1000, 3000));
-        }
+                }, 500);
+            }
+        }).fail(function() {
+            console.error("Błąd pobierania skryptu massScavenge.js");
+            if(autoClick) {
+                setTimeout(() => location.reload(), 5000); // Awaryjne odświeżenie
+            }
+        });
     }
 
     function loadVisualTable() {
-        const s = document.createElement('script');
-        s.src = 'https://shinko-to-kuma.com/scripts/scavengingOverview.js';
-        document.body.appendChild(s);
+        $.getScript('https://shinko-to-kuma.com/scripts/scavengingOverview.js');
     }
 
     function createDraggableUI() {
@@ -214,7 +225,6 @@
         delayRow.appendChild(delayLabel);
         delayRow.appendChild(delayInputs);
 
-        // Przycisk ręcznego uruchomienia skryptu Shinko (jak z paska skrótów)
         const btnManualRun = document.createElement('button');
         btnManualRun.textContent = '🚀 Uruchom Zbierak';
         btnManualRun.className = 'scav-btn scav-btn-blue';
