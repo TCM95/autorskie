@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.0
+// @version      1.2
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -86,6 +86,40 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    // Ładowanie skryptu Shinko
+    function loadShinkoMassScavenge(autoClick = false) {
+        if (!document.getElementById('massScavengeScript')) {
+            const script = document.createElement('script');
+            script.id = 'massScavengeScript';
+            script.src = 'https://shinko-to-kuma.com/scripts/massScavenge.js';
+            script.type = 'text/javascript';
+            document.body.appendChild(script);
+        }
+
+        if (autoClick) {
+            setTimeout(() => {
+                const sendMassButton = document.getElementById('sendMass');
+                if (sendMassButton) {
+                    sendMassButton.click();
+                }
+
+                const clickerInterval = setInterval(() => {
+                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                    if (sendMassButton2) {
+                        sendMassButton2.click();
+                        if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
+                    }
+                }, randomDelay(1000, 2000));
+
+                setTimeout(() => {
+                    clearInterval(clickerInterval);
+                    location.reload();
+                }, 6000);
+
+            }, randomDelay(1000, 3000));
+        }
+    }
+
     function loadVisualTable() {
         const s = document.createElement('script');
         s.src = 'https://shinko-to-kuma.com/scripts/scavengingOverview.js';
@@ -111,7 +145,7 @@
         header.style.paddingBottom = '4px';
 
         const title = document.createElement('span');
-        title.textContent = 'Kalkulator Zbierak';
+        title.textContent = 'Kalkulator';
         title.style.fontWeight = 'bold';
         title.style.color = 'var(--title-color)';
         title.style.cursor = uiState.pinned ? 'default' : 'move';
@@ -180,20 +214,26 @@
         delayRow.appendChild(delayLabel);
         delayRow.appendChild(delayInputs);
 
+        // Przycisk ręcznego uruchomienia skryptu Shinko (jak z paska skrótów)
+        const btnManualRun = document.createElement('button');
+        btnManualRun.textContent = ' Ręczny Zbierak';
+        btnManualRun.className = 'scav-btn scav-btn-blue';
+        btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
+
         const btnOverview = document.createElement('button');
-        btnOverview.textContent = 'ℹ️ Pokaż Czasy';
+        btnOverview.textContent = 'Czasy';
         btnOverview.className = 'scav-btn';
         btnOverview.onclick = () => { loadVisualTable(); };
 
         const btnUnlock = document.createElement('button');
-        btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
+        btnUnlock.textContent = ' Odblokuj Zbierak';
         btnUnlock.className = 'scav-btn scav-btn-blue';
         btnUnlock.onclick = () => {
             $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
         };
 
         const btnStart = document.createElement('button');
-        btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
+        btnStart.textContent = isRunning ? '❎️Stop' : '✅️Start';
         btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
 
         btnStart.onclick = () => { 
@@ -205,6 +245,7 @@
         div.appendChild(header);
         div.appendChild(clock);
         div.appendChild(delayRow); 
+        div.appendChild(btnManualRun);
         div.appendChild(btnOverview); 
         div.appendChild(btnUnlock); 
         div.appendChild(btnStart); 
@@ -214,7 +255,7 @@
         let startX, startY, initialX, initialY;
 
         const startDrag = (e) => {
-            if (uiState.pinned || e.target === pinBtn || e.target === btnStart || e.target === btnOverview || e.target === btnUnlock || e.target === minInput || e.target === maxInput) return;
+            if (uiState.pinned || e.target === pinBtn || e.target === btnStart || e.target === btnOverview || e.target === btnUnlock || e.target === btnManualRun || e.target === minInput || e.target === maxInput) return;
             isDragging = true;
             let event = e.type.includes('mouse') ? e : e.touches[0];
             startX = event.clientX;
@@ -257,7 +298,8 @@
     function sophieGetAll(urls, onLoad, onDone) {
         let numDone = 0;
         let lastRequestTime = 0;
-        let minWaitTime = 200; 
+        let minWaitTime = 1050; 
+
         loadNext();
 
         function loadNext() {
@@ -343,7 +385,7 @@
 
                     if (hasReadyVillages) {
                         clock.textContent = "Urun. wysyłkę!";
-                        triggerMassScavenge();
+                        loadShinkoMassScavenge(true);
                     } else if (minTime !== Infinity) {
                         let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
                         let targetTime = minTime + addedSeconds;
@@ -373,39 +415,9 @@
         });
     }
 
-    function triggerMassScavenge() {
-        setTimeout(() => {
-            const script = document.createElement('script');
-            script.src = 'https://shinko-to-kuma.com/scripts/massScavenge.js';
-            script.type = 'text/javascript';
-            document.body.appendChild(script);
-
-            setTimeout(() => {
-                const sendMassButton = document.getElementById('sendMass');
-                if (sendMassButton) {
-                    sendMassButton.click();
-                }
-
-                const clickerInterval = setInterval(() => {
-                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                    if (sendMassButton2) {
-                        sendMassButton2.click();
-                        if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
-                    }
-                }, randomDelay(1000, 2000));
-
-                setTimeout(() => {
-                    clearInterval(clickerInterval);
-                    location.reload();
-                }, 6000);
-
-            }, randomDelay(1000, 5000));
-        }, randomDelay(2000, 5000));
-    }
-
-    // UI montowane zawsze
+    // Inicjalizacja interfejsu
     createDraggableUI();
-    
-    // Skanowanie uruchamiane w zależności od flagi runs
+
+    // Skanowanie uruchamiane tylko gdy flaga isRunning jest aktywna
     checkScavengeData();
 })();
