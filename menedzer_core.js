@@ -30,14 +30,17 @@
         }
     }
 
-    async function loadModule(path) {
-        const url = path.startsWith('http') ? `${path}?t=${Date.now()}` : `${BASE_URL}${path}?t=${Date.now()}`;
-        const res = await fetch(url);
-        if (res.ok) {
+    // BEZPIECZNE ŁADOWANIE MODUŁÓW (Naprawia 'Script error.')
+    function loadModule(path) {
+        return new Promise((resolve, reject) => {
+            const url = path.startsWith('http') ? `${path}&t=${Date.now()}` : `${BASE_URL}${path}?t=${Date.now()}`;
             const script = document.createElement('script');
-            script.textContent = await res.text();
+            script.type = 'text/javascript';
+            script.src = url;
+            script.onload = () => resolve();
+            script.onerror = (err) => reject(new Error(`Nie udało się załadować modułu: ${path}`));
             document.head.appendChild(script);
-        }
+        });
     }
 
     async function toggleDarkTheme(darkScriptUrl, enable) {
@@ -47,14 +50,10 @@
             if (!themeElement && darkScriptUrl) {
                 try {
                     const fetchUrl = darkScriptUrl.includes('?') ? `${darkScriptUrl}&t=${Date.now()}` : `${darkScriptUrl}?t=${Date.now()}`;
-                    const response = await fetch(fetchUrl);
-                    if (response.ok) {
-                        const code = await response.text();
-                        themeElement = document.createElement('script');
-                        themeElement.id = 'tcm-dark-theme-script';
-                        themeElement.textContent = code;
-                        document.head.appendChild(themeElement);
-                    }
+                    themeElement = document.createElement('script');
+                    themeElement.id = 'tcm-dark-theme-script';
+                    themeElement.src = fetchUrl;
+                    document.head.appendChild(themeElement);
                 } catch (e) {
                     console.error("Błąd motywu:", e);
                 }
@@ -74,11 +73,10 @@
             if (s.id === 'ciemny_motyw' || !state[s.id] || !s.screens) continue;
 
             if (s.screens.includes('*') || s.screens.some(sc => url.includes(sc))) {
-                const sRes = await fetch(`${s.url}?t=${Date.now()}`);
-                if (sRes.ok) {
-                    const el = document.createElement('script');
-                    el.textContent = await sRes.text();
-                    document.head.appendChild(el);
+                try {
+                    await loadModule(s.url);
+                } catch (err) {
+                    console.error(`Błąd aktywnego skryptu [${s.id}]:`, err);
                 }
             }
         }
@@ -87,7 +85,9 @@
     try {
         await loadCSS();
 
-        for (const file of UI_JS) await loadModule(file);
+        for (const file of UI_JS) {
+            await loadModule(file);
+        }
 
         // Pobranie konfiguracji skryptów
         const confRes = await fetch(`${BASE_URL}confing.json?t=${Date.now()}`);
@@ -97,18 +97,16 @@
         if (confRes.ok) {
             const json = await confRes.json();
 
-            // Jeśli JSON to obiekt ze słupkami/kategoriami
             if (!Array.isArray(json)) {
                 categories = Object.keys(json);
-                
+
                 Object.entries(json).forEach(([categoryName, scriptList]) => {
                     scriptList.forEach(s => {
-                        s.category = categoryName; // Automatyczne przypisanie kategorii ze słupka
+                        s.category = categoryName;
                         scripts.push(s);
                     });
                 });
             } else {
-                // Obsługa starej płaskiej tablicy w razie potrzeby
                 scripts = json;
                 categories = ["Atak/obrona", "Budowa/rekrutacja", "Farma/zbieractwo", "Raporty", "Etykiety", "Surowce", "Mapa", "Inne"];
             }
@@ -118,16 +116,20 @@
         scripts.sort((a, b) => a.name.localeCompare(b.name, 'pl'));
 
         // Inicjalizacja budowy okna panelu
-        window.TCM_UI.initPanel(scripts, categories, { 
-            getScriptsState, 
-            saveScriptState, 
-            onToggleTheme: toggleDarkTheme 
-        });
+        if (window.TCM_UI && typeof window.TCM_UI.initPanel === 'function') {
+            window.TCM_UI.initPanel(scripts, categories, { 
+                getScriptsState, 
+                saveScriptState, 
+                onToggleTheme: toggleDarkTheme 
+            });
+        } else {
+            console.error("TCM Menedżer: Obiekt window.TCM_UI nie został poprawnie zainicjalizowany przez ui/panel.js!");
+        }
 
         await loadModule(EXTERNAL_MENU_URL);
         await loadActiveScripts(scripts);
 
     } catch (e) {
-        console.error("TCM Menedżer Błąd:", e);
+        console.error("TCM Menedżer Błąd krytyczny:", e);
     }
 })();
