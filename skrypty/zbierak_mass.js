@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.1
+// @version      1.3
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -10,7 +10,17 @@
 (function () {
     'use strict';
 
-    // Dodanie systemowych styli CSS zgodnie ze standardem
+    // Sprawdzenie stanu z menedżera (klucz: tw_scripts_state)
+    function isScriptEnabledInManager() {
+        try {
+            const state = JSON.parse(localStorage.getItem('tw_scripts_state') || '{}');
+            // Jeśli klucz istnieje i jest true, lub jeśli skrypt odpalany jest ręcznie z paska (brak menedżera)
+            return state['kalkulator_zbierak'] === true;
+        } catch (e) {
+            return false;
+        }
+    }
+
     const style = document.createElement('style');
     style.innerHTML = `
         :root {
@@ -86,7 +96,6 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Wywołanie zewnętrznego skryptu masowej wysyłki Shinko
     function loadShinkoMassScavenge(autoClick = false) {
         if (!document.getElementById('massScavengeScript')) {
             const script = document.createElement('script');
@@ -98,25 +107,20 @@
 
         if (autoClick) {
             setTimeout(() => {
-                const sendMassButton = document.getElementById('sendMass');
-                if (sendMassButton) {
-                    sendMassButton.click();
-                }
-
                 const clickerInterval = setInterval(() => {
-                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                    if (sendMassButton2) {
-                        sendMassButton2.click();
-                        if (typeof $ !== 'undefined') $(sendMassButton2).trigger('click'); 
+                    const sendMassButton = document.querySelector('input#sendMass.btn.btnSophie') || document.getElementById('sendMass');
+                    if (sendMassButton) {
+                        sendMassButton.click();
+                        if (typeof $ !== 'undefined') $(sendMassButton).trigger('click');
                     }
                 }, randomDelay(1000, 2000));
 
                 setTimeout(() => {
                     clearInterval(clickerInterval);
                     location.reload();
-                }, 6000);
+                }, 7000);
 
-            }, randomDelay(1000, 3000));
+            }, randomDelay(1500, 3000));
         }
     }
 
@@ -138,17 +142,11 @@
         }
 
         const header = document.createElement('div');
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.marginBottom = '8px';
-        header.style.borderBottom = '1px solid var(--border-color)';
-        header.style.paddingBottom = '4px';
+        header.style.cssText = 'display:flex;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid var(--border-color);padding-bottom:4px;';
 
         const title = document.createElement('span');
         title.textContent = 'Kalkulator Zbierak';
-        title.style.fontWeight = 'bold';
-        title.style.color = 'var(--title-color)';
-        title.style.cursor = uiState.pinned ? 'default' : 'move';
+        title.style.cssText = 'font-weight:bold;color:var(--title-color);cursor:' + (uiState.pinned ? 'default' : 'move');
 
         const pinBtn = document.createElement('span');
         pinBtn.innerHTML = uiState.pinned ? '📌' : '📍';
@@ -165,18 +163,11 @@
 
         const clock = document.createElement('div');
         clock.id = 'scav-clock'; 
-        clock.style.textAlign = 'center'; 
-        clock.style.fontSize = '14px';
-        clock.style.fontWeight = 'bold';
-        clock.style.color = '#5cb85c';
-        clock.style.marginBottom = '8px';
+        clock.style.cssText = 'text-align:center;font-size:14px;font-weight:bold;color:#5cb85c;margin-bottom:8px;';
         clock.textContent = isRunning ? "Inicjalizacja..." : "Wyłączony";
 
         const delayRow = document.createElement('div');
-        delayRow.style.display = 'flex';
-        delayRow.style.alignItems = 'center';
-        delayRow.style.justifyContent = 'space-between';
-        delayRow.style.marginBottom = '8px';
+        delayRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
 
         const delayLabel = document.createElement('span');
         delayLabel.textContent = 'Opóźnienie (s):';
@@ -223,7 +214,7 @@
         btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
         btnUnlock.className = 'scav-btn scav-btn-blue';
         btnUnlock.onclick = () => {
-            $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
+            if (typeof $ !== 'undefined') $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
         };
 
         const btnStart = document.createElement('button');
@@ -291,7 +282,7 @@
     function sophieGetAll(urls, onLoad, onDone) {
         let numDone = 0;
         let lastRequestTime = 0;
-        let minWaitTime = 1050; // Zgodność z limitami serwera (1 zapytanie / s)
+        let minWaitTime = 1050;
 
         loadNext();
 
@@ -408,12 +399,15 @@
         });
     }
 
-    // Inicjalizacja interfejsu
+    // Inicjalizacja interfejsu (zawsze dostępna)
     createDraggableUI();
-
-    // ZAWSZE ładuj skrypt Shinko na stronie (nawet przy wyłączonym automacie)
     loadShinkoMassScavenge(false);
 
-    // Wykończenie pętli weryfikacji czasów (jeśli włączona)
-    checkScavengeData();
+    // Automatyczne sprawdzanie danych wykonuje się TYLKO jeśli skrypt jest włączony w panelu menedżera
+    if (isScriptEnabledInManager()) {
+        checkScavengeData();
+    } else {
+        const clock = document.getElementById('scav-clock');
+        if (clock) clock.textContent = "Wyłączony w Menedżerze";
+    }
 })();
