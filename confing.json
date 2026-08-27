@@ -73,6 +73,12 @@
             "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_mass.js",
             "description": "Masowe wysyłanie na zbieractwo.",
             "screens": ["scavenge_mass"]
+        },
+        {"id": "zbierak_sin",
+            "name": "Zbierak single",
+            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/zbierak_sin.js",
+            "description": " wysyłanie na zbieractwo(pojedyńcz wioska).",
+            "screens": ["scavenge"]
         }
     ],
     "Raporty": [
