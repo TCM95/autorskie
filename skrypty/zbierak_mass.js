@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.5
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Omijanie konfliktów)
+// @version      1.6
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Poprawiony CORS)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -86,50 +86,45 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        // Czyste uruchamianie zewnętrznych skryptów (jak z palca)
+        // Zmodyfikowana metoda wstrzykiwania omijająca blokady CORS
         function injectCleanScript(url, isAutoSend = false) {
             // Usuń starą wtyczkę, żeby nie zapętlić Shinko getAll
             if (typeof $.getAll === 'function') {
                 $.getAll = undefined; 
             }
             
-            // Czysty natywny XHR zapobiega konfliktom z Tampermonkey i Panelem
-            const xhr = new XMLHttpRequest();
-            xhr.open("GET", url + "?_=" + new Date().getTime(), true); 
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    try {
-                        const script = document.createElement("script");
-                        script.type = "text/javascript";
-                        script.text = xhr.responseText;
-                        document.head.appendChild(script);
+            const script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = url + "?_=" + new Date().getTime(); // Cache buster
+            
+            script.onload = function() {
+                if (isAutoSend) {
+                    setTimeout(() => {
+                        const sendMassButton = document.getElementById('sendMass');
+                        if (sendMassButton) sendMassButton.click();
 
-                        if (isAutoSend) {
-                            setTimeout(() => {
-                                const sendMassButton = document.getElementById('sendMass');
-                                if (sendMassButton) sendMassButton.click();
+                        const clickerInterval = setInterval(() => {
+                            const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                            if (sendMassButton2) {
+                                sendMassButton2.click();
+                                $(sendMassButton2).trigger('click');
+                            }
+                        }, randomDelay(1000, 2000));
 
-                                const clickerInterval = setInterval(() => {
-                                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                                    if (sendMassButton2) {
-                                        sendMassButton2.click();
-                                        $(sendMassButton2).trigger('click');
-                                    }
-                                }, randomDelay(1000, 2000));
+                        setTimeout(() => {
+                            clearInterval(clickerInterval);
+                            location.reload();
+                        }, 6000);
 
-                                setTimeout(() => {
-                                    clearInterval(clickerInterval);
-                                    location.reload();
-                                }, 6000);
-
-                            }, randomDelay(1000, 3000));
-                        }
-                    } catch (e) {
-                        console.error("Błąd podczas uruchamiania wstrzykniętego skryptu:", e);
-                    }
+                    }, randomDelay(1000, 3000));
                 }
             };
-            xhr.send();
+
+            script.onerror = function() {
+                console.error("Kalkulator Zbierak: Nie udało się pobrać skryptu z " + url);
+            };
+
+            document.head.appendChild(script);
         }
 
         function createDraggableUI() {
@@ -235,9 +230,7 @@
             const btnUnlock = document.createElement('button');
             btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
             btnUnlock.className = 'scav-btn scav-btn-blue';
-            btnUnlock.onclick = () => {
-                $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
-            };
+            btnUnlock.onclick = () => { injectCleanScript('https://twscripts.dev/scripts/massUnlockScav.js', false); };
 
             const btnStart = document.createElement('button');
             btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
@@ -302,7 +295,6 @@
             document.addEventListener('touchend', stopDrag);
         }
 
-        // Pętla odliczająca natywna (zmieniono nazwę by ominąć konflikt z $.getAll z Shinko)
         function nativeGetAll(urls, onLoad, onDone) {
             let numDone = 0;
             let lastRequestTime = 0;
@@ -427,7 +419,6 @@
         checkScavengeData();
     }
 
-    // Bezpieczne wstrzyknięcie
     if (typeof $ !== 'undefined' && typeof game_data !== 'undefined') {
         initZbierak();
     } else {
