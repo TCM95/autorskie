@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.3
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
+// @version      1.5
+// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa (Omijanie konfliktów)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
 // ==/UserScript==
@@ -10,21 +10,7 @@
 (function () {
     'use strict';
 
-    // Oczekiwanie na załadowanie zależy od panelu (odczekaj na jQuery i game_data)
-    function waitForGame(callback) {
-        if (typeof $ !== 'undefined' && typeof game_data !== 'undefined' && $.isReady) {
-            callback();
-        } else {
-            setTimeout(() => waitForGame(callback), 100);
-        }
-    }
-
-    waitForGame(() => {
-        initZbierak();
-    });
-
     function initZbierak() {
-        // Dodanie systemowych styli CSS
         const style = document.createElement('style');
         style.innerHTML = `
             :root {
@@ -100,34 +86,50 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        // Poprawione ładowanie zbieraka Shinko z użyciem jQuery.getScript
-        function loadShinkoMassScavenge(autoClick = false) {
-            $.getScript('https://shinko-to-kuma.com/scripts/massScavenge.js', function() {
-                if (autoClick) {
-                    setTimeout(() => {
-                        const sendMassButton = document.getElementById('sendMass');
-                        if (sendMassButton) sendMassButton.click();
+        // Czyste uruchamianie zewnętrznych skryptów (jak z palca)
+        function injectCleanScript(url, isAutoSend = false) {
+            // Usuń starą wtyczkę, żeby nie zapętlić Shinko getAll
+            if (typeof $.getAll === 'function') {
+                $.getAll = undefined; 
+            }
+            
+            // Czysty natywny XHR zapobiega konfliktom z Tampermonkey i Panelem
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", url + "?_=" + new Date().getTime(), true); 
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    try {
+                        const script = document.createElement("script");
+                        script.type = "text/javascript";
+                        script.text = xhr.responseText;
+                        document.head.appendChild(script);
 
-                        const clickerInterval = setInterval(() => {
-                            const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
-                            if (sendMassButton2) {
-                                sendMassButton2.click();
-                                $(sendMassButton2).trigger('click');
-                            }
-                        }, randomDelay(1000, 2000));
+                        if (isAutoSend) {
+                            setTimeout(() => {
+                                const sendMassButton = document.getElementById('sendMass');
+                                if (sendMassButton) sendMassButton.click();
 
-                        setTimeout(() => {
-                            clearInterval(clickerInterval);
-                            location.reload();
-                        }, 6000);
+                                const clickerInterval = setInterval(() => {
+                                    const sendMassButton2 = document.querySelector('input#sendMass.btn.btnSophie');
+                                    if (sendMassButton2) {
+                                        sendMassButton2.click();
+                                        $(sendMassButton2).trigger('click');
+                                    }
+                                }, randomDelay(1000, 2000));
 
-                    }, randomDelay(1000, 3000));
+                                setTimeout(() => {
+                                    clearInterval(clickerInterval);
+                                    location.reload();
+                                }, 6000);
+
+                            }, randomDelay(1000, 3000));
+                        }
+                    } catch (e) {
+                        console.error("Błąd podczas uruchamiania wstrzykniętego skryptu:", e);
+                    }
                 }
-            });
-        }
-
-        function loadVisualTable() {
-            $.getScript('https://shinko-to-kuma.com/scripts/scavengingOverview.js');
+            };
+            xhr.send();
         }
 
         function createDraggableUI() {
@@ -223,12 +225,12 @@
             const btnManualRun = document.createElement('button');
             btnManualRun.textContent = '🚀 Uruchom Zbierak';
             btnManualRun.className = 'scav-btn scav-btn-blue';
-            btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
+            btnManualRun.onclick = () => { injectCleanScript('https://shinko-to-kuma.com/scripts/massScavenge.js', false); };
 
             const btnOverview = document.createElement('button');
             btnOverview.textContent = 'ℹ️ Pokaż Czasy';
             btnOverview.className = 'scav-btn';
-            btnOverview.onclick = () => { loadVisualTable(); };
+            btnOverview.onclick = () => { injectCleanScript('https://shinko-to-kuma.com/scripts/scavengingOverview.js', false); };
 
             const btnUnlock = document.createElement('button');
             btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
@@ -300,7 +302,8 @@
             document.addEventListener('touchend', stopDrag);
         }
 
-        function sophieGetAll(urls, onLoad, onDone) {
+        // Pętla odliczająca natywna (zmieniono nazwę by ominąć konflikt z $.getAll z Shinko)
+        function nativeGetAll(urls, onLoad, onDone) {
             let numDone = 0;
             let lastRequestTime = 0;
             let minWaitTime = 1050;
@@ -342,7 +345,7 @@
 
                 let arrayWithData = "[";
 
-                sophieGetAll(URLs, (i, here) => {
+                nativeGetAll(URLs, (i, here) => {
                     let thisPageData = $(here).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[2];
                     arrayWithData += thisPageData + ",";
                 }, () => {
@@ -390,7 +393,7 @@
 
                         if (hasReadyVillages) {
                             clock.textContent = "Urun. wysyłkę!";
-                            loadShinkoMassScavenge(true);
+                            injectCleanScript('https://shinko-to-kuma.com/scripts/massScavenge.js', true);
                         } else if (minTime !== Infinity) {
                             let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
                             let targetTime = minTime + addedSeconds;
@@ -420,10 +423,14 @@
             });
         }
 
-        // Inicjalizacja interfejsu
         createDraggableUI();
-
-        // Skanowanie uruchamiane tylko gdy flaga isRunning jest aktywna
         checkScavengeData();
+    }
+
+    // Bezpieczne wstrzyknięcie
+    if (typeof $ !== 'undefined' && typeof game_data !== 'undefined') {
+        initZbierak();
+    } else {
+        setTimeout(initZbierak, 500);
     }
 })();
