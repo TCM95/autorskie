@@ -145,7 +145,7 @@
         header.style.paddingBottom = '4px';
 
         const title = document.createElement('span');
-        title.textContent = 'Kalkulator';
+        title.textContent = 'Kalkulator Zbierak';
         title.style.fontWeight = 'bold';
         title.style.color = 'var(--title-color)';
         title.style.cursor = uiState.pinned ? 'default' : 'move';
@@ -216,24 +216,24 @@
 
         // Przycisk ręcznego uruchomienia skryptu Shinko (jak z paska skrótów)
         const btnManualRun = document.createElement('button');
-        btnManualRun.textContent = ' Ręczny Zbierak';
+        btnManualRun.textContent = '🚀 Uruchom Zbierak';
         btnManualRun.className = 'scav-btn scav-btn-blue';
         btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
 
         const btnOverview = document.createElement('button');
-        btnOverview.textContent = 'Czasy';
+        btnOverview.textContent = 'ℹ️ Pokaż Czasy';
         btnOverview.className = 'scav-btn';
         btnOverview.onclick = () => { loadVisualTable(); };
 
         const btnUnlock = document.createElement('button');
-        btnUnlock.textContent = ' Odblokuj Zbierak';
+        btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
         btnUnlock.className = 'scav-btn scav-btn-blue';
         btnUnlock.onclick = () => {
             $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
         };
 
         const btnStart = document.createElement('button');
-        btnStart.textContent = isRunning ? '❎️Stop' : '✅️Start';
+        btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
         btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
 
         btnStart.onclick = () => { 
