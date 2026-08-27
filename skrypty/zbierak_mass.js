@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Zbierak
 // @namespace    https://viayoo.com/
-// @version      1.3
+// @version      1.5
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -9,17 +9,6 @@
 
 (function () {
     'use strict';
-
-    // Sprawdzenie stanu z menedżera (klucz: tw_scripts_state)
-    function isScriptEnabledInManager() {
-        try {
-            const state = JSON.parse(localStorage.getItem('tw_scripts_state') || '{}');
-            // Jeśli klucz istnieje i jest true, lub jeśli skrypt odpalany jest ręcznie z paska (brak menedżera)
-            return state['kalkulator_zbierak'] === true;
-        } catch (e) {
-            return false;
-        }
-    }
 
     const style = document.createElement('style');
     style.innerHTML = `
@@ -164,7 +153,7 @@
         const clock = document.createElement('div');
         clock.id = 'scav-clock'; 
         clock.style.cssText = 'text-align:center;font-size:14px;font-weight:bold;color:#5cb85c;margin-bottom:8px;';
-        clock.textContent = isRunning ? "Inicjalizacja..." : "Wyłączony";
+        clock.textContent = isRunning ? "Inicjalizacja..." : "Gotowy (Wyłączony)";
 
         const delayRow = document.createElement('div');
         delayRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
@@ -399,15 +388,12 @@
         });
     }
 
-    // Inicjalizacja interfejsu (zawsze dostępna)
+    // Inicjalizacja interfejsu i skryptu Shinko
     createDraggableUI();
     loadShinkoMassScavenge(false);
 
-    // Automatyczne sprawdzanie danych wykonuje się TYLKO jeśli skrypt jest włączony w panelu menedżera
-    if (isScriptEnabledInManager()) {
+    // Jeśli włączone w UI, uruchamiamy logikę zbieraka
+    if (isRunning) {
         checkScavengeData();
-    } else {
-        const clock = document.getElementById('scav-clock');
-        if (clock) clock.textContent = "Wyłączony w Menedżerze";
     }
 })();
