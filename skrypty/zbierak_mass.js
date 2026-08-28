@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Kalkulator Zbierak 1.5
+// @name         zbierak
 // @namespace    https://viayoo.com/
-// @version      1.5
+// @version      1.6
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -91,19 +91,13 @@
                 window.squads = {};
                 window.squads_premium = {};
 
-                serverTimeTemp = $("#serverDate")[0].innerText + " " + $("#serverTime")[0].innerText;
-                serverTime = serverTimeTemp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
-                
-                // Zabezpieczenie przed brakiem dopasowania daty serwera (na wszelki wypadek)
-                if(serverTime) {
-                    serverDate = Date.parse(serverTime[3] + "/" + serverTime[2] + "/" + serverTime[1] + serverTime[4]);
-                } else {
-                    serverDate = Date.now();
-                }
-                
+                let serverTimeTemp = $("#serverDate")[0].innerText + " " + $("#serverTime")[0].innerText;
+                let serverTime = serverTimeTemp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
+                let serverDate = serverTime ? Date.parse(serverTime[3] + "/" + serverTime[2] + "/" + serverTime[1] + serverTime[4]) : Date.now();
+
                 var is_mobile = !!navigator.userAgent.match(/iphone|android|blackberry/ig) || false;
                 var scavengeInfo;
-                var tempElementSelection="";
+                var tempElementSelection = "";
                 if (window.location.href.indexOf('screen=place&mode=scavenge_mass') < 0) {
                     window.location.assign(game_data.link_base_pure + "place&mode=scavenge_mass");
                 }
@@ -112,19 +106,19 @@
                 var langShinko = [ "Mass scavenging", "Select unit types/ORDER to scavenge with (drag units to order)", "Select categories to use", "When do you want your scav runs to return (approximately)?", "Runtime here", "Calculate runtimes for each page", "Creator: ", "Mass scavenging: send per 50 villages", "Launch group " ];
                 
                 if (localStorage.getItem("troopTypeEnabled") == null) {
-                    worldUnits = game_data.units;
-                    var troopTypeEnabled = {}
+                    let worldUnits = game_data.units;
+                    var troopTypeEnabled = {};
                     for (var i = 0; i < worldUnits.length; i++) {
                         if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
-                            troopTypeEnabled[worldUnits[i]] = false
+                            troopTypeEnabled[worldUnits[i]] = false;
                         }
-                    };
+                    }
                     localStorage.setItem("troopTypeEnabled", JSON.stringify(troopTypeEnabled));
                 } else {
                     var troopTypeEnabled = JSON.parse(localStorage.getItem("troopTypeEnabled"));
                 }
                 if (localStorage.getItem("keepHome") == null) {
-                    var keepHome = { "spear": 0, "sword": 0, "axe": 0, "archer": 0, "light": 0, "marcher": 0, "heavy": 0 }
+                    var keepHome = { "spear": 0, "sword": 0, "axe": 0, "archer": 0, "light": 0, "marcher": 0, "heavy": 0 };
                     localStorage.setItem("keepHome", JSON.stringify(keepHome));
                 } else {
                     var keepHome = JSON.parse(localStorage.getItem("keepHome"));
@@ -148,29 +142,30 @@
                     tempElementSelection = localStorage.getItem("timeElement");
                 }
                 if (localStorage.getItem("sendOrder") == null) {
-                    worldUnits = game_data.units;
+                    let worldUnits = game_data.units;
                     var sendOrder = [];
                     for (var i = 0; i < worldUnits.length; i++) {
                         if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
-                            sendOrder.push(worldUnits[i])
+                            sendOrder.push(worldUnits[i]);
                         }
-                    };
+                    }
                     localStorage.setItem("sendOrder", JSON.stringify(sendOrder));
                 } else {
                     var sendOrder = JSON.parse(localStorage.getItem("sendOrder"));
                 }
                 if (localStorage.getItem("runTimes") == null) {
-                    var runTimes = { "off": 4, "def": 3 }
+                    var runTimes = { "off": 4, "def": 3 };
                     localStorage.setItem("runTimes", JSON.stringify(runTimes));
                 } else {
                     var runTimes = JSON.parse(localStorage.getItem("runTimes"));
                 }
-                if (typeof premiumBtnEnabled == 'undefined') { var premiumBtnEnabled = false; }
+
                 if (game_data.player.sitter > 0) {
-                    URLReq = "\game.php?t=" + game_data.player.id + "&screen=place&mode=scavenge_mass";
+                    URLReq = "game.php?t=" + game_data.player.id + "&screen=place&mode=scavenge_mass";
                 } else {
                     URLReq = "game.php?&screen=place&mode=scavenge_mass";
                 }
+
                 var arrayWithData;
                 var enabledCategories = [];
                 var squad_requests = [];
@@ -178,15 +173,26 @@
                 var duration_factor = 0;
                 var duration_exponent = 0;
                 var duration_initial_seconds = 0;
-                var categoryNames = JSON.parse("[" + $.find('script:contains("ScavengeMassScreen")')[0].innerHTML.match(/\{.*\:\{.*\:.*\}\}/g) + "]")[0];
+
+                // Bezpieczne pobieranie nazw kategorii
+                var categoryNames = [{ name: "" }, { name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }];
+                try {
+                    var rawCatScript = $.find('script:contains("ScavengeMassScreen")')[0].innerHTML;
+                    var catMatches = rawCatScript.match(/\{.*\:\{.*\:.*\}\}/g);
+                    if (catMatches && catMatches[0]) {
+                        categoryNames = JSON.parse("[" + catMatches[0] + "]")[0];
+                    }
+                } catch (e) {
+                    console.warn("Nie udało się pobrać nazw kategorii, używam domyślnych.", e);
+                }
+
                 var time = { 'off': 0, 'def': 0 };
-                
                 var backgroundColor = "#36393f"; var borderColor = "#3e4147"; var headerColor = "#202225"; var titleColor = "#ffffdf";
                 var cssClassesSophie = "<style> .sophRowA { background-color: #32353b; color: white; } .sophRowB { background-color: #36393f; color: white; } .sophHeader { background-color: #202225; font-weight: bold; color: white; } .btnSophie { background-image: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%); } .btnSophie:hover { background-image: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%); } #x { position: absolute; background: red; color: white; top: 0px; right: 0px; width: 30px; height: 30px; } #cog { position: absolute; background: #32353b; color: white; top: 0px; right: 30px; width: 30px; height: 30px; } </style>";
                 
                 $("#contentContainer").eq(0).prepend(cssClassesSophie);
                 $("#mobileHeader").eq(0).prepend(cssClassesSophie);
-                
+
                 $.getAll = function ( urls, onLoad, onDone, onError ) {
                     var numDone = 0; var lastRequestTime = 0; var minWaitTime = 200;
                     loadNext();
@@ -202,7 +208,7 @@
                         lastRequestTime = now;
                         $.get(urls[numDone]).done((data) => {
                             try { onLoad(numDone, data); ++numDone; loadNext(); } catch (e) { onError(e); }
-                        }).fail((xhr) => { onError(xhr); })
+                        }).fail((xhr) => { onError(xhr); });
                     }
                 };
 
@@ -211,28 +217,60 @@
                     var URLs = [];
                     $.get(URLReq, function (data) {
                         var amountOfPages = 0;
-                        if ($(".paged-nav-item").length > 0) {
-                            // ZABEZPIECZENIE NUMER 1: Null-check dla wyrażenia regularnego
-                            let lastPageHref = $(".paged-nav-item")[$(".paged-nav-item").length - 1].href;
-                            let pageMatch = lastPageHref.match(/page=(\d+)/);
+                        if ($(data).find(".paged-nav-item").length > 0) {
+                            let navItems = $(data).find(".paged-nav-item");
+                            let lastPageHref = navItems[navItems.length - 1].href;
+                            let pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
                             amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
                         }
                         for (var i = 0; i <= amountOfPages; i++) {
                             URLs.push(URLReq + "&page=" + i);
-                            var tempData = JSON.parse($(data).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[0]);
-                            duration_exponent = tempData[1].duration_exponent;
-                            duration_factor = tempData[1].duration_factor;
-                            duration_initial_seconds = tempData[1].duration_initial_seconds;
                         }
+
+                        // NAPRAWA BŁĘDU (Linia 177): Bezpieczna ekstrakcja parametrów konfiguracji
+                        try {
+                            let scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
+                            if (scriptContent) {
+                                let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                                if (matches && matches.length > 0) {
+                                    let tempData = JSON.parse(matches[0]);
+                                    let configObj = tempData[1] || tempData;
+                                    duration_exponent = configObj.duration_exponent || 0.45;
+                                    duration_factor = configObj.duration_factor || 0.6;
+                                    duration_initial_seconds = configObj.duration_initial_seconds || 1800;
+                                }
+                            }
+                        } catch (err) {
+                            console.error("Błąd parsowania parametrów zbieractwa, używam domyślnych:", err);
+                            duration_exponent = 0.45;
+                            duration_factor = 0.6;
+                            duration_initial_seconds = 1800;
+                        }
+
                     }).done(function () {
                         arrayWithData = "[";
                         $.getAll(URLs, (i, data) => {
-                            var thisPageData = $(data).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[2];
-                            arrayWithData += thisPageData + ",";
+                            let scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
+                            if (scriptContent) {
+                                let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                                if (matches && matches.length >= 3) {
+                                    arrayWithData += matches[2] + ",";
+                                } else if (matches && matches.length > 0) {
+                                    arrayWithData += matches[matches.length - 1] + ",";
+                                }
+                            }
                         }, () => {
-                            arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1);
+                            if (arrayWithData.endsWith(",")) {
+                                arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1);
+                            }
                             arrayWithData += "]";
-                            scavengeInfo = JSON.parse(arrayWithData);
+                            
+                            try {
+                                scavengeInfo = JSON.parse(arrayWithData);
+                            } catch(e) {
+                                scavengeInfo = [];
+                            }
+
                             var count = 0;
                             for (var i = 0; i < scavengeInfo.length; i++) {
                                 calculateHaulCategories(scavengeInfo[i]);
@@ -251,19 +289,19 @@
                                 }
                                 var htmlWithLaunchButtons = '<div id="massScavengeFinal" class="ui-widget-content" style="position:fixed;background-color:'+backgroundColor+';cursor:move;z-index:50;"><button class="btn" id = "x" onclick="closeWindow(\'massScavengeFinal\')"> X </button><table id="massScavengeSophieFinalTable" class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[7]+'</font></u></center></h3></td></tr>';
                                 for (var s = 0; s < Object.keys(window.squads).length; s++) {
-                                    htmlWithLaunchButtons += '<tr id="sendRow'+s+'" style="text-align:center; width:auto; background-color:'+backgroundColor+'"><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btnSophie btn-launch-group" id="sendGroupBtn'+s+'" onclick="sendGroup('+s+',false)" value="'+langShinko[8]+(s + 1)+'"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btn-pp btn-send-premium" id="sendMassPremium" onclick="sendGroup('+s+',true)" value="'+langShinko[8]+(s + 1)+' WITH PREMIUM" style="display:none"></center></td></tr>'
+                                    htmlWithLaunchButtons += '<tr id="sendRow'+s+'" style="text-align:center; width:auto; background-color:'+backgroundColor+'"><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btnSophie btn-launch-group" id="sendGroupBtn'+s+'" onclick="sendGroup('+s+',false)" value="'+langShinko[8]+(s + 1)+'"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btn-pp btn-send-premium" id="sendMassPremium" onclick="sendGroup('+s+',true)" value="'+langShinko[8]+(s + 1)+' WITH PREMIUM" style="display:none"></center></td></tr>';
                                 }
-                                htmlWithLaunchButtons += "</table></div>"
+                                htmlWithLaunchButtons += "</table></div>";
                                 $(".maincell").eq(0).prepend(htmlWithLaunchButtons);
                                 $("#mobileContent").eq(0).prepend(htmlWithLaunchButtons);
                                 if (is_mobile == false) { $("#massScavengeFinal").draggable(); }
                                 $("#sendGroupBtn0")[0].focus();
                             }
                         }, (error) => { console.error(error); });
-                    })
+                    });
                 }
 
-                var html = '<div id="massScavengeSophie" class="ui-widget-content" style="width:600px;background-color:'+backgroundColor+';cursor:move;z-index:50;"><button class="btn" id ="cog" onclick="settings()">⚙️</button><button class="btn" id = "x" onclick="closeWindow(\'massScavengeSophie\')"> X </button><table id="massScavengeSophieTable" class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[0]+'</font></u></center></h3></td></tr><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="15"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[1]+'</font></u></center></h3></td></tr><tr id="imgRow"></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tbody><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="4"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[2]+'</font></u></center></h3></td></tr><tr id="categories" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+categoryNames[1].name+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+categoryNames[2].name+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+categoryNames[3].name+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+categoryNames[4].name+'</font></td></tr><tr><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category1" name="cat1"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category2" name="cat2"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category3" name="cat3"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category4" name="cat4"></center></td></tr></tbody></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="runtimesTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="3" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">'+langShinko[3]+'</font></center></td></tr><tr id="runtimes" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="background-color:'+headerColor+';"></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Off villages</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Def villages</font></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorDate" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="offDay" name="offDay" value="'+setDayToField(runTimes.off)+'"><input type="time" id="offTime" name="offTime" value="'+setTimeToField(runTimes.off)+'"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="defDay" name="defDay" value="'+setDayToField(runTimes.def)+'"><input type="time" id="defTime" name="defTime" value="'+setTimeToField(runTimes.def)+'"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorHours" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_off" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['off']+'" onclick="this.select();"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_def" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['def']+'" onclick="this.select();"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="offDisplay"></span></font></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="defDisplay"></span></font></td></tr></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="settingPriorityTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="2" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">Which setting?</font></center></td></tr><tr id="settingPriorityHeader" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Balanced over all categories</font></td><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Priority on filling higher categories</font></td></tr><tr id="settingPriority" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityBalanced" name="prio"></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityPriority" name="prio"></td></tr><tr style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'">Settings bugged?</font></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><center><input type="button" class="btn btnSophie" id="reset" onclick="resetSettings()" value="Reset settings"></center></td></tr></table><hr><center><input type="button" class="btn btnSophie" id="sendMass" onclick="readyToSend()" value="'+langShinko[5]+'"></center></div>';
+                var html = '<div id="massScavengeSophie" class="ui-widget-content" style="width:600px;background-color:'+backgroundColor+';cursor:move;z-index:50;"><button class="btn" id ="cog" onclick="settings()">⚙️</button><button class="btn" id = "x" onclick="closeWindow(\'massScavengeSophie\')"> X </button><table id="massScavengeSophieTable" class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[0]+'</font></u></center></h3></td></tr><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="15"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[1]+'</font></u></center></h3></td></tr><tr id="imgRow"></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tbody><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="4"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[2]+'</font></u></center></h3></td></tr><tr id="categories" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[1] ? categoryNames[1].name : '1')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[2] ? categoryNames[2].name : '2')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[3] ? categoryNames[3].name : '3')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[4] ? categoryNames[4].name : '4')+'</font></td></tr><tr><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category1" name="cat1"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category2" name="cat2"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category3" name="cat3"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category4" name="cat4"></center></td></tr></tbody></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="runtimesTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="3" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">'+langShinko[3]+'</font></center></td></tr><tr id="runtimes" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="background-color:'+headerColor+';"></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Off villages</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Def villages</font></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorDate" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="offDay" name="offDay" value="'+setDayToField(runTimes.off)+'"><input type="time" id="offTime" name="offTime" value="'+setTimeToField(runTimes.off)+'"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="defDay" name="defDay" value="'+setDayToField(runTimes.def)+'"><input type="time" id="defTime" name="defTime" value="'+setTimeToField(runTimes.def)+'"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorHours" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_off" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['off']+'" onclick="this.select();"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_def" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['def']+'" onclick="this.select();"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="offDisplay"></span></font></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="defDisplay"></span></font></td></tr></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="settingPriorityTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="2" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">Which setting?</font></center></td></tr><tr id="settingPriorityHeader" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Balanced over all categories</font></td><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Priority on filling higher categories</font></td></tr><tr id="settingPriority" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityBalanced" name="prio"></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityPriority" name="prio"></td></tr><tr style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'">Settings bugged?</font></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><center><input type="button" class="btn btnSophie" id="reset" onclick="resetSettings()" value="Reset settings"></center></td></tr></table><hr><center><input type="button" class="btn btnSophie" id="sendMass" onclick="readyToSend()" value="'+langShinko[5]+'"></center></div>';
                 
                 $(".maincell").eq(0).prepend(html);
                 $("#mobileContent").eq(0).prepend(html);
@@ -271,14 +309,14 @@
                 $("#offDisplay")[0].innerText = fancyTimeFormat(runTimes.off * 3600);
                 $("#defDisplay")[0].innerText = fancyTimeFormat(runTimes.def * 3600);
                 if (tempElementSelection == "Date") { $("#timeSelectorDate").prop("checked", true); selectType("Date"); updateTimers(); } else { $("#timeSelectorHours").prop("checked", true); selectType("Hours"); updateTimers(); }
-                $("#offDay")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $("#defDay")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $("#offTime")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $("#defTime")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $(".runTime_off")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $(".runTime_def")[0].addEventListener("input", function () { updateTimers(); }, false)
-                $("#timeSelectorDate")[0].addEventListener("input", function () { selectType('Date'); updateTimers(); }, false)
-                $("#timeSelectorHours")[0].addEventListener("input", function () { selectType('Hours'); updateTimers(); }, false)
+                $("#offDay")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $("#defDay")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $("#offTime")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $("#defTime")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $(".runTime_off")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $(".runTime_def")[0].addEventListener("input", function () { updateTimers(); }, false);
+                $("#timeSelectorDate")[0].addEventListener("input", function () { selectType('Date'); updateTimers(); }, false);
+                $("#timeSelectorHours")[0].addEventListener("input", function () { selectType('Hours'); updateTimers(); }, false);
                 
                 for (var i = 0; i < sendOrder.length; i++) {
                     $("#imgRow").eq(0).append('<td align="center" style="background-color:'+backgroundColor+'"><table class="vis" border="1" style="width: 100%"><thead></thead><tbody><tr><td style=" text-align:center;background-color:'+headerColor+';padding: 5px;"><img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_'+sendOrder[i]+'.png" title="'+sendOrder[i]+'" alt="" class=""></td></tr><tr><td align="center" style="background-color:'+backgroundColor+';padding: 5px;"><input type="checkbox" ID="'+sendOrder[i]+'" name="'+sendOrder[i]+'"></td></tr><tr><td style="text-align:center; width:auto; background-color:#202225;padding: 5px;"><font color="#ffffdf">Backup</font></td></tr><tr><td align="center" style="background-color:'+backgroundColor+';padding: 5px;"><input type="text" ID="'+sendOrder[i]+'Backup" name="'+sendOrder[i]+'" value="'+keepHome[sendOrder[i]]+'" size="5"></td></tr></tbody></table></td>');
@@ -304,7 +342,7 @@
                     }
                     if ($("#settingPriorityPriority")[0].checked == true) { prioritiseHighCat = true; } else { prioritiseHighCat = false; }
                     sendOrder = [];
-                    for (var k = 0; k < $("#imgRow :checkbox").length; k++) { sendOrder.push($("#imgRow :checkbox")[k].name) }
+                    for (var k = 0; k < $("#imgRow :checkbox").length; k++) { sendOrder.push($("#imgRow :checkbox")[k].name); }
                     localStorage.setItem("troopTypeEnabled", JSON.stringify(troopTypeEnabled)); localStorage.setItem("keepHome", JSON.stringify(keepHome)); localStorage.setItem("categoryEnabled", JSON.stringify(enabledCategories)); localStorage.setItem("prioritiseHighCat", JSON.stringify(prioritiseHighCat)); localStorage.setItem("sendOrder", JSON.stringify(sendOrder)); localStorage.setItem("runTimes", JSON.stringify(time));
                     getData();
                 }
@@ -335,6 +373,7 @@
                 }
 
                 function calculateHaulCategories(data) {
+                    if (!data) return;
                     if (data.has_rally_point == true) {
                         var troopsAllowed = {};
                         for (var key in troopTypeEnabled) {
@@ -342,7 +381,7 @@
                                 if (data.unit_counts_home[key] - keepHome[key] > 0) { troopsAllowed[key] = data.unit_counts_home[key] - keepHome[key]; } else { troopsAllowed[key] = 0; }
                             }
                         }
-                        var unitType = { "spear": 'def', "sword": 'def', "axe": 'off', "archer": 'def', "light": 'off', "marcher": 'off', "heavy": 'def' }
+                        var unitType = { "spear": 'def', "sword": 'def', "axe": 'off', "archer": 'def', "light": 'off', "marcher": 'off', "heavy": 'def' };
                         var typeCount = { 'off': 0, 'def': 0 };
                         for (var prop in troopsAllowed) { typeCount[unitType[prop]] = typeCount[unitType[prop]] + troopsAllowed[prop]; }
                         var totalLoot = 0;
@@ -370,15 +409,15 @@
                         for (var k = 0; k < Object.keys(unitsReadyForSend).length; k++) {
                             var candidate_squad = { "unit_counts": unitsReadyForSend[k], "carry_max": 9999999999 };
                             if (data.options[k + 1].is_locked == false) {
-                                squad_requests.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": false })
-                                squad_requests_premium.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": true })
+                                squad_requests.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": false });
+                                squad_requests_premium.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": true });
                             }
                         }
                     }
                 }
 
                 function enableCorrectTroopTypes() {
-                    worldUnits = game_data.units;
+                    let worldUnits = game_data.units;
                     for (var i = 0; i < worldUnits.length; i++) {
                         if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy") {
                             if (troopTypeEnabled[worldUnits[i]] == true) $("#"+worldUnits[i]).prop("checked", true);
@@ -429,7 +468,7 @@
                 function setTimeToField(runtimeType) { var d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()); return d; }
                 function setDayToField(runtimeType) { var d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()); return d; }
                 function fancyTimeFormat(time) {
-                    if (time < 0) { return "Time is in the past!" } else {
+                    if (time < 0) { return "Time is in the past!"; } else {
                         var hrs = ~~(time / 3600); var mins = ~~((time % 3600) / 60); var secs = ~~time % 60;
                         var ret = "Max duration: ";
                         if (hrs > 0) { ret += "" + hrs + ":" + (mins < 10 ? "0" : ""); } else { ret += "0:" + (mins < 10 ? "0" : ""); }
@@ -438,11 +477,11 @@
                 }
                 function updateTimers() {
                     if ($("#timeSelectorDate")[0].checked == true) {
-                        $("#offDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#offDay").val().replace(/-/g, "/") + " " + $("#offTime").val()) - serverDate) / 1000)
-                        $("#defDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#defDay").val().replace(/-/g, "/") + " " + $("#defTime").val()) - serverDate) / 1000)
+                        $("#offDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#offDay").val().replace(/-/g, "/") + " " + $("#offTime").val()) - serverDate) / 1000);
+                        $("#defDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#defDay").val().replace(/-/g, "/") + " " + $("#defTime").val()) - serverDate) / 1000);
                     } else {
-                        $("#offDisplay")[0].innerText = fancyTimeFormat($(".runTime_off").val() * 3600)
-                        $("#defDisplay")[0].innerText = fancyTimeFormat($(".runTime_def").val() * 3600)
+                        $("#offDisplay")[0].innerText = fancyTimeFormat($(".runTime_off").val() * 3600);
+                        $("#defDisplay")[0].innerText = fancyTimeFormat($(".runTime_def").val() * 3600);
                     }
                 }
                 function selectType(type) {
@@ -527,7 +566,7 @@
         header.style.paddingBottom = '4px';
 
         const title = document.createElement('span');
-        title.textContent = 'Kalkulator Zbierak';
+        title.textContent = 'zbierak';
         title.style.fontWeight = 'bold';
         title.style.color = 'var(--title-color)';
         title.style.cursor = uiState.pinned ? 'default' : 'move';
@@ -710,9 +749,9 @@
         $.get(URLReq, function (data) {
             let amountOfPages = 0;
             if ($(data).find(".paged-nav-item").length > 0) {
-                // ZABEZPIECZENIE NUMER 2: Null-check dla wyrażenia regularnego
-                let lastPageHref = $(data).find(".paged-nav-item")[$(data).find(".paged-nav-item").length - 1].href;
-                let pageMatch = lastPageHref.match(/page=(\d+)/);
+                let navItems = $(data).find(".paged-nav-item");
+                let lastPageHref = navItems[navItems.length - 1].href;
+                let pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
                 amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
             }
             let URLs = [];
@@ -721,10 +760,20 @@
             let arrayWithData = "[";
 
             sophieGetAll(URLs, (i, here) => {
-                let thisPageData = $(here).find('script:contains("ScavengeMassScreen")').html().match(/\{.*\:\{.*\:.*\}\}/g)[2];
-                arrayWithData += thisPageData + ",";
+                let scriptContent = $(here).find('script:contains("ScavengeMassScreen")').html();
+                if (scriptContent) {
+                    let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                    if (matches && matches.length >= 3) {
+                        arrayWithData += matches[2] + ",";
+                    } else if (matches && matches.length > 0) {
+                        arrayWithData += matches[matches.length - 1] + ",";
+                    }
+                }
             }, () => {
-                arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1) + "]";
+                if (arrayWithData.endsWith(",")) {
+                    arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1);
+                }
+                arrayWithData += "]";
 
                 try {
                     let scavengeInfo = JSON.parse(arrayWithData);
