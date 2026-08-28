@@ -1,6 +1,8 @@
 // ==UserScript==
-// @name         Zarządzanie znajomymi
+// @name         Zarządzanie Znajomymi
 // @namespace    https://viayoo.com/
+// @version      1.1
+// @description  Automatyczne dodawanie i masowe usuwanie znajomych na podstawie plemienia oraz punktów.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=buddies*
 // @grant        none
@@ -25,7 +27,7 @@
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
         }
         #tcm-friends-ui {
-            position: absolute; /* Zmiana z fixed na absolute */
+            position: absolute;
             width: 320px;
             background: var(--bg-main); color: var(--text-color);
             border: 1px solid var(--border-color); z-index: 99999;
@@ -64,7 +66,7 @@
             background: var(--bg-row-alt); border: 1px solid var(--border-color); padding: 5px;
             max-height: 100px; overflow-y: auto; margin-bottom: 8px; font-size: 11px;
         }
-        .tcm-log { background: #000; color: #0f0; padding: 5px; height: 60px; overflow-y: auto; font-family: monospace; font-size: 10px; margin-top: 5px; border-radius: 2px; }
+        .tcm-log { background: #000; color: #0f0; padding: 5px; height: 70px; overflow-y: auto; font-family: monospace; font-size: 10px; margin-top: 5px; border-radius: 2px; }
     `;
     document.head.appendChild(style);
 
@@ -76,19 +78,21 @@
     rows.forEach(row => {
         if (row.querySelector('th') || row.classList.contains('lit')) return;
         let cells = row.querySelectorAll('td');
-        if (cells.length < 10) return;
+        if (cells.length < 4) return;
         
-        let nameElem = cells[1].querySelector('a');
-        let pointsText = cells[4].innerText.replace(/\./g, '').trim();
-        let tribeElem = cells[8].querySelector('a');
-        let deleteElem = cells[9].querySelector('a');
+        let nameElem = row.querySelector('a[href*="screen=info_player"]');
+        let pointsElem = cells[4] || cells[3];
+        let tribeElem = row.querySelector('a[href*="screen=info_ally"]');
+        let deleteElem = row.querySelector('a[href*="action=del"]');
         
         if (nameElem && deleteElem) {
             let tribe = tribeElem ? tribeElem.innerText.trim() : "Brak plemienia";
-            tribesSet.add(tribe);
+            let pts = pointsElem ? parseInt(pointsElem.innerText.replace(/\./g, '').trim(), 10) : 0;
+            if (tribe !== "Brak plemienia") tribesSet.add(tribe);
+            
             friends.push({
                 name: nameElem.innerText.trim(),
-                points: parseInt(pointsText, 10) || 0,
+                points: pts || 0,
                 tribe: tribe,
                 deleteUrl: deleteElem.getAttribute('href')
             });
@@ -101,9 +105,7 @@
     let checkboxHtmlDel = '';
     
     sortedTribes.forEach(t => {
-        if (t !== "Brak plemienia") {
-            checkboxHtmlAdd += `<div style="display:flex; align-items:center; margin-bottom:3px;"><input type="checkbox" class="tcm-add-chk" value="${t}" style="margin-right:5px;"><span>${t}</span></div>`;
-        }
+        checkboxHtmlAdd += `<div style="display:flex; align-items:center; margin-bottom:3px;"><input type="checkbox" class="tcm-add-chk" value="${t}" style="margin-right:5px;"><span>${t}</span></div>`;
         checkboxHtmlDel += `<div style="display:flex; align-items:center; margin-bottom:3px;"><input type="checkbox" class="tcm-del-chk" value="${t}" style="margin-right:5px;"><span>${t}</span></div>`;
     });
 
@@ -123,9 +125,9 @@
         <div id="tcm-tab-add" class="tcm-content-section active">
             <label style="font-size:11px;">Plemiona z Twojej listy znajomych:</label>
             <div class="tcm-list-box">
-                ${checkboxHtmlAdd || '<div style="color:#aaa;">Brak plemion do wyboru</div>'}
+                ${checkboxHtmlAdd || '<div style="color:#aaa;">Brak plemion na liście</div>'}
             </div>
-            <label style="font-size:11px;">Oraz dodatkowe tagi (opcjonalnie):</label>
+            <label style="font-size:11px;">Wpisz Tagi/Nazwy plemion (rozdzielone nową linią):</label>
             <textarea id="tcm-ally-list" class="tcm-textarea" placeholder="np. K44\nELITE"></textarea>
             <button id="tcm-generate-btn" class="tcm-btn">Automatycznie dodaj znajomych</button>
             <div id="tcm-add-log" class="tcm-log">Oczekiwanie...</div>
@@ -136,7 +138,7 @@
             <input type="number" id="tcm-min-points" class="tcm-input" placeholder="np. 50000">
             <label style="font-size:11px;">Zaznacz plemiona do usunięcia:</label>
             <div class="tcm-list-box">
-                ${checkboxHtmlDel || '<div style="color:#aaa;">Brak tabeli znajomych</div>'}
+                ${checkboxHtmlDel || '<div style="color:#aaa;">Brak plemion do wyboru</div>'}
             </div>
             <button id="tcm-delete-btn" class="tcm-btn">Usuń zaznaczonych</button>
             <div id="tcm-del-log" class="tcm-log">Oczekiwanie...</div>
@@ -154,7 +156,7 @@
         });
     });
 
-    // --- SZPILKA I PRZECIĄGANIE (Z optymalizacją pod absolute) ---
+    // --- SZPILKA I PRZECIĄGANIE ---
     const header = document.getElementById('tcm-header');
     const pinBtn = document.getElementById('tcm-pin');
     let isPinned = localStorage.getItem('tcm_pin_zaj') === 'true';
@@ -183,7 +185,6 @@
     const dragStart = (e) => {
         if (isPinned || e.target === pinBtn) return;
         isDragging = true;
-        // Zmiana clientX/Y na pageX/Y by poprawnie czytać pozycję na zescrollowanej stronie (absolute)
         startX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
         startY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
         initialX = ui.offsetLeft;
@@ -208,7 +209,7 @@
     document.addEventListener('mouseup', dragEnd);
     document.addEventListener('touchend', dragEnd);
 
-    // --- FUNKCJE POMOCNICZE (LOGI) ---
+    // --- FUNKCJE POMOCNICZE ---
     function logAdd(msg) {
         const box = document.getElementById('tcm-add-log');
         box.innerHTML += `<div>${msg}</div>`;
@@ -219,78 +220,104 @@
         box.innerHTML += `<div>${msg}</div>`;
         box.scrollTop = box.scrollHeight;
     }
+    
+    function cleanText(str) {
+        return decodeURIComponent(str.replace(/\+/g, ' ')).trim().toLowerCase();
+    }
 
-    // --- LOGIKA DODAWANIA ZNAJOMYCH (AUTO) ---
-    const baseUrl = window.location.origin;
-    let urlTemplate = TribalWars.buildURL('POST', 'buddies', {action: 'add_buddy'});
-    const tokenH = urlTemplate.substring(urlTemplate.indexOf("h=") + 2);
-    const postUrl = urlTemplate.substring(0, urlTemplate.indexOf("h=") - 1);
-
+    // --- LOGIKA DODAWANIA ZNAJOMYCH ---
     document.getElementById('tcm-generate-btn').addEventListener('click', async () => {
         const genBtn = document.getElementById('tcm-generate-btn');
-        let targetAllies = document.getElementById('tcm-ally-list').value.split('\n').map(a => a.trim()).filter(a => a);
+        let rawInputs = document.getElementById('tcm-ally-list').value.split('\n').map(a => a.trim()).filter(a => a);
         
         document.querySelectorAll('.tcm-add-chk:checked').forEach(cb => {
-            if (!targetAllies.includes(cb.value)) targetAllies.push(cb.value);
+            if (!rawInputs.includes(cb.value)) rawInputs.push(cb.value);
         });
 
-        if (targetAllies.length === 0) {
-            logAdd('Brak tagów do wyszukania.');
+        if (rawInputs.length === 0) {
+            logAdd('⚠️ Zaznacz plemię lub wpisz tag!');
             return;
         }
 
+        const targetSearch = rawInputs.map(t => t.toLowerCase());
+
         genBtn.disabled = true;
-        logAdd('Pobieranie bazy z mapy serwera...');
+        logAdd('♻️ Pobieranie bazy świata...');
 
         try {
-            const [allyRes, tribeRes] = await Promise.all([
+            const baseUrl = window.location.origin;
+            const [allyRes, playerRes] = await Promise.all([
                 fetch(baseUrl + "/map/ally.txt").then(r => r.text()),
-                fetch(baseUrl + "/map/tribe.txt").then(r => r.text())
+                fetch(baseUrl + "/map/player.txt").then(r => r.text())
             ]);
 
             let targetAllyIds = new Set();
             allyRes.split('\n').forEach(line => {
                 if (!line) return;
-                let [id, , tag] = line.split(',');
-                if (targetAllies.includes(decodeURIComponent(tag))) {
-                    targetAllyIds.add(id);
+                let parts = line.split(',');
+                if (parts.length >= 3) {
+                    let id = parts[0];
+                    let name = cleanText(parts[1]);
+                    let tag = cleanText(parts[2]);
+
+                    if (targetSearch.includes(name) || targetSearch.includes(tag)) {
+                        targetAllyIds.add(id);
+                    }
                 }
             });
+
+            if (targetAllyIds.size === 0) {
+                logAdd('❗ Nie znaleziono plemienia o podanym tagu/nazwie.');
+                genBtn.disabled = false;
+                return;
+            }
 
             let playersToAdd = [];
-            tribeRes.split('\n').forEach(line => {
+            playerRes.split('\n').forEach(line => {
                 if (!line) return;
-                let [id, name, allyId] = line.split(',');
-                if (targetAllyIds.has(allyId)) {
-                    playersToAdd.push({ id, name: decodeURIComponent(name).replace(/\+/g, ' ') });
+                let parts = line.split(',');
+                if (parts.length >= 3) {
+                    let name = decodeURIComponent(parts[1].replace(/\+/g, ' '));
+                    let allyId = parts[2];
+                    if (targetAllyIds.has(allyId)) {
+                        playersToAdd.push(name);
+                    }
                 }
             });
 
-            logAdd(`Znaleziono: ${playersToAdd.length} graczy. Rozpoczynam wysyłkę...`);
+            logAdd(`Znaleziono: ${playersToAdd.length} graczy. Wysyłam zaproszenia...`);
+
+            const csrfToken = (window.csrf_token || (window.game_data && window.game_data.csrf));
+            const postUrl = TribalWars.buildURL('POST', 'buddies', { action: 'add_buddy' });
 
             for (let i = 0; i < playersToAdd.length; i++) {
-                let p = playersToAdd[i];
-                logAdd(`[${i+1}/${playersToAdd.length}] Wysyłam do: ${p.name}`);
+                let name = playersToAdd[i];
+                logAdd(`[${i+1}/${playersToAdd.length}] Wysyłam do: ${name}`);
+                
+                let formData = new URLSearchParams();
+                formData.append('name', name);
+                formData.append('h', csrfToken);
+
                 try {
                     await fetch(postUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `name=${encodeURIComponent(p.name)}&h=${tokenH}`
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+                        body: formData.toString()
                     });
-                    await new Promise(r => setTimeout(r, 250)); // Opóźnienie
+                    await new Promise(r => setTimeout(r, 200));
                 } catch (e) {
-                    logAdd(`Błąd wysyłki: ${p.name}`);
+                    logAdd(`❗ Błąd wysyłki do: ${name}`);
                 }
             }
-            logAdd('Zakończono wysyłanie zaproszeń!');
+            logAdd('ദ്ദി ˉ͈̀꒳ˉ͈́ )✧ Gotowe!');
         } catch (e) {
-            logAdd('Błąd pobierania danych.');
+            logAdd('❗ Błąd podczas pobierania bazy.');
             console.error(e);
         }
         genBtn.disabled = false;
     });
 
-    // --- LOGIKA USUWANIA ZNAJOMYCH (Rygorystyczna) ---
+    // --- LOGIKA USUWANIA ZNAJOMYCH ---
     document.getElementById('tcm-delete-btn').addEventListener('click', async () => {
         const delBtn = document.getElementById('tcm-delete-btn');
         const minPointsVal = document.getElementById('tcm-min-points').value;
@@ -303,23 +330,22 @@
         let hasTribeCondition = tribesToDelete.length > 0;
 
         if (!hasMinPointsCondition && !hasTribeCondition) {
-            logDel("Wybierz przynajmniej jedno kryterium usuwania.");
+            logDel("⚠️ Wybierz przynajmniej jedno kryterium.");
             return;
         }
 
         let toDelete = friends.filter(f => {
             let matchPoints = hasMinPointsCondition && f.points < minPoints;
             let matchTribe = hasTribeCondition && tribesToDelete.includes(f.tribe);
-            
             return matchPoints || matchTribe;
         });
 
         if (toDelete.length === 0) {
-            logDel("Brak graczy spełniających podane kryteria.");
+            logDel("Brak graczy spełniających kryteria.");
             return;
         }
 
-        if (!confirm(`Znaleziono ${toDelete.length} znajomych pasujących do kryteriów. Na pewno usunąć?`)) return;
+        if (!confirm(`Usuwasz ${toDelete.length} graczy. Kontynuować?`)) return;
 
         delBtn.disabled = true;
         for (let i = 0; i < toDelete.length; i++) {
@@ -327,13 +353,13 @@
             logDel(`[${i+1}/${toDelete.length}] Usuwam: ${f.name}`);
             try {
                 await fetch(f.deleteUrl);
-                await new Promise(r => setTimeout(r, 300));
+                await new Promise(r => setTimeout(r, 250));
             } catch (e) {
-                logDel(`Błąd usuwania: ${f.name}`);
+                logDel(`Błąd: ${f.name}`);
             }
         }
-        logDel("Zakończono! Odświeżam stronę...");
-        setTimeout(() => location.reload(), 1500);
+        logDel("ദ്ദി ˉ͈̀꒳ˉ͈́ )✧ Odświeżam...");
+        setTimeout(() => location.reload(), 1200);
     });
 
 })();
