@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Kalkulator Zbierak
+// @name         Kalkulator Zbierak 1.5
 // @namespace    https://viayoo.com/
 // @version      1.5
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
@@ -88,13 +88,19 @@
     function loadShinkoMassScavenge(autoClick = false) {
         if (!document.getElementById('massScavengeScript')) {
             const shinkoLogic = function() {
-                // ZMIENNE PRZENIESIONE DO ZAKRESU GŁÓWNEGO - NAPRAWA BŁĘDU
                 window.squads = {};
                 window.squads_premium = {};
 
                 serverTimeTemp = $("#serverDate")[0].innerText + " " + $("#serverTime")[0].innerText;
                 serverTime = serverTimeTemp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
-                serverDate = Date.parse(serverTime[3] + "/" + serverTime[2] + "/" + serverTime[1] + serverTime[4]);
+                
+                // Zabezpieczenie przed brakiem dopasowania daty serwera (na wszelki wypadek)
+                if(serverTime) {
+                    serverDate = Date.parse(serverTime[3] + "/" + serverTime[2] + "/" + serverTime[1] + serverTime[4]);
+                } else {
+                    serverDate = Date.now();
+                }
+                
                 var is_mobile = !!navigator.userAgent.match(/iphone|android|blackberry/ig) || false;
                 var scavengeInfo;
                 var tempElementSelection="";
@@ -167,7 +173,6 @@
                 }
                 var arrayWithData;
                 var enabledCategories = [];
-                var availableUnits = [];
                 var squad_requests = [];
                 var squad_requests_premium = [];
                 var duration_factor = 0;
@@ -207,7 +212,10 @@
                     $.get(URLReq, function (data) {
                         var amountOfPages = 0;
                         if ($(".paged-nav-item").length > 0) {
-                            amountOfPages = parseInt($(".paged-nav-item")[$(".paged-nav-item").length - 1].href.match(/page=(\d+)/)[1]);
+                            // ZABEZPIECZENIE NUMER 1: Null-check dla wyrażenia regularnego
+                            let lastPageHref = $(".paged-nav-item")[$(".paged-nav-item").length - 1].href;
+                            let pageMatch = lastPageHref.match(/page=(\d+)/);
+                            amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
                         }
                         for (var i = 0; i <= amountOfPages; i++) {
                             URLs.push(URLReq + "&page=" + i);
@@ -301,7 +309,6 @@
                     getData();
                 }
 
-                // NAPRAWIONA FUNKCJA WYSYŁANIA GRUP
                 function sendGroup(groupNr, premiumEnabled) {
                     var actuallyEnabled = false;
                     if (premiumEnabled == true) { actuallyEnabled = confirm("Jesteś pewny, że chcesz wysłać za PP?"); }
@@ -458,7 +465,6 @@
                     }
                 }
 
-                // EKSPORT DO ZAKRESU GLOBALNEGO
                 window.readyToSend = readyToSend;
                 window.sendGroup = sendGroup;
                 window.resetSettings = resetSettings;
@@ -478,7 +484,6 @@
         }
 
         if (autoClick) {
-            // INTELIGENTNY KLIKACZ AUTOMATYCZNY
             setTimeout(() => {
                 const calcBtn = document.getElementById('sendMass');
                 if (calcBtn) calcBtn.click();
@@ -705,7 +710,10 @@
         $.get(URLReq, function (data) {
             let amountOfPages = 0;
             if ($(data).find(".paged-nav-item").length > 0) {
-                amountOfPages = parseInt($(data).find(".paged-nav-item")[$(data).find(".paged-nav-item").length - 1].href.match(/page=(\d+)/)[1]);
+                // ZABEZPIECZENIE NUMER 2: Null-check dla wyrażenia regularnego
+                let lastPageHref = $(data).find(".paged-nav-item")[$(data).find(".paged-nav-item").length - 1].href;
+                let pageMatch = lastPageHref.match(/page=(\d+)/);
+                amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
             }
             let URLs = [];
             for (let i = 0; i <= amountOfPages; i++) URLs.push(URLReq + "&page=" + i);
