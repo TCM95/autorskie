@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         zbierak
 // @namespace    https://viayoo.com/
-// @version      1.6
+// @version      1.7
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -174,7 +174,6 @@
                 var duration_exponent = 0;
                 var duration_initial_seconds = 0;
 
-                // Bezpieczne pobieranie nazw kategorii
                 var categoryNames = [{ name: "" }, { name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }];
                 try {
                     var rawCatScript = $.find('script:contains("ScavengeMassScreen")')[0].innerHTML;
@@ -227,7 +226,6 @@
                             URLs.push(URLReq + "&page=" + i);
                         }
 
-                        // NAPRAWA BŁĘDU (Linia 177): Bezpieczna ekstrakcja parametrów konfiguracji
                         try {
                             let scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
                             if (scriptContent) {
@@ -241,7 +239,6 @@
                                 }
                             }
                         } catch (err) {
-                            console.error("Błąd parsowania parametrów zbieractwa, używam domyślnych:", err);
                             duration_exponent = 0.45;
                             duration_factor = 0.6;
                             duration_initial_seconds = 1800;
@@ -746,6 +743,11 @@
             return;
         }
 
+        // POBRANIE AKTUALNYCH USTAWIEŃ SHINKO
+        let categoryEnabled = JSON.parse(localStorage.getItem("categoryEnabled")) || [true, true, true, true];
+        let troopTypeEnabled = JSON.parse(localStorage.getItem("troopTypeEnabled")) || {};
+        let keepHome = JSON.parse(localStorage.getItem("keepHome")) || {};
+
         $.get(URLReq, function (data) {
             let amountOfPages = 0;
             if ($(data).find(".paged-nav-item").length > 0) {
@@ -782,29 +784,39 @@
 
                     $.each(scavengeInfo, function (villageNr) {
                         let units = scavengeInfo[villageNr]["unit_counts_home"];
-                        let hasTroops = false;
-                        if (units) {
-                            let totalUnits = (parseInt(units.spear || 0)) +
-                                             (parseInt(units.sword || 0)) +
-                                             (parseInt(units.axe || 0)) +
-                                             (parseInt(units.archer || 0)) +
-                                             (parseInt(units.light || 0)) +
-                                             (parseInt(units.marcher || 0)) +
-                                             (parseInt(units.heavy || 0)) +
-                                             (parseInt(units.knight || 0));
+                        let hasAvailableTroops = false;
+                        let totalCarry = 0;
 
-                            if (totalUnits >= 10) {
-                                hasTroops = true;
+                        // DYNAMICZNE SPRAWDZANIE WOJSKA NA BAZIE USTAWIEŃ "BACKUP" I WŁĄCZONYCH JEDNOSTEK
+                        if (units) {
+                            let unitHaul = { "spear": 25, "sword": 15, "axe": 10, "archer": 10, "light": 80, "marcher": 50, "heavy": 50, "knight": 100 };
+                            
+                            for (let unit in units) {
+                                if (troopTypeEnabled[unit] === true) {
+                                    let kept = parseInt(keepHome[unit]) || 0;
+                                    let available = parseInt(units[unit]) - kept;
+                                    if (available > 0) {
+                                        totalCarry += available * (unitHaul[unit] || 0);
+                                    }
+                                }
+                            }
+                            
+                            // Próg min. ładowności – żeby skrypt nie zapętlał się dla samotnego pikiniera
+                            if (totalCarry >= 50) {
+                                hasAvailableTroops = true;
                             }
                         } else {
-                            hasTroops = true;
+                            hasAvailableTroops = true;
                         }
 
                         $.each(scavengeInfo[villageNr]["options"], function (villageCategoryNr) {
                             let option = scavengeInfo[villageNr]["options"][villageCategoryNr];
+                            let catIndex = parseInt(villageCategoryNr) - 1; // mapowanie z "1" na index 0
+
                             if (option["is_locked"] !== true) {
                                 if (option["scavenging_squad"] == null) {
-                                    if (hasTroops) {
+                                    // DODANO WERYFIKACJĘ CZY DANY POZIOM ZBIERACTWA JEST W OGÓLE WŁĄCZONY W PANELU
+                                    if (categoryEnabled[catIndex] === true && hasAvailableTroops) {
                                         hasReadyVillages = true;
                                     }
                                 } else {
