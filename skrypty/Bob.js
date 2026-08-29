@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Budowy PRO
 // @namespace    https://viayoo.com/
-// @version      2.5
-// @description  Zintegrowany system budowy, trwałe notatki okienkowe, nowe UI 3D + Wbudowany Aktywator Bonusów
+// @version      2.6
+// @description  Zintegrowany system budowy, trwałe notatki okienkowe, nowe UI 3D + Wbudowany Aktywator Bonusów (Naprawione UI)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
 // @grant        none
@@ -40,8 +40,6 @@
             --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
             --neon-green: #74ff00;
             --neon-glow: 0 0 8px rgba(116,255,0,.6), 0 0 15px rgba(116,255,0,.4);
-            --neon-red: #ff003c;
-            --neon-red-glow: 0 0 8px rgba(255,0,60,.6), 0 0 15px rgba(255,0,60,.4);
         }
         
         #autoBuilderMain * { box-sizing: border-box !important; outline: none !important; -webkit-tap-highlight-color: transparent !important; }
@@ -177,9 +175,10 @@
                 label += ` (${simulatedLevels[b]})`;
             }
 
+            // POPRAWKA UI: dodano white-space: nowrap i sztywną szerokość dla prawej kolumny (komórka z przyciskami)
             let row = `<tr class="q-row ${i % 2 === 0 ? 'q-row-a' : 'q-row-b'}" style="${isQueueMinimized ? 'display:none;' : ''}">
-                <td style="padding: 4px; ${isBonus ? 'color: #ff9800; font-weight: bold;' : 'color: var(--text-color);'}">${label}</td>
-                <td style="text-align:right; padding: 4px;">
+                <td style="padding: 4px; ${isBonus ? 'color: #ff9800; font-weight: bold;' : 'color: var(--text-color);'} word-break: break-word;">${label}</td>
+                <td style="text-align:right; padding: 4px; white-space: nowrap; width: 85px;">
                     <button class="tcm-btn q-action" data-type="up" data-idx="${i}">▲</button>
                     <button class="tcm-btn q-action" data-type="down" data-idx="${i}">▼</button>
                     <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">X</button>
@@ -196,7 +195,6 @@
         let addedCount = 0;
         let localInstructions = [];
 
-        // Normalizacja znaków końca linii
         const lines = text.replace(/\r\n/g, '\n').split('\n');
 
         lines.forEach(line => {
@@ -297,7 +295,6 @@
         })
         .fail(function(xhr, status, error) {
             UI.ErrorMessage("Wystąpił błąd podczas pobierania szablonu.");
-            console.error("Błąd pobierania szablonu:", status, error);
         });
     }
 
@@ -431,7 +428,13 @@
 
         UI.InfoMessage("Wykryto bonus! Szukam: " + keyword, 2000);
 
-        $.getJSON(`/game.php?village=${game_data.village.id}&screen=inventory&ajax=load_inventory`)
+        // POPRAWKA AJAX: Dodano odpowiednie nagłówki do żądania
+        $.ajax({
+            url: `/game.php?village=${game_data.village.id}&screen=inventory&ajax=load_inventory`,
+            type: 'GET',
+            dataType: 'json',
+            headers: { "TribalWars-Ajax": 1 }
+        })
         .done(function(r) {
             let foundItemId = null;
             if (r && r.dialog && r.dialog.inventory) {
