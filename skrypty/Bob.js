@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Kalkulator Budowy PRO
+// @name         Kalkulator Budowy
 // @namespace    https://viayoo.com/
-// @version      2.8
-// @description  Zintegrowany system budowy, Touch Drag&Drop, Szablony, Notatki i Zaawansowane Bonusy
+// @version      3.0
+// @description  Zintegrowany system budowy, szablony, notatki, obsługa bonusów w tle
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
 // @grant        none
@@ -17,27 +17,32 @@
     if (typeof get_world_info === 'function') {
         try {
             daneSwiata = await get_world_info({ configs: ['config', 'building_info'], entities: { 'village': ['id', 'name', 'points'] } });
-        } catch (e) { console.log("Brak Biblioteki Hermitowskiego."); }
+        } catch (e) { 
+            console.log("Brak Biblioteki Hermitowskiego. Praca w trybie ograniczonym."); 
+        }
     }
 
     const style = document.createElement('style');
     style.innerHTML = `
         :root {
             --bg-main: #36393f; --bg-row-alt: #32353b; --bg-header: #202225; --border-color: #3e4147;
-            --text-color: #fff; --title-color: #ffffdf;
-            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, #000 100%);
+            --text-color: white; --title-color: #ffffdf;
+            --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
             --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
             --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
             --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
             --neon-green: #74ff00; --neon-glow: 0 0 8px rgba(116,255,0,.6), 0 0 15px rgba(116,255,0,.4);
         }
-        #autoBuilderMain * { box-sizing: border-box !important; outline: none !important; -webkit-tap-highlight-color: transparent !important; }
-        #autoBuilderMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 320px; font-size: 12px; }
-        #autoBuilderMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        #autoBuilderMain th { background-color: var(--bg-header) !important; color: var(--title-color) !important; border-bottom: 1px solid var(--border-color); }
-        #autoBuilderMain select, #autoBuilderMain input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; max-width: 100px; }
-        .tcm-btn { background: var(--btn-bg) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px 1px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.8); transition: all 0.2s ease; }
+        #kalkulatorBudowyMain * { box-sizing: border-box !important; outline: none !important; -webkit-tap-highlight-color: transparent !important; }
+        #kalkulatorBudowyMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 320px; font-size: 12px; }
+        #kalkulatorBudowyMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        #kalkulatorBudowyMain th { background: var(--bg-header) !important; background-image: none !important; color: var(--title-color) !important; border-bottom: 1px solid var(--border-color); }
+        #kalkulatorBudowyMain select, #kalkulatorBudowyMain input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; max-width: 100px; }
+        .tcm-btn { background: var(--btn-bg) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold; margin: 2px 1px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.8); transition: all 0.2s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .tcm-btn-active { border-color: var(--neon-green) !important; color: var(--neon-green) !important; text-shadow: var(--neon-glow); box-shadow: inset 0 0 5px rgba(116,255,0,.3); }
         .q-row-a { background-color: var(--bg-main); } .q-row-b { background-color: var(--bg-row-alt); }
         .drag-handle { cursor: grab; font-size: 16px; color: #aaa; padding: 0 6px !important; user-select: none; }
@@ -127,7 +132,7 @@
     }
 
     function reloadQueueDisplay() {
-        const table = $('#autoBuilderTable');
+        const table = $('#kalkulatorBudowyTabela');
         if (!table.length) return;
         table.find('.q-row').remove();
 
@@ -263,9 +268,9 @@
         }
 
         let menuHtml = `
-            <div id="autoBuilderMain">
+            <div id="kalkulatorBudowyMain">
                 <h4>🛠️ BOB 🛠️<button id="instrukcjeBtn" title="Pokaż notatki szablonu">ℹ️</button></h4>
-                <table id="autoBuilderTable" style="width: 100%; border-collapse: collapse;">
+                <table id="kalkulatorBudowyTabela" style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td colspan="3" style="padding-bottom: 6px; text-align:center;">
                             <button id="startBtn" class="tcm-btn ${buildingObject.status ? 'tcm-btn-active' : ''}">${buildingObject.status ? 'Stop' : 'Start'}</button>
@@ -274,8 +279,8 @@
                     </tr>
                     <tr>
                         <td colspan="3" style="padding-bottom: 6px; text-align:center;">
-                            <button id="addWWBtn" class="tcm-btn" style="color:#ff9800 !important;">+Wojenny Wysiłek</button>
-                            <button id="addWBBtn" class="tcm-btn" style="color:#00bcd4 !important;">+Wzmocnienie Budowy</button>
+                            <button id="addWWBtn" class="tcm-btn" style="color:#ff9800 !important;">+ Surowce 30%</button>
+                            <button id="addWBBtn" class="tcm-btn" style="color:#00bcd4 !important;">+ Budowa 10%</button>
                         </td>
                     </tr>
                     <tr>
@@ -335,7 +340,7 @@
                 </div>
             </div>`;
 
-        $('#autoBuilderMain, #tcm-modal-inst, #tcm-modal-bonus').remove();
+        $('#kalkulatorBudowyMain, #tcm-modal-inst, #tcm-modal-bonus').remove();
         $('#content_value').prepend(menuHtml);
 
         $('#clearQueueBtn').click(() => {
@@ -348,15 +353,16 @@
             }
         });
 
-        $('#addWWBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Wojenny wysiłek"); updateLocalStorage(); reloadQueueDisplay(); });
-        $('#addWBBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Wzmocnienie budowy"); updateLocalStorage(); reloadQueueDisplay(); });
+        // Krótkie nazwy w przyciskach wrzucają pełną informację do logiki
+        $('#addWWBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Surowce 30%"); updateLocalStorage(); reloadQueueDisplay(); });
+        $('#addWBBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Budowa 10%"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addBBtn').click(() => { const v = $('#bSelect').val(); if(v) { buildingObject.buildingQueue.push(v); updateLocalStorage(); reloadQueueDisplay(); }});
         
         $('#startBtn').click(function() {
             buildingObject.status = !buildingObject.status;
             $(this).text(buildingObject.status ? "Stop" : "Start").toggleClass('tcm-btn-active', buildingObject.status);
             updateLocalStorage();
-            if (buildingObject.status) runAutoBuild();
+            if (buildingObject.status) uruchomBudowe();
         });
 
         $('#toggleQueueBtn').click(function() {
@@ -364,16 +370,15 @@
             $(this).text(isQueueMinimized ? '+' : '-'); $('.q-row').toggle(!isQueueMinimized);
         });
 
-        $('#autoBuilderTable').on('click', '.q-action', function() {
+        $('#kalkulatorBudowyTabela').on('click', '.q-action', function() {
             if ($(this).data('type') === 'del') {
                 buildingObject.buildingQueue.splice($(this).data('idx'), 1);
                 updateLocalStorage(); reloadQueueDisplay();
             }
         });
 
-        // Touch Drag & Drop (VIA browser support)
         let dragIdx = -1, dragEl = null;
-        $('#autoBuilderTable').on('touchstart', '.drag-handle', function(e) {
+        $('#kalkulatorBudowyTabela').on('touchstart', '.drag-handle', function(e) {
             dragEl = $(this).closest('.q-row');
             dragIdx = dragEl.data('idx');
             dragEl.css({opacity: '0.4', background: 'var(--bg-row-alt)'});
@@ -410,7 +415,6 @@
             $('#manual-tpl-container').hide();
         });
 
-        // Modal bonusu
         $('#btn-bonus-wait').click(() => $('#tcm-modal-bonus').hide());
         $('#btn-bonus-skip').click(() => { 
             $('#tcm-modal-bonus').hide(); 
@@ -418,14 +422,15 @@
             buildingObject.status = true; 
             $('#startBtn').text("Stop").addClass('tcm-btn-active');
             updateLocalStorage(); reloadQueueDisplay();
-            runAutoBuild();
+            uruchomBudowe();
         });
 
         reloadQueueDisplay();
-        if (buildingObject.status) runAutoBuild();
+        if (buildingObject.status) uruchomBudowe();
         if (buildingObject.instructions.length > 0) $('#instrukcjeBtn').show();
     }
 
+    // Nowa ulepszona funkcja szukająca inwentarza z tła Ratusza
     function activateBonusInBg(bonusText) {
         if (isActivatingBonus) return;
         isActivatingBonus = true;
@@ -433,35 +438,66 @@
         let keyword = "";
         let textLower = bonusText.toLowerCase();
 
-        if (textLower.includes('wojenny wysiłek')) keyword = "wojenny wysiłek";
-        else if (textLower.includes('wzmocnienie budowy') || textLower.includes('budow')) keyword = "budow";
-        else if (textLower.includes('wydobyci')) keyword = "wydobyci";
+        // Tłumaczenie przycisków na rzeczywiste nazwy przedmiotów w Plemionach
+        if (textLower.includes('surowce 30%') || textLower.includes('wojenny wysiłek') || textLower.includes('wydobyci')) keyword = "wysiłek";
+        else if (textLower.includes('budowa 10%') || textLower.includes('wzmocnienie budowy') || textLower.includes('budow')) keyword = "budow";
         else keyword = textLower.replace('aktywuj', '').trim();
 
+        UI.InfoMessage("Skanowanie inwentarza w tle...", 1500);
+
+        // Pobranie strony inwentarza "w tle" bez przeładowywania Ratusza
         $.ajax({
-            url: `/game.php?village=${game_data.village.id}&screen=inventory&ajax=load_inventory`,
-            type: 'GET', dataType: 'json', headers: { "TribalWars-Ajax": 1 }
-        }).done(function(r) {
+            url: `/game.php?village=${game_data.village.id}&screen=inventory`,
+            type: 'GET'
+        }).done(function(data) {
             let foundItemId = null;
-            if (r && r.dialog && r.dialog.inventory) {
-                let items = r.dialog.inventory;
-                for (let i = 0; i < items.length; i++) {
-                    let name = (items[i].name || '').toLowerCase();
-                    let desc = (items[i].description || '').toLowerCase();
-                    if (name.includes(keyword) || desc.includes(keyword)) {
-                        foundItemId = items[i].id || items[i].item_id; break;
+            let foundName = "";
+            
+            // Metoda 1: Wyciągnięcie JSONa prosto ze skryptów na stronie inwentarza
+            let match = data.match(/Inventory\.items\s*=\s*(\{.*?\});/s);
+            if (match) {
+                try {
+                    let items = JSON.parse(match[1]);
+                    for (let key in items) {
+                        let n = (items[key].name || items[key].title || '').toLowerCase();
+                        if (n.includes(keyword)) {
+                            foundItemId = items[key].id || items[key].item_id || key;
+                            foundName = items[key].name;
+                            break;
+                        }
                     }
-                }
+                } catch(e) {}
+            }
+
+            // Metoda 2: Fallback (DOM Scraping HTML) jak w Ekstraktorze
+            if (!foundItemId) {
+                let htmlDoc = $($.parseHTML(data));
+                htmlDoc.find('.item, .inventory-item, [class*="item_"]').each(function() {
+                    let n = ($(this).attr('data-item-name') || $(this).attr('data-name') || $(this).attr('data-title') || '').toLowerCase();
+                    if (n && n.includes(keyword)) {
+                        foundItemId = $(this).attr('data-item-id') || $(this).attr('data-id');
+                        foundName = $(this).attr('data-item-name') || $(this).attr('data-name');
+                        return false; 
+                    }
+                });
             }
 
             if (foundItemId) {
+                UI.SuccessMessage(`Znaleziono: ${foundName || 'Przedmiot'}. Aktywacja...`, 2000);
                 $.ajax({
                     url: `/game.php?village=${game_data.village.id}&screen=inventory&ajaxaction=use_item&h=${game_data.csrf}`,
-                    type: "post", data: { item_id: foundItemId, village_id: game_data.village.id }, headers: { "TribalWars-Ajax": 1 }
-                }).done(function(res) {
-                    buildingObject.buildingQueue.shift(); updateLocalStorage();
-                    isActivatingBonus = false; setTimeout(() => location.reload(), 1500);
-                }).fail(function() { isActivatingBonus = false; });
+                    type: "post", 
+                    data: { item_id: foundItemId, village_id: game_data.village.id }, 
+                    headers: { "TribalWars-Ajax": 1 }
+                }).done(function() {
+                    buildingObject.buildingQueue.shift(); 
+                    updateLocalStorage();
+                    isActivatingBonus = false; 
+                    setTimeout(() => location.reload(), 1500);
+                }).fail(function() { 
+                    isActivatingBonus = false; 
+                    UI.ErrorMessage("Błąd wysyłania komendy aktywacji.");
+                });
             } else {
                 isActivatingBonus = false;
                 buildingObject.status = false;
@@ -470,14 +506,21 @@
                 $('#missing-bonus-name').text(bonusText.replace('Aktywuj', '').trim());
                 $('#tcm-modal-bonus').css('display', 'flex');
             }
-        }).fail(function() { isActivatingBonus = false; });
+        }).fail(function() { 
+            isActivatingBonus = false; 
+            UI.ErrorMessage("Brak odpowiedzi z inwentarza. Odśwież stronę.");
+        });
     }
 
-    function runAutoBuild() {
+    function uruchomBudowe() {
         if (!buildingObject.status || isBuilding || isActivatingBonus) return;
 
         const $freeBtn = $('.btn-instant-free:visible');
-        if ($freeBtn.length) { $freeBtn.click(); setTimeout(runAutoBuild, 2000); return; }
+        if ($freeBtn.length) { 
+            $freeBtn.click(); 
+            setTimeout(uruchomBudowe, Math.floor(Math.random() * 1000) + 2500); // Bardziej losowe, trudniejsze do wykrycia
+            return; 
+        }
 
         if (buildingObject.buildingQueue.length > 0) {
             let nextItem = buildingObject.buildingQueue[0];
@@ -493,7 +536,7 @@
                 }
             }
         }
-        setTimeout(runAutoBuild, Math.floor(Math.random() * 1500) + 3500);
+        setTimeout(uruchomBudowe, Math.floor(Math.random() * 1500) + 3500);
     }
 
     function buildAjax(bId) {
