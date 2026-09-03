@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Udostępnianie Komend
 // @namespace    https://viayoo.com/
-// @version      1.4
-// @description  Automatyzacja udostępniania komend z kompaktowym UI
+// @version      1.7
+// @description  Automatyzacja zaznaczania i zapisywania udostępniania komend
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=settings*mode=command_sharing*
 // @grant        unsafeWindow
@@ -48,12 +48,7 @@
               max-width: 100%;
               box-sizing: border-box;
             }
-            .tcm-bar { 
-              display: flex; 
-              align-items: center; 
-              gap: 5px; 
-              flex-wrap: wrap; 
-            }
+            .tcm-bar { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
             .tcm-btn { 
               background: var(--btn-bg); 
               border: 1px solid var(--border-color); 
@@ -95,12 +90,7 @@
               font-size: 11px; 
               margin-bottom: 6px; 
             }
-            .tcm-title { 
-              color: var(--title-color); 
-              font-weight: bold; 
-              font-size: 11px; 
-              margin-bottom: 4px; 
-            }
+            .tcm-title { color: var(--title-color); font-weight: bold; font-size: 11px; margin-bottom: 4px; }
         `;
         document.head.appendChild(style);
     }
@@ -109,14 +99,14 @@
         const $ = win.jQuery;
         if (!$) return;
 
-        const targetTable = $('table.vis').has('input[name="share[]"]').first();
-        if (!targetTable.length || $('#tcm_main_container').length) return;
+        const targetForm = $('form').has('input[name="share[]"]').first();
+        if (!targetForm.length || $('#tcm_main_container').length) return;
 
         injectCSS();
-        buildUI(targetTable);
+        buildUI(targetForm);
     }
 
-    function buildUI(targetTable) {
+    function buildUI(targetForm) {
         const $ = win.jQuery;
         const savedRada = localStorage.getItem(storageRada) || "";
         const savedGracze = localStorage.getItem(storageGracze) || "";
@@ -126,8 +116,8 @@
                 <div class="tcm-bar">
                     <button id="btn_modal_rada" class="tcm-btn tcm-btn-blue">👑 Rada</button>
                     <button id="btn_modal_gracze" class="tcm-btn tcm-btn-blue">📜 Gracze</button>
-                    <button id="btn_action_add" class="tcm-btn tcm-btn-green">➕ Dodaj</button>
-                    <button id="btn_action_replace" class="tcm-btn tcm-btn-red">🔄 Podmień</button>
+                    <button id="btn_action_add" class="tcm-btn tcm-btn-green">➕ Dodaj i Zapisz</button>
+                    <button id="btn_action_replace" class="tcm-btn tcm-btn-red">🔄 Podmień i Zapisz</button>
                 </div>
 
                 <div id="modal_rada" class="tcm-modal-inline">
@@ -149,15 +139,10 @@
                         <button id="btn_close_gracze" class="tcm-btn" style="flex:1;">Zamknij</button>
                     </div>
                 </div>
-
-                <div id="tcm_missing_section" class="tcm-modal-inline" style="border-color: #da3633;">
-                    <div class="tcm-title" style="color: #ff7b72;">Brakujące zaproszenia:</div>
-                    <div id="tcm_missing_list" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
-                </div>
             </div>
         `;
 
-        targetTable.before(uiHtml);
+        targetForm.before(uiHtml);
         bindEvents();
     }
 
@@ -238,88 +223,40 @@
         const totalList = [...new Set([...radaList, ...graczeList])];
 
         if (totalList.length === 0 && !shouldReplace) {
-            win.UI.InfoMessage("Brak nicków do dodania!", 3000, "error");
+            win.UI.InfoMessage("Brak nicków do przetworzenia!", 3000, "error");
             return;
         }
 
-        const foundInTable = [];
-        let markedCount = 0;
+        const form = $('form').has('input[name="share[]"]').first();
+        if (!form.length) return;
 
+        // Jeśli opcja podmień – odznaczamy wszystkie checkboxy
         if (shouldReplace) {
-            $('input[name="share[]"]').prop('checked', false);
+            form.find('input[name="share[]"]').prop('checked', false);
         }
 
         const totalListLower = totalList.map(n => n.toLowerCase());
 
-        $('table.vis tr').has('input[name="share[]"]').each(function() {
+        // Zaznaczanie graczy obecnych w tabeli
+        form.find('tr').has('input[name="share[]"]').each(function() {
             const nickInTable = $(this).find('td:first').text().trim();
-            const index = totalListLower.indexOf(nickInTable.toLowerCase());
-            
-            if (index !== -1) {
+            if (totalListLower.includes(nickInTable.toLowerCase())) {
                 $(this).find('input[name="share[]"]').prop('checked', true);
-                foundInTable.push(totalList[index]);
-                markedCount++;
             }
         });
 
-        const foundInTableLower = foundInTable.map(n => n.toLowerCase());
-        const missing = totalList.filter(n => !foundInTableLower.includes(n.toLowerCase()));
+        // Wyszukanie dokładnie tego przycisku Zapisz, który podesłałeś w strukturze HTML
+        const submitBtn = form.find('input[type="submit"][value="Zapisz"], input[type="submit"].btn').first();
 
-        if (markedCount > 0 || shouldReplace) {
-            saveChangesAJAX();
-        }
-
-        if (missing.length > 0) {
-            showMissingInvites(missing);
+        if (submitBtn.length) {
+            win.UI.InfoMessage("Klikam Zapisz...", 2000, "success");
+            submitBtn.click();
         } else {
-            $('#tcm_missing_section').hide();
+            win.UI.InfoMessage("Wysyłam formularz...", 2000, "success");
+            form.submit();
         }
-    }
-
-    function showMissingInvites(missing) {
-        const $ = win.jQuery;
-        $('#tcm_missing_section').show();
-        const listContainer = $('#tcm_missing_list').empty();
-
-        missing.forEach(nick => {
-            const btn = $(`<button class="tcm-btn tcm-btn-green" style="font-size:11px; padding:3px 6px;">➕ ${nick}</button>`);
-            btn.on('click', function(e) { 
-                e.preventDefault();
-                sendInvite(nick, $(this)); 
-            });
-            listContainer.append(btn);
-        });
-    }
-
-    function sendInvite(nick, buttonElement) {
-        const $ = win.jQuery;
-        const url = win.TribalWars.buildURL('POST', 'buddies', { action: 'add_buddy' });
-        const h = url.substring(url.indexOf("h=") + 2);
-        const cleanUrl = url.substring(0, url.indexOf("h=") - 1);
-
-        $.post(cleanUrl, { name: nick, h: h }, function() {
-            win.UI.InfoMessage(`Zaproszono: ${nick}`, 2000, "success");
-            buttonElement.fadeOut(300, function() {
-                $(this).remove();
-                if ($('#tcm_missing_list').children().length === 0) {
-                    $('#tcm_missing_section').hide();
-                }
-            });
-        });
-    }
-
-    function saveChangesAJAX() {
-        const $ = win.jQuery;
-        const form = $('form').has('input[name="share[]"]');
-        const url = form.attr('action');
-        const formData = form.serialize();
-
-        $.post(url, formData, function() {
-            win.UI.InfoMessage("Zaktualizowano uprawnienia!", 2000, "success");
-        }).fail(function() {
-            win.UI.InfoMessage("Błąd zapisu uprawnień.", 3000, "error");
-        });
     }
 
     init();
 })();
+ 
