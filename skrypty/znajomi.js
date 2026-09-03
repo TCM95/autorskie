@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Zarządzanie Znajomymi
 // @namespace    https://viayoo.com/
-// @version      1.1
-// @description  Automatyczne dodawanie i masowe usuwanie znajomych na podstawie plemienia oraz punktów.
+// @version      1.2
+// @description  Automatyczne dodawanie i masowe usuwanie znajomych na podstawie plemienia, braku plemienia oraz punktów.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=buddies*
 // @grant        none
@@ -139,6 +139,10 @@
             <label style="font-size:11px;">Zaznacz plemiona do usunięcia:</label>
             <div class="tcm-list-box">
                 ${checkboxHtmlDel || '<div style="color:#aaa;">Brak plemion do wyboru</div>'}
+            </div>
+            <div style="display:flex; align-items:center; margin-bottom:8px;">
+                <input type="checkbox" id="tcm-del-no-tribe" style="margin-right:5px;">
+                <span style="font-size:11px; font-weight:bold; color:#ffaaaa;">Usuń graczy bez plemienia</span>
             </div>
             <button id="tcm-delete-btn" class="tcm-btn">Usuń zaznaczonych</button>
             <div id="tcm-del-log" class="tcm-log">Oczekiwanie...</div>
@@ -325,11 +329,12 @@
         
         const checkedBoxes = document.querySelectorAll('.tcm-del-chk:checked');
         const tribesToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+        const deleteNoTribe = document.getElementById('tcm-del-no-tribe').checked;
 
         let hasMinPointsCondition = minPoints > 0;
         let hasTribeCondition = tribesToDelete.length > 0;
 
-        if (!hasMinPointsCondition && !hasTribeCondition) {
+        if (!hasMinPointsCondition && !hasTribeCondition && !deleteNoTribe) {
             logDel("⚠️ Wybierz przynajmniej jedno kryterium.");
             return;
         }
@@ -337,7 +342,8 @@
         let toDelete = friends.filter(f => {
             let matchPoints = hasMinPointsCondition && f.points < minPoints;
             let matchTribe = hasTribeCondition && tribesToDelete.includes(f.tribe);
-            return matchPoints || matchTribe;
+            let matchNoTribe = deleteNoTribe && f.tribe === "Brak plemienia";
+            return matchPoints || matchTribe || matchNoTribe;
         });
 
         if (toDelete.length === 0) {
