@@ -1,11 +1,10 @@
 // ==UserScript==
-// @name         kalkulator farmy
-// @version      1.0
-// @description  Auto loot with FarmGodCopy and Autotrading-style controls.
-// @include      https://*/game.php*screen=am_farm*
-// @namespace https://greasyfork.org/users/1388863
-// @downloadURL https://update.greasyfork.org/scripts/514955/Autofarm%20V2.user.js
-// @updateURL https://update.greasyfork.org/scripts/514955/Autofarm%20V2.meta.js
+// @name         Kalkulator Farmy - Integracja
+// @namespace    https://viayoo.com/
+// @version      1.2
+// @description  Skrypt do zarządzania wysyłaniem farm z wbudowanymi ustawieniami
+// @author       TCM
+// @match        https://*.plemiona.pl/game.php*screen=am_farm*
 // ==/UserScript==
 
 (function () {
@@ -21,21 +20,101 @@
     let enterTimeoutId = null;
     let countdownIntervalId = null;
     let startTimeoutIds = [];
-    let settingsPopupLoot = null;
+    let settingsPopup = null;
 
     let settings = {
-        firstDelayMin: 4000,
-        firstDelayMax: 7000,
-        scriptDelayMin: 3000,
-        scriptDelayMax: 5000,
-        planDelayMin: 3000,
-        planDelayMax: 5000,
-        enterDelayMin: 200,
+        firstDelayMin: 1000,
+        firstDelayMax: 1000,
+        scriptDelayMin: 1000,
+        scriptDelayMax: 1000,
+        planDelayMin: 1000,
+        planDelayMax: 1000,
+        enterDelayMin: 90,
         enterDelayMax: 250,
         reloadMin: 600,
         reloadMax: 900,
-        planRetries: 3
+        fgDistance: 25,
+        fgTime: 10,
+        fgMaxLoot: true,
+        fgLosses: false
     };
+
+    function injectCSS() {
+        if (document.getElementById('tcm-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'tcm-styles';
+        style.innerHTML = `
+            :root {
+                --bg-main: #36393f;
+                --bg-row-alt: #32353b;
+                --bg-header: #202225;
+                --border-color: #3e4147;
+                --text-color: white;
+                --title-color: #ffffdf;
+                --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+                --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+                --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+                --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+                --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+                --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+                --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+                --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
+            }
+            .tcm-panel {
+                position: fixed !important;
+                background-color: var(--bg-main);
+                color: var(--text-color);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                z-index: 9999;
+                box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+            }
+            .tcm-btn {
+                background: var(--btn-bg);
+                color: var(--text-color);
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                padding: 6px 10px;
+                cursor: pointer;
+                font-size: 13px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+            }
+            .tcm-btn:hover { background: var(--btn-hover); }
+            .tcm-btn-green { background: var(--btn-green-bg); }
+            .tcm-btn-green:hover { background: var(--btn-green-hover); }
+            .tcm-btn-red { background: var(--btn-red-bg); }
+            .tcm-btn-red:hover { background: var(--btn-red-hover); }
+            .tcm-btn-blue { background: var(--btn-blue-bg); }
+            .tcm-btn-blue:hover { background: var(--btn-blue-hover); }
+            .tcm-input {
+                width: 100%;
+                box-sizing: border-box;
+                background: var(--bg-row-alt);
+                color: white;
+                border: 1px solid var(--border-color);
+                padding: 4px;
+                border-radius: 3px;
+                margin-top: 2px;
+                text-align: center;
+            }
+            .tcm-timer {
+                font-size: 12px;
+                font-weight: bold;
+                text-align: center;
+                color: var(--title-color);
+                background-color: #1a1c1e;
+                padding: 5px;
+                border-radius: 4px;
+                border: 1px solid #cda434;
+                box-shadow: 0 0 6px rgba(205, 164, 52, 0.6);
+                margin-bottom: 5px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
 
     function randomDelay(min, max) {
         const safeMin = Math.max(1, Number(min) || 1);
@@ -43,24 +122,34 @@
         return Math.floor(Math.random() * (safeMax - safeMin + 1)) + safeMin;
     }
 
-    function loadSettingsLoot() {
+    function loadSettings() {
         try {
-            settings = {
-                ...settings,
-                ...JSON.parse(localStorage.getItem(settingsKey) || '{}')
-            };
+            settings = { ...settings, ...JSON.parse(localStorage.getItem(settingsKey) || '{}') };
         } catch (e) {
-            console.warn('Autoloot settings invalid, using defaults.');
+            console.warn('Błąd wczytywania ustawień.');
         }
     }
 
-    function saveSettingsLoot() {
+    function syncFarmGodOptions() {
+        let fgOptions = JSON.parse(localStorage.getItem('farmGod_options')) || {
+            optionGroup: 0, optionDistance: 25, optionTime: 10,
+            optionLosses: false, optionMaxloot: true, optionNewbarbs: true
+        };
+        fgOptions.optionDistance = settings.fgDistance;
+        fgOptions.optionTime = settings.fgTime;
+        fgOptions.optionMaxloot = settings.fgMaxLoot;
+        fgOptions.optionLosses = settings.fgLosses;
+        localStorage.setItem('farmGod_options', JSON.stringify(fgOptions));
+    }
+
+    function saveSettings() {
         localStorage.setItem(settingsKey, JSON.stringify(settings));
-        toggleSettingsPopupLoot();
+        syncFarmGodOptions();
+        toggleSettingsPopup();
     }
 
     function setStatus(text) {
-        const countdownEl = document.getElementById('countdown-timer-loot');
+        const countdownEl = document.getElementById('tcm-countdown');
         if (countdownEl) countdownEl.innerText = text;
     }
 
@@ -80,62 +169,42 @@
 
     function loadFarmGodScript(callback) {
         if (document.querySelector(`script[src="${farmGodUrl}"]`)) {
-            setStatus('FarmGod already loaded');
+            setStatus('Skrypt załadowany');
             callback();
             return;
         }
-
-        setStatus('Loading FarmGod...');
+        setStatus('Ładowanie skryptu...');
         const script = document.createElement('script');
         script.src = farmGodUrl;
         script.type = 'text/javascript';
-        script.onload = () => {
-            setStatus('FarmGod loaded');
-            callback();
-        };
-        script.onerror = () => setStatus('FarmGod load failed');
+        script.onload = () => { setStatus('Załadowany'); callback(); };
+        script.onerror = () => setStatus('Błąd ładowania❗');
         document.body.appendChild(script);
     }
 
-    function clickOptionButton(retries = settings.planRetries, manual = false) {
-        if (!isRunning && !manual) return;
-
+    function clickOptionButton() {
+        if (!isRunning) return;
         const button = document.querySelector('input.btn.optionButton[value="Plan farms"]');
         if (button) {
             button.click();
-            setStatus('Plan farms clicked');
+            setStatus('Aktywny');
             return;
         }
-
-        if (retries > 0) {
-            setStatus(`Plan farms not found, retry ${retries}`);
-            rememberTimeout(() => clickOptionButton(retries - 1, manual), randomDelay(2000, 4000));
-            return;
-        }
-
-        setStatus('Plan farms not found');
+        
+        setStatus('Szukam planu...');
+        rememberTimeout(clickOptionButton, randomDelay(1000, 1100));
     }
 
     function pressEnterRandomly() {
         if (!isRunning) return;
-
         document.dispatchEvent(new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            which: 13,
-            keyCode: 13,
-            bubbles: true
+            key: 'Enter', code: 'Enter', which: 13, keyCode: 13, bubbles: true
         }));
-
-        enterTimeoutId = setTimeout(
-            pressEnterRandomly,
-            randomDelay(settings.enterDelayMin, settings.enterDelayMax)
-        );
+        enterTimeoutId = setTimeout(pressEnterRandomly, randomDelay(settings.enterDelayMin, settings.enterDelayMax));
     }
 
     function startCountdown() {
         clearInterval(countdownIntervalId);
-
         let timeLeft = randomDelay(settings.reloadMin, settings.reloadMax);
         countdownIntervalId = setInterval(() => {
             if (!isRunning) {
@@ -143,38 +212,34 @@
                 countdownIntervalId = null;
                 return;
             }
-
             if (timeLeft <= 0) {
                 clearInterval(countdownIntervalId);
                 countdownIntervalId = null;
-                setStatus('Reload...');
+                setStatus('...');
                 location.reload();
                 return;
             }
-
-            setStatus(`Next loop ${Math.floor(timeLeft / 60)}m ${timeLeft % 60}s`);
+            setStatus(`${Math.floor(timeLeft / 60)}m ${timeLeft % 60}s`);
             timeLeft--;
         }, 1000);
     }
 
     function startProcess() {
         if (!isRunning) return;
-
         clearStartTimeouts();
         clearTimeout(enterTimeoutId);
         clearInterval(countdownIntervalId);
-        setStatus('Wait 4-7s');
+        syncFarmGodOptions();
+        setStatus('⌛');
 
         rememberTimeout(() => {
             if (!isRunning) return;
-
             loadFarmGodScript(() => {
                 rememberTimeout(() => {
                     clickOptionButton();
-
                     rememberTimeout(() => {
                         if (!isRunning) return;
-                        setStatus('Looting...');
+                        setStatus('Wysyłanie');
                         pressEnterRandomly();
                         startCountdown();
                     }, randomDelay(settings.planDelayMin, settings.planDelayMax));
@@ -192,185 +257,162 @@
         isRunning = false;
         localStorage.setItem(runningKey, 'false');
         localStorage.setItem(oldRunningKey, 'false');
-        updateButtonStateLoot(false);
+        updateButtonState(false);
     }
 
     function toggleProcess() {
-        if (isRunning) {
-            stopProcess();
+        if (isRunning) { stopProcess(); } 
+        else {
+            isRunning = true;
+            localStorage.setItem(runningKey, 'true');
+            localStorage.setItem(oldRunningKey, 'true');
+            updateButtonState(true);
+            startProcess();
+        }
+    }
+
+    function toggleSettingsPopup() {
+        if (settingsPopup) {
+            settingsPopup.remove();
+            settingsPopup = null;
             return;
         }
 
-        isRunning = true;
-        localStorage.setItem(runningKey, 'true');
-        localStorage.setItem(oldRunningKey, 'true');
-        updateButtonStateLoot(true);
-        startProcess();
-    }
+        settingsPopup = document.createElement('div');
+        settingsPopup.className = 'tcm-panel';
+        settingsPopup.style.bottom = '90px';
+        settingsPopup.style.left = '20px';
+        settingsPopup.style.padding = '10px';
+        settingsPopup.style.width = '200px';
 
-    function inputStyle() {
-        return 'width: 100%; margin-bottom: 8px; box-sizing: border-box;';
-    }
+        settingsPopup.innerHTML = `
+            <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--title-color); text-align:center;">⚙️</h3>
+            
+            <div style="margin-bottom: 8px; font-size: 11px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px;">
+                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Logika(FG):</div>
+                <div style="display:flex; gap:5px;">
+                    <label style="flex:1">Kratki: <input type="number" id="cfgDistance" value="${settings.fgDistance}" class="tcm-input"></label>
+                    <label style="flex:1">Czas (m): <input type="number" id="cfgTime" value="${settings.fgTime}" class="tcm-input"></label>
+                </div>
+                <label style="display:block; margin-top:8px; cursor:pointer;">
+                    <input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}>full loot [B]
+                </label>
+                <label style="display:block; margin-top:5px; cursor:pointer;">
+                    <input type="checkbox" id="cfgLosses" ${settings.fgLosses ? 'checked' : ''}> Partie losse
+                </label>
+            </div>
 
-    function toggleSettingsPopupLoot() {
-        if (settingsPopupLoot) {
-            settingsPopupLoot.remove();
-            settingsPopupLoot = null;
-            return;
-        }
-
-        settingsPopupLoot = document.createElement('div');
-        settingsPopupLoot.style.position = 'fixed';
-        settingsPopupLoot.style.bottom = '100px';
-        settingsPopupLoot.style.left = '100px';
-        settingsPopupLoot.style.backgroundColor = '#222';
-        settingsPopupLoot.style.color = '#fff';
-        settingsPopupLoot.style.padding = '20px';
-        settingsPopupLoot.style.borderRadius = '10px';
-        settingsPopupLoot.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.2)';
-        settingsPopupLoot.style.zIndex = '1000';
-        settingsPopupLoot.style.width = '260px';
-        settingsPopupLoot.style.height = 'auto';
-
-        settingsPopupLoot.innerHTML = `
-            <h3 style="margin: 0 0 5px 0; font-size: 14px; text-align: center;">Loot Settings</h3>
-            <div style="margin-bottom: 3px; display: flex; gap: 8px; font-size: 12px;">
-                <label>Start Min ms: <input type="number" id="lootFirstMinInput" value="${settings.firstDelayMin}" style="${inputStyle()}"></label>
-                <label>Start Max ms: <input type="number" id="lootFirstMaxInput" value="${settings.firstDelayMax}" style="${inputStyle()}"></label>
+            <div style="margin-bottom: 8px; font-size: 11px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px;">
+                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Delay A/B</div>
+                <div style="display:flex; gap:5px; margin-bottom:4px;">
+                    <label style="flex:1">Min(ms): <input type="number" id="cfgEnterMin" value="${settings.enterDelayMin}" class="tcm-input"></label>
+                    <label style="flex:1">Max(ms): <input type="number" id="cfgEnterMax" value="${settings.enterDelayMax}" class="tcm-input"></label>
+                </div>
+                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Odświeżanie</div>
+                <div style="display:flex; gap:5px;">
+                    <label style="flex:1">Min(s): <input type="number" id="cfgReloadMin" value="${settings.reloadMin}" class="tcm-input"></label>
+                    <label style="flex:1">Max(s): <input type="number" id="cfgReloadMax" value="${settings.reloadMax}" class="tcm-input"></label>
+                </div>
             </div>
-            <div style="margin-bottom: 3px; display: flex; gap: 8px; font-size: 12px;">
-                <label>Enter Min ms: <input type="number" id="lootEnterMinInput" value="${settings.enterDelayMin}" style="${inputStyle()}"></label>
-                <label>Enter Max ms: <input type="number" id="lootEnterMaxInput" value="${settings.enterDelayMax}" style="${inputStyle()}"></label>
+            
+            <div style="display:flex; gap:6px; margin-top:10px;">
+                <button id="saveCfgBtn" class="tcm-btn tcm-btn-green" style="flex:1; font-size:20px; padding:4px;">💾</button>
+                <button id="closeSettingsBtn" class="tcm-btn tcm-btn-red" style="flex:1; font-size:20px; padding:4px;">❌</button>
             </div>
-            <div style="margin-bottom: 3px; display: flex; gap: 8px; font-size: 12px;">
-                <label>Reload Min s: <input type="number" id="lootReloadMinInput" value="${settings.reloadMin}" style="${inputStyle()}"></label>
-                <label>Reload Max s: <input type="number" id="lootReloadMaxInput" value="${settings.reloadMax}" style="${inputStyle()}"></label>
-            </div>
-            <div style="margin-bottom: 8px; font-size: 12px;">
-                <label>Plan retries: <input type="number" id="lootPlanRetriesInput" value="${settings.planRetries}" style="${inputStyle()}"></label>
-            </div>
-            <button id="saveSettingsLootButton" style="width: 100%; padding: 5px; background-color: #28a745; color: white; border: none; border-radius: 5px;">Save</button>
         `;
 
-        document.body.appendChild(settingsPopupLoot);
+        document.body.appendChild(settingsPopup);
 
-        document.getElementById('saveSettingsLootButton').addEventListener('click', () => {
-            settings.firstDelayMin = Number(document.getElementById('lootFirstMinInput').value) || 4000;
-            settings.firstDelayMax = Number(document.getElementById('lootFirstMaxInput').value) || settings.firstDelayMin;
-            settings.enterDelayMin = Number(document.getElementById('lootEnterMinInput').value) || 200;
-            settings.enterDelayMax = Number(document.getElementById('lootEnterMaxInput').value) || settings.enterDelayMin;
-            settings.reloadMin = Number(document.getElementById('lootReloadMinInput').value) || 600;
-            settings.reloadMax = Number(document.getElementById('lootReloadMaxInput').value) || settings.reloadMin;
-            settings.planRetries = Number(document.getElementById('lootPlanRetriesInput').value) || 3;
+        document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+            settingsPopup.remove();
+            settingsPopup = null;
+        });
 
-            if (settings.firstDelayMax < settings.firstDelayMin) settings.firstDelayMax = settings.firstDelayMin;
+        document.getElementById('saveCfgBtn').addEventListener('click', () => {
+            settings.fgDistance = Number(document.getElementById('cfgDistance').value) || 25;
+            settings.fgTime = Number(document.getElementById('cfgTime').value) || 10;
+            settings.fgMaxLoot = document.getElementById('cfgMaxLoot').checked;
+            settings.fgLosses = document.getElementById('cfgLosses').checked;
+
+            settings.enterDelayMin = Number(document.getElementById('cfgEnterMin').value) || 200;
+            settings.enterDelayMax = Number(document.getElementById('cfgEnterMax').value) || settings.enterDelayMin;
+            settings.reloadMin = Number(document.getElementById('cfgReloadMin').value) || 600;
+            settings.reloadMax = Number(document.getElementById('cfgReloadMax').value) || settings.reloadMin;
+            
             if (settings.enterDelayMax < settings.enterDelayMin) settings.enterDelayMax = settings.enterDelayMin;
             if (settings.reloadMax < settings.reloadMin) settings.reloadMax = settings.reloadMin;
-            if (settings.planRetries < 0) settings.planRetries = 0;
 
-            saveSettingsLoot();
+            saveSettings();
         });
     }
 
-    function updateButtonStateLoot(running) {
-        const autoButtonLoot = document.getElementById('auto-loot-button');
-        const countdownElementLoot = document.getElementById('countdown-timer-loot');
-        if (!autoButtonLoot || !countdownElementLoot) return;
+    function updateButtonState(running) {
+        const autoBtn = document.getElementById('tcm-main-btn');
+        const countdownEl = document.getElementById('tcm-countdown');
+        if (!autoBtn || !countdownEl) return;
 
         if (running) {
-            autoButtonLoot.innerText = 'StopLoot';
-            autoButtonLoot.style.backgroundColor = '#dc3545';
-            countdownElementLoot.innerText = 'Wait 4-7s';
+            autoBtn.innerHTML = '❎️';
+            autoBtn.className = 'tcm-btn tcm-btn-red';
+            countdownEl.innerText = '⌛';
+            countdownEl.style.boxShadow = '0 0 8px rgba(205, 92, 92, 0.6)';
+            countdownEl.style.borderColor = '#cd5c5c';
         } else {
-            autoButtonLoot.innerText = 'AutoLoot';
-            autoButtonLoot.style.backgroundColor = '#28a745';
-            countdownElementLoot.innerText = 'Auto Loot';
+            autoBtn.innerHTML = '✅️';
+            autoBtn.className = 'tcm-btn tcm-btn-green';
+            countdownEl.innerText = 'Gotowy';
+            countdownEl.style.boxShadow = '0 0 6px rgba(205, 164, 52, 0.6)';
+            countdownEl.style.borderColor = '#cda434';
         }
     }
 
     function createUI() {
-        loadSettingsLoot();
+        injectCSS();
+        loadSettings();
 
-        const oldPanel = document.getElementById('auto-loot-container');
+        const oldPanel = document.getElementById('tcm-main-container');
         if (oldPanel) oldPanel.remove();
 
-        const containerLoot = document.createElement('div');
-        containerLoot.id = 'auto-loot-container';
-        containerLoot.style.position = 'fixed';
-        containerLoot.style.bottom = '20px';
-        containerLoot.style.left = '100px';
-        containerLoot.style.backgroundColor = '#222';
-        containerLoot.style.color = '#fff';
-        containerLoot.style.padding = '12px';
-        containerLoot.style.borderRadius = '8px';
-        containerLoot.style.zIndex = '1000';
-        containerLoot.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.2)';
-        containerLoot.style.display = 'flex';
-        containerLoot.style.flexDirection = 'column';
-        containerLoot.style.gap = '10px';
-        containerLoot.style.backdropFilter = 'blur(5px)';
+        const container = document.createElement('div');
+        container.id = 'tcm-main-container';
+        container.className = 'tcm-panel';
+        container.style.bottom = '20px';
+        container.style.left = '20px';
+        container.style.padding = '10px';
+        container.style.width = '120px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '8px';
 
-        const countdownElementLoot = document.createElement('div');
-        countdownElementLoot.id = 'countdown-timer-loot';
-        countdownElementLoot.style.marginBottom = '1px';
-        countdownElementLoot.style.fontSize = '12px';
-        countdownElementLoot.style.fontWeight = 'bold';
-        countdownElementLoot.style.textAlign = 'center';
-        countdownElementLoot.innerText = 'Auto Loot';
-        containerLoot.appendChild(countdownElementLoot);
+        const countdownElement = document.createElement('div');
+        countdownElement.id = 'tcm-countdown';
+        countdownElement.className = 'tcm-timer';
+        countdownElement.innerText = 'Wczytywanie';
+        container.appendChild(countdownElement);
 
-        const buttonContainerLoot = document.createElement('div');
-        buttonContainerLoot.style.display = 'flex';
-        buttonContainerLoot.style.justifyContent = 'space-between';
-        buttonContainerLoot.style.width = '100%';
-        buttonContainerLoot.style.gap = '5px';
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.flexDirection = 'column';
+        buttonContainer.style.gap = '6px';
 
-        const autoButtonLoot = document.createElement('button');
-        autoButtonLoot.id = 'auto-loot-button';
-        autoButtonLoot.style.padding = '5px 10px';
-        autoButtonLoot.style.fontSize = '13px';
-        autoButtonLoot.style.color = '#fff';
-        autoButtonLoot.style.border = 'none';
-        autoButtonLoot.style.borderRadius = '5px';
-        autoButtonLoot.style.cursor = 'pointer';
-        autoButtonLoot.style.transition = 'background-color 0.3s ease';
-        autoButtonLoot.addEventListener('click', toggleProcess);
+        const autoBtn = document.createElement('button');
+        autoBtn.id = 'tcm-main-btn';
+        autoBtn.className = 'tcm-btn';
+        autoBtn.style.padding = '8px';
+        autoBtn.addEventListener('click', toggleProcess);
 
-        const manualButtonLoot = document.createElement('button');
-        manualButtonLoot.innerText = 'Manual';
-        manualButtonLoot.style.padding = '5px 10px';
-        manualButtonLoot.style.fontSize = '13px';
-        manualButtonLoot.style.backgroundColor = '#ff7f00';
-        manualButtonLoot.style.color = '#ffff';
-        manualButtonLoot.style.border = 'none';
-        manualButtonLoot.style.borderRadius = '5px';
-        manualButtonLoot.style.cursor = 'pointer';
-        manualButtonLoot.style.transition = 'background-color 0.3s ease';
-        manualButtonLoot.addEventListener('click', () => {
-            loadFarmGodScript(() => {
-                setTimeout(() => clickOptionButton(settings.planRetries, true), randomDelay(500, 1500));
-            });
-        });
+        const settingsBtn = document.createElement('button');
+        settingsBtn.innerHTML = '⚙️';
+        settingsBtn.className = 'tcm-btn tcm-btn-blue';
+        settingsBtn.style.padding = '8px';
+        settingsBtn.addEventListener('click', toggleSettingsPopup);
 
-        const settingsButtonLoot = document.createElement('button');
-        settingsButtonLoot.innerText = 'Settings';
-        settingsButtonLoot.style.padding = '5px 10px';
-        settingsButtonLoot.style.fontSize = '13px';
-        settingsButtonLoot.style.backgroundColor = '#007bff';
-        settingsButtonLoot.style.color = '#fff';
-        settingsButtonLoot.style.border = 'none';
-        settingsButtonLoot.style.borderRadius = '5px';
-        settingsButtonLoot.style.cursor = 'pointer';
-        settingsButtonLoot.style.transition = 'background-color 0.3s ease';
-        settingsButtonLoot.addEventListener('click', toggleSettingsPopupLoot);
+        buttonContainer.appendChild(autoBtn);
+        buttonContainer.appendChild(settingsBtn);
+        container.appendChild(buttonContainer);
+        document.body.appendChild(container);
 
-        buttonContainerLoot.appendChild(autoButtonLoot);
-        buttonContainerLoot.appendChild(manualButtonLoot);
-        buttonContainerLoot.appendChild(settingsButtonLoot);
-        containerLoot.appendChild(buttonContainerLoot);
-        document.body.appendChild(containerLoot);
-
-        updateButtonStateLoot(isRunning);
+        updateButtonState(isRunning);
     }
 
     createUI();
