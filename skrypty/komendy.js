@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Udostępnianie Komend
 // @namespace    https://viayoo.com/
-// @version      1.7
-// @description  Automatyzacja zaznaczania i zapisywania udostępniania komend
+// @version      1.8
+// @description  Automatyzacja zaznaczania, dodawania i zapisywania udostępniania komend
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=settings*mode=command_sharing*
 // @grant        unsafeWindow
@@ -139,6 +139,11 @@
                         <button id="btn_close_gracze" class="tcm-btn" style="flex:1;">Zamknij</button>
                     </div>
                 </div>
+
+                <div id="tcm_missing_section" class="tcm-modal-inline" style="border-color: #ad5c5c;">
+                    <div class="tcm-title" style="color: #ffbfbf;">Brakujący gracze w tabeli:</div>
+                    <div id="tcm_missing_list" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+                </div>
             </div>
         `;
 
@@ -230,33 +235,81 @@
         const form = $('form').has('input[name="share[]"]').first();
         if (!form.length) return;
 
-        // Jeśli opcja podmień – odznaczamy wszystkie checkboxy
         if (shouldReplace) {
             form.find('input[name="share[]"]').prop('checked', false);
         }
 
+        const foundInTable = [];
         const totalListLower = totalList.map(n => n.toLowerCase());
 
-        // Zaznaczanie graczy obecnych w tabeli
+        // Przeszukiwanie obecnych wierszy w tabeli
         form.find('tr').has('input[name="share[]"]').each(function() {
             const nickInTable = $(this).find('td:first').text().trim();
-            if (totalListLower.includes(nickInTable.toLowerCase())) {
+            const index = totalListLower.indexOf(nickInTable.toLowerCase());
+
+            if (index !== -1) {
                 $(this).find('input[name="share[]"]').prop('checked', true);
+                foundInTable.push(totalList[index]);
             }
         });
 
-        // Wyszukanie dokładnie tego przycisku Zapisz, który podesłałeś w strukturze HTML
-        const submitBtn = form.find('input[type="submit"][value="Zapisz"], input[type="submit"].btn').first();
+        // Wyznaczenie graczy, których brakuje w tabeli
+        const foundInTableLower = foundInTable.map(n => n.toLowerCase());
+        const missing = totalList.filter(n => !foundInTableLower.includes(n.toLowerCase()));
 
-        if (submitBtn.length) {
-            win.UI.InfoMessage("Klikam Zapisz...", 2000, "success");
-            submitBtn.click();
+        // Wyświetlenie brakujących graczy w osobnym panelu
+        if (missing.length > 0) {
+            showMissingPlayers(missing);
+            win.UI.InfoMessage(`Zaznaczono znanych. Brakujących na liście: ${missing.length}`, 3000, "warning");
         } else {
-            win.UI.InfoMessage("Wysyłam formularz...", 2000, "success");
-            form.submit();
+            $('#tcm_missing_section').hide();
+            
+            // Jeśli wszyscy są w tabeli, klikamy Zapisz i odświeżamy
+            const submitBtn = form.find('input[type="submit"][value="Zapisz"], input[type="submit"].btn').first();
+            if (submitBtn.length) {
+                win.UI.InfoMessage("Zapisywanie zmian...", 2000, "success");
+                submitBtn.click();
+            } else {
+                form.submit();
+            }
+        }
+    }
+
+    function showMissingPlayers(missing) {
+        const $ = win.jQuery;
+        $('#tcm_missing_section').show();
+        const listContainer = $('#tcm_missing_list').empty();
+
+        missing.forEach(nick => {
+            const btn = $(`<button class="tcm-btn tcm-btn-green" style="font-size:11px; padding:3px 6px;">➕ ${nick}</button>`);
+            btn.on('click', function(e) { 
+                e.preventDefault();
+                addPlayerDirectly(nick, $(this)); 
+            });
+            listContainer.append(btn);
+        });
+    }
+
+    function addPlayerDirectly(nick, buttonElement) {
+        const $ = win.jQuery;
+        
+        // Szukanie drugiego formularza na stronie do dodawania nicku
+        const addForm = $('form').not(':has(input[name="share[]"])').has('input[name="name"]').first();
+        const nameInput = $('input[name="name"]').first();
+
+        if (nameInput.length && addForm.length) {
+            nameInput.val(nick);
+            const submitAddBtn = addForm.find('input[type="submit"], button[type="submit"]').first();
+            if (submitAddBtn.length) {
+                submitAddBtn.click();
+            } else {
+                addForm.submit();
+            }
+        } else {
+            win.UI.InfoMessage(`Brak pola dodawania dla: ${nick}`, 2500, "error");
         }
     }
 
     init();
 })();
- 
+            
