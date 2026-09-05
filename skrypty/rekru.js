@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name          Kalkulator rekru
+// @name         Kalkulator Rekrutacji
 // @namespace    https://viayoo.com/
-// @version      3.3
-// @description  Zarządzanie rekrutacją wojsk
+// @version      3.7
+// @description  Zarządzanie rekrutacją wojsk z niezależnymi kolejkami budynków
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=train*
 // @match        *://*.plemiona.pl/game.php?*screen=barracks*
@@ -46,6 +46,8 @@
           --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
           --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
           --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+          --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+          --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
         }
 
         #tcm-rekrutacja-ui *, #tcm-rekrutacja-ui {
@@ -55,7 +57,7 @@
         }
 
         #tcm-rekrutacja-ui { 
-            position: absolute !important; 
+            position: fixed !important; 
             top: 130px; 
             left: 10px; 
             z-index: 999999 !important; 
@@ -85,18 +87,6 @@
             border-radius: 4px;
             border-bottom: 1px solid var(--border-color);
         }
-
-        .tcm-pin { 
-            cursor: pointer; 
-            padding: 2px 6px; 
-            background: var(--btn-bg); 
-            border: 1px solid var(--border-color); 
-            border-radius: 3px; 
-            font-size: 11px; 
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        .tcm-pin.pinned { background: var(--btn-red-bg); }
 
         #tcm-rtable { width: 100%; margin-top: 4px; border-collapse: collapse; }
         #tcm-rtable td { text-align: center; padding: 2px; background: var(--bg-row-alt); border: 1px solid var(--border-color); }
@@ -143,6 +133,11 @@
             border-radius: 3px;
             padding: 2px;
         }
+        
+        .tcm-btns-wrapper {
+            display: flex;
+            gap: 4px;
+        }
 
         .tcm-btn { 
             padding: 5px 10px; 
@@ -160,15 +155,16 @@
         .tcm-btn-start:hover { background: var(--btn-green-hover) !important; }
         .tcm-btn-stop { background: var(--btn-red-bg) !important; }
         .tcm-btn-stop:hover { background: var(--btn-red-hover) !important; }
+        .tcm-btn-clear { padding: 5px 6px; font-size: 12px; }
     `);
 
-    const iconUrl = (unit) => `https://dsen.innogamescdn.com/asset/10d39b3d/graphic/unit/unit_${unit}.png`;
+    const iconUrl = (unit) => `https://dspl.innogamescdn.com/asset/45436e33/graphic/unit/unit_${unit}.png`;
 
     const uiHtml = `
     <div id="tcm-rekrutacja-ui">
         <div id="tcm-rekrutacja-header">
             <span>Kalkulator Rekrutacji</span>
-            <span class="tcm-pin" id="tcm-pin-btn">📌</span>
+            <span>⚙️</span>
         </div>
         <table id="tcm-rtable">
             <tbody>
@@ -220,13 +216,15 @@
                 <span>Kolejka:</span>
                 <input type="number" id="tcm-queue-size-in" min="1" max="20">
             </div>
-            <div>
-                <button id='tcm-save-btn' class='tcm-btn'>Zapisz</button>
-                <button id='tcm-toggle-btn' class='tcm-btn'>Start</button>
+            <div class="tcm-btns-wrapper">
+                <button id='tcm-clear-btn' class='tcm-btn tcm-btn-clear tcm-btn-stop' title="Wyczyść">🗑️</button>
+                <button id='tcm-save-btn' class='tcm-btn'>💾 Zapisz</button>
+                <button id='tcm-toggle-btn' class='tcm-btn'>✅️ Start</button>
             </div>
         </div>
     </div>`;
 
+    let injectAttempts = 0;
     const checkAndInject = setInterval(() => {
         if (document.getElementById('tcm-rekrutacja-ui')) {
             clearInterval(checkAndInject);
@@ -240,45 +238,31 @@
             initLogic();
             clearInterval(checkAndInject);
         }
+        
+        if (++injectAttempts > 50) {
+            clearInterval(checkAndInject);
+        }
     }, 100);
 
     function initLogic() {
         const uiBox = document.getElementById('tcm-rekrutacja-ui');
         const header = document.getElementById('tcm-rekrutacja-header');
-        const pinBtn = document.getElementById('tcm-pin-btn');
+        let isRecruiting = false;
         
-        let isPinned = localStorage.getItem('TCM_CR_Pinned') === 'true';
         let savedPos = JSON.parse(localStorage.getItem('TCM_CR_Pos'));
-
         if (savedPos) {
             uiBox.style.left = savedPos.left;
             uiBox.style.top = savedPos.top;
         }
         
-        if (isPinned) {
-            pinBtn.classList.add('pinned');
-        }
-
-        pinBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            isPinned = !isPinned;
-            localStorage.setItem('TCM_CR_Pinned', isPinned);
-            if (isPinned) {
-                pinBtn.classList.add('pinned');
-            } else {
-                pinBtn.classList.remove('pinned');
-            }
-        });
-
         let isDragging = false, startX, startY, initialX, initialY;
 
         const dragStart = (e) => {
-            if (isPinned || e.target === pinBtn) return;
             isDragging = true;
             let evt = e.type.includes('mouse') ? e : e.touches[0];
             
-            startX = evt.pageX; 
-            startY = evt.pageY;
+            startX = evt.clientX; 
+            startY = evt.clientY;
             
             initialX = uiBox.offsetLeft;
             initialY = uiBox.offsetTop;
@@ -289,8 +273,8 @@
             if (e.cancelable) e.preventDefault(); 
             
             let evt = e.type.includes('mouse') ? e : e.touches[0];
-            let dx = evt.pageX - startX;
-            let dy = evt.pageY - startY;
+            let dx = evt.clientX - startX;
+            let dy = evt.clientY - startY;
             
             uiBox.style.left = `${initialX + dx}px`;
             uiBox.style.top = `${initialY + dy}px`;
@@ -355,15 +339,15 @@
             
             const btn = $('#tcm-toggle-btn');
             if (isActive === 1) {
-                btn.text('Stop').removeClass('tcm-btn-start').addClass('tcm-btn-stop');
+                btn.html('❎️ Stop').removeClass('tcm-btn-start').addClass('tcm-btn-stop');
             } else {
-                btn.text('Start').removeClass('tcm-btn-stop').addClass('tcm-btn-start');
+                btn.html('✅️ Start').removeClass('tcm-btn-stop').addClass('tcm-btn-start');
             }
             
             getVillageUnits();
         };
 
-        $('.limit-in').on('input', function() {
+        $('.limit-in').on('change', function() {
             let u = $(this).data('unit');
             let val = parseInt($(this).val()) || 0;
             limitData[u] = val;
@@ -387,17 +371,36 @@
             localStorage.setItem(keyQueueSize, maxQueueSize);
             
             let btn = $(this);
-            btn.text('Zapisano!').addClass('tcm-btn-start');
+            btn.html('ദ്ദി ˉ͈̀꒳ˉ͈́ )✧').addClass('tcm-btn-start');
             setTimeout(() => {
-                btn.text('Zapisz').removeClass('tcm-btn-start');
-            }, 1200);
+                btn.html('💾 Zapisz').removeClass('tcm-btn-start');
+            }, 1500);
+        });
+
+        $('#tcm-clear-btn').click(function() {
+            if (confirm('Czy na pewno chcesz usunąć wszystkie limity i wielkości paczek?')) {
+                unitData = { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
+                limitData = { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
+                localStorage.setItem(keyUnitData, JSON.stringify(unitData));
+                localStorage.setItem(keyLimitData, JSON.stringify(limitData));
+                updateUI();
+            }
         });
 
         const recruitIfPossible = () => {
-            if (isActive !== 1) return;
+            if (isActive !== 1 || isRecruiting) return;
 
-            let currentQueueCount = $('.trainqueue_wrap table tr[id^="trainorder_"], .trainqueue_wrap table tr.lit').length;
-            if (currentQueueCount >= maxQueueSize) return;
+            const buildingMap = {
+                'spear': 'barracks', 'sword': 'barracks', 'axe': 'barracks',
+                'spy': 'stable', 'light': 'stable', 'heavy': 'stable',
+                'ram': 'garage', 'catapult': 'garage'
+            };
+
+            const getBuildingQueueCount = (buildingName) => {
+                let wrap = document.getElementById(`trainqueue_wrap_${buildingName}`);
+                if (!wrap) return 0;
+                return $(wrap).find('table tr:has(.unit_sprite_smaller)').length;
+            };
 
             let currentUnits = getVillageUnits();
             let candidates = [];
@@ -406,6 +409,10 @@
                 let limit = parseInt(limitData[key]) || 0;
                 let paczka = parseInt(unitData[key]) || 0;
                 if (limit <= 0 || paczka <= 0) return;
+
+                let buildingName = buildingMap[key];
+                let currentBuildingQueue = getBuildingQueueCount(buildingName);
+                if (currentBuildingQueue >= maxQueueSize) return; 
 
                 let current = currentUnits[key] || 0;
                 let missing = limit - current;
@@ -432,24 +439,31 @@
 
             if (candidates.length > 0) {
                 candidates.sort((a, b) => b.missingPercentage - a.missingPercentage || b.missingAbsolute - a.missingAbsolute);
-                let bestCandidate = candidates[0];
 
-                const input = $(`#train_form input[name="${bestCandidate.unit}"]`);
-                
-                $('#train_form input[type="text"]').val(''); 
-                input.val(bestCandidate.targetAmount);
-                input.trigger('change');
-                input[0].dispatchEvent(new Event('input', { bubbles: true }));
+                for (let i = 0; i < candidates.length; i++) {
+                    let candidate = candidates[i];
+                    const input = $(`#train_form input[name="${candidate.unit}"]`);
 
-                setTimeout(() => {
-                    let form = $('#train_form');
-                    let submitBtn = form.find('input[type="submit"], button[type="submit"]');
-                    if (!submitBtn.length) {
-                        submitBtn = $('<input type="submit" style="display:none;">');
-                        form.append(submitBtn);
+                    if (input.length && !input.prop('disabled')) {
+                        isRecruiting = true;
+                        
+                        document.querySelectorAll('#train_form input[type="text"]').forEach(el => el.value = '');
+                        
+                        input.val(candidate.targetAmount);
+                        input.trigger('change');
+                        input[0].dispatchEvent(new Event('input', { bubbles: true }));
+
+                        setTimeout(() => {
+                            let submitBtn = $('#train_form .btn-recruit');
+                            if (submitBtn.length) {
+                                submitBtn.click();
+                            } else {
+                                isRecruiting = false; 
+                            }
+                        }, 400);
+                        break; 
                     }
-                    submitBtn.click();
-                }, 400);
+                }
             }
         };
 
