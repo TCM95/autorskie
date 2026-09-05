@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Farmy - Integracja
 // @namespace    https://viayoo.com/
-// @version      1.2
-// @description  Skrypt do zarządzania wysyłaniem farm z wbudowanymi ustawieniami
+// @version      1.5
+// @description  Skrypt do zarządzania wysyłaniem farm z pełną obsługą logiki FarmGod
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php*screen=am_farm*
 // ==/UserScript==
@@ -23,18 +23,18 @@
     let settingsPopup = null;
 
     let settings = {
-        firstDelayMin: 1000,
-        firstDelayMax: 1000,
-        scriptDelayMin: 1000,
-        scriptDelayMax: 1000,
-        planDelayMin: 1000,
-        planDelayMax: 1000,
+        firstDelayMin: 150,
+        firstDelayMax: 250,
+        scriptDelayMin: 150,
+        scriptDelayMax: 250,
+        planDelayMin: 150,
+        planDelayMax: 300,
         enterDelayMin: 90,
         enterDelayMax: 250,
         reloadMin: 600,
         reloadMax: 900,
         fgDistance: 25,
-        fgTime: 10,
+        fgTime: 10,       // W FarmGodzie to jest właśnie Odstęp między atakami (Cooldown)
         fgMaxLoot: true,
         fgLosses: false
     };
@@ -59,6 +59,7 @@
                 --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
                 --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
                 --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
+                --neon-green: #39ff14;
             }
             .tcm-panel {
                 position: fixed !important;
@@ -104,13 +105,14 @@
                 font-size: 12px;
                 font-weight: bold;
                 text-align: center;
-                color: var(--title-color);
+                color: var(--neon-green);
                 background-color: #1a1c1e;
                 padding: 5px;
                 border-radius: 4px;
-                border: 1px solid #cda434;
-                box-shadow: 0 0 6px rgba(205, 164, 52, 0.6);
+                border: 1px solid var(--neon-green);
+                box-shadow: 0 0 6px rgba(57, 255, 20, 0.6);
                 margin-bottom: 5px;
+                text-shadow: 0 0 3px rgba(57, 255, 20, 0.4);
             }
         `;
         document.head.appendChild(style);
@@ -131,14 +133,13 @@
     }
 
     function syncFarmGodOptions() {
-        let fgOptions = JSON.parse(localStorage.getItem('farmGod_options')) || {
-            optionGroup: 0, optionDistance: 25, optionTime: 10,
-            optionLosses: false, optionMaxloot: true, optionNewbarbs: true
+        let fgOptions = {
+            optionGroup: 0,
+            optionDistance: settings.fgDistance,
+            optionTime: settings.fgTime,
+            optionLosses: settings.fgLosses,
+            optionMaxloot: settings.fgMaxLoot
         };
-        fgOptions.optionDistance = settings.fgDistance;
-        fgOptions.optionTime = settings.fgTime;
-        fgOptions.optionMaxloot = settings.fgMaxLoot;
-        fgOptions.optionLosses = settings.fgLosses;
         localStorage.setItem('farmGod_options', JSON.stringify(fgOptions));
     }
 
@@ -169,15 +170,15 @@
 
     function loadFarmGodScript(callback) {
         if (document.querySelector(`script[src="${farmGodUrl}"]`)) {
-            setStatus('Skrypt załadowany');
+            setStatus('Skrypt gotowy');
             callback();
             return;
         }
-        setStatus('Ładowanie skryptu...');
+        setStatus('Wczytywanie...');
         const script = document.createElement('script');
         script.src = farmGodUrl;
         script.type = 'text/javascript';
-        script.onload = () => { setStatus('Załadowany'); callback(); };
+        script.onload = () => { setStatus('Załadowano'); callback(); };
         script.onerror = () => setStatus('Błąd ładowania❗');
         document.body.appendChild(script);
     }
@@ -187,12 +188,12 @@
         const button = document.querySelector('input.btn.optionButton[value="Plan farms"]');
         if (button) {
             button.click();
-            setStatus('Aktywny');
+            setStatus('Działam');
             return;
         }
         
         setStatus('Szukam planu...');
-        rememberTimeout(clickOptionButton, randomDelay(1000, 1100));
+        rememberTimeout(clickOptionButton, randomDelay(200, 300));
     }
 
     function pressEnterRandomly() {
@@ -215,7 +216,7 @@
             if (timeLeft <= 0) {
                 clearInterval(countdownIntervalId);
                 countdownIntervalId = null;
-                setStatus('...');
+                setStatus('Odświeżanie...');
                 location.reload();
                 return;
             }
@@ -230,7 +231,7 @@
         clearTimeout(enterTimeoutId);
         clearInterval(countdownIntervalId);
         syncFarmGodOptions();
-        setStatus('⌛');
+        setStatus('⌛ Start...');
 
         rememberTimeout(() => {
             if (!isRunning) return;
@@ -286,29 +287,27 @@
         settingsPopup.style.width = '200px';
 
         settingsPopup.innerHTML = `
-            <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--title-color); text-align:center;">⚙️</h3>
+            <h3 style="margin:0 0 10px 0; font-size:14px; color:var(--title-color); text-align:center;">⚙️ Ustawienia</h3>
             
             <div style="margin-bottom: 8px; font-size: 11px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px;">
-                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Logika(FG):</div>
-                <div style="display:flex; gap:5px;">
-                    <label style="flex:1">Kratki: <input type="number" id="cfgDistance" value="${settings.fgDistance}" class="tcm-input"></label>
-                    <label style="flex:1">Czas (m): <input type="number" id="cfgTime" value="${settings.fgTime}" class="tcm-input"></label>
+                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Logika FarmGod:</div>
+                <div style="display:flex; gap:5px; margin-bottom:4px;">
+                    <label style="flex:1">Kratki max: <input type="number" id="cfgDistance" value="${settings.fgDistance}" class="tcm-input"></label>
+                    <label style="flex:1">Odstęp (m): <input type="number" id="cfgTime" value="${settings.fgTime}" class="tcm-input" title="Odstęp ataku w minutach"></label>
                 </div>
-                <label style="display:block; margin-top:8px; cursor:pointer;">
-                    <input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}>full loot [B]
-                </label>
-                <label style="display:block; margin-top:5px; cursor:pointer;">
-                    <input type="checkbox" id="cfgLosses" ${settings.fgLosses ? 'checked' : ''}> Partie losse
-                </label>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top:8px;">
+                    <label style="cursor:pointer;"><input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}> Full loot</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="cfgLosses" ${settings.fgLosses ? 'checked' : ''}> Partie losse</label>
+                </div>
             </div>
 
             <div style="margin-bottom: 8px; font-size: 11px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px;">
-                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Delay A/B</div>
+                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Klawisz Enter (A/B)</div>
                 <div style="display:flex; gap:5px; margin-bottom:4px;">
                     <label style="flex:1">Min(ms): <input type="number" id="cfgEnterMin" value="${settings.enterDelayMin}" class="tcm-input"></label>
                     <label style="flex:1">Max(ms): <input type="number" id="cfgEnterMax" value="${settings.enterDelayMax}" class="tcm-input"></label>
                 </div>
-                <div style="color:var(--title-color); margin-bottom:5px; font-weight:bold;">Odświeżanie</div>
+                <div style="color:var(--title-color); margin-bottom:5px; margin-top:8px; font-weight:bold;">Zegar odświeżania strony</div>
                 <div style="display:flex; gap:5px;">
                     <label style="flex:1">Min(s): <input type="number" id="cfgReloadMin" value="${settings.reloadMin}" class="tcm-input"></label>
                     <label style="flex:1">Max(s): <input type="number" id="cfgReloadMax" value="${settings.reloadMax}" class="tcm-input"></label>
@@ -334,7 +333,7 @@
             settings.fgMaxLoot = document.getElementById('cfgMaxLoot').checked;
             settings.fgLosses = document.getElementById('cfgLosses').checked;
 
-            settings.enterDelayMin = Number(document.getElementById('cfgEnterMin').value) || 200;
+            settings.enterDelayMin = Number(document.getElementById('cfgEnterMin').value) || 90;
             settings.enterDelayMax = Number(document.getElementById('cfgEnterMax').value) || settings.enterDelayMin;
             settings.reloadMin = Number(document.getElementById('cfgReloadMin').value) || 600;
             settings.reloadMax = Number(document.getElementById('cfgReloadMax').value) || settings.reloadMin;
@@ -354,15 +353,10 @@
         if (running) {
             autoBtn.innerHTML = '❎️';
             autoBtn.className = 'tcm-btn tcm-btn-red';
-            countdownEl.innerText = '⌛';
-            countdownEl.style.boxShadow = '0 0 8px rgba(205, 92, 92, 0.6)';
-            countdownEl.style.borderColor = '#cd5c5c';
         } else {
             autoBtn.innerHTML = '✅️';
             autoBtn.className = 'tcm-btn tcm-btn-green';
             countdownEl.innerText = 'Gotowy';
-            countdownEl.style.boxShadow = '0 0 6px rgba(205, 164, 52, 0.6)';
-            countdownEl.style.borderColor = '#cda434';
         }
     }
 
@@ -387,7 +381,7 @@
         const countdownElement = document.createElement('div');
         countdownElement.id = 'tcm-countdown';
         countdownElement.className = 'tcm-timer';
-        countdownElement.innerText = 'Wczytywanie';
+        countdownElement.innerText = 'Gotowy';
         container.appendChild(countdownElement);
 
         const buttonContainer = document.createElement('div');
