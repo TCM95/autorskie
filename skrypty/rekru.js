@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Rekrutacji
 // @namespace    https://viayoo.com/
-// @version      3.7
-// @description  Zarządzanie rekrutacją wojsk z niezależnymi kolejkami budynków
+// @version      3.8
+// @description  Zarządzanie rekrutacją wojsk z niezależnymi kolejkami budynków (działanie w tle)
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=train*
 // @match        *://*.plemiona.pl/game.php?*screen=barracks*
@@ -457,9 +457,13 @@
                             let submitBtn = $('#train_form .btn-recruit');
                             if (submitBtn.length) {
                                 submitBtn.click();
-                            } else {
-                                isRecruiting = false; 
                             }
+                            
+                            // Resetujemy blokadę z opóźnieniem, dając grze czas na zaktualizowanie DOM przez AJAX
+                            setTimeout(() => {
+                                isRecruiting = false; 
+                            }, 1500); 
+                            
                         }, 400);
                         break; 
                     }
@@ -467,17 +471,38 @@
             }
         };
 
-        let recruitLoop;
+        // --- WEB WORKER (Obejście usypiania kart w mobilnych przeglądarkach) ---
+        let workerBlob = new Blob([`
+            let intervalId;
+            self.onmessage = function(e) {
+                if (e.data.command === 'start') {
+                    intervalId = setInterval(() => self.postMessage('tick'), e.data.time);
+                } else if (e.data.command === 'stop') {
+                    clearInterval(intervalId);
+                }
+            };
+        `], { type: 'application/javascript' });
+
+        let workerUrl = URL.createObjectURL(workerBlob);
+        let recruitWorker;
+
         const startLoop = () => {
-            clearInterval(recruitLoop);
-            recruitLoop = setInterval(() => {
+            if (recruitWorker) recruitWorker.terminate();
+            recruitWorker = new Worker(workerUrl);
+            recruitWorker.onmessage = () => {
                 if (isActive === 1) {
                     updateUI();
                     recruitIfPossible();
                 }
-            }, 3500);
+            };
+            recruitWorker.postMessage({ command: 'start', time: 3500 });
         };
-        const stopLoop = () => clearInterval(recruitLoop);
+
+        const stopLoop = () => {
+            if (recruitWorker) {
+                recruitWorker.postMessage({ command: 'stop' });
+            }
+        };
 
         $('#tcm-toggle-btn').click(() => {
             isActive = isActive === 1 ? 2 : 1;
@@ -496,7 +521,6 @@
             if (isActive === 1) {
                 setTimeout(recruitIfPossible, 1200); 
                 startLoop();
-                setInterval(() => location.reload(true), 5 * 60 * 1000);
             }
         }, 1000);
     }
