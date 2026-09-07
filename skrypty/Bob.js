@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Kalkulator Budowy
+// @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      3.2
+// @version      3.3
 // @description  Zintegrowany system budowy, szablony, notatki, przygotowany interfejs bonusów
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -17,8 +17,8 @@
     if (typeof get_world_info === 'function') {
         try {
             daneSwiata = await get_world_info({ configs: ['config', 'building_info'], entities: { 'village': ['id', 'name', 'points'] } });
-        } catch (e) { 
-            console.log("Brak Biblioteki Hermitowskiego. Praca w trybie ograniczonym."); 
+        } catch (e) {
+            console.log("Brak Biblioteki Hermitowskiego. Praca w trybie ograniczonym.");
         }
     }
 
@@ -41,7 +41,7 @@
         #kalkulatorBudowyMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 320px; font-size: 12px; }
         #kalkulatorBudowyMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
         #kalkulatorBudowyMain th { background: var(--bg-header) !important; background-image: none !important; color: var(--title-color) !important; border-bottom: 1px solid var(--border-color); }
-        #kalkulatorBudowyMain select { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 4px; border-radius: 3px; font-size: 13px; }
+        #kalkulatorBudowyMain select { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 4px; border-radius: 3px; font-size: 11px; }
         .tcm-btn { background: var(--btn-bg) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 2px 1px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.8); transition: all 0.2s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .tcm-btn-active { border-color: var(--neon-green) !important; color: var(--neon-green) !important; text-shadow: var(--neon-glow); box-shadow: inset 0 0 5px rgba(116,255,0,.3); }
         .q-row-a { background-color: var(--bg-main); } .q-row-b { background-color: var(--bg-row-alt); }
@@ -58,8 +58,9 @@
     `;
     document.head.appendChild(style);
 
-    let buildingObject = { buildingQueue: [], buildingQueueLength: 5, status: false, instructions: [] };
+    let buildingObject = { buildingQueue: [], buildingQueueLength: 5, autoFarmLimit: 0, status: false, instructions: [] };
     let isBuilding = false;
+    let expectedBuild = null;
     let isQueueMinimized = JSON.parse(localStorage.getItem('queueMinimized') || "false");
 
     const LINKS = {
@@ -80,8 +81,8 @@
     };
 
     const REVERSE_MAP = {
-        "ratusz": "main", "koszary": "barracks", "stajnia": "stable", "warsztat": "garage", 
-        "wieża strażnicza": "watchtower", "kuźnia": "smith", "rynek": "market", "tartak": "wood", 
+        "ratusz": "main", "koszary": "barracks", "stajnia": "stable", "warsztat": "garage",
+        "wieża strażnicza": "watchtower", "kuźnia": "smith", "rynek": "market", "tartak": "wood",
         "cegielnia": "stone", "huta żelaza": "iron", "zagroda": "farm", "spichlerz": "storage",
         "schowek": "hide", "mur": "wall", "pałac": "snob"
     };
@@ -129,16 +130,15 @@
     function updateSelectOptions() {
         const $select = $('#bSelect');
         if (!$select.length) return;
-        
+
         const obecnyWybór = $select.val();
         let optionsHtml = '';
-        
-        // Zawsze renderuje pełną listę 15 budynków, niezależnie od stanu wioski
+
         for (let bCode in PL_NAMES) {
             optionsHtml += `<option value="${bCode}">${PL_NAMES[bCode]}</option>`;
         }
         $select.html(optionsHtml);
-        
+
         if (obecnyWybór && $select.find(`option[value="${obecnyWybór}"]`).length) {
             $select.val(obecnyWybór);
         }
@@ -202,10 +202,10 @@
             const trimmed = line.trim();
             if(!trimmed) return;
             if (trimmed.match(/^\[\/?table\]$/i) || trimmed.match(/^\[\*\*?\].*\[\/\*\*?\]$/i)) return;
-            if (trimmed.startsWith('[|]')) return; 
+            if (trimmed.startsWith('[|]')) return;
 
             const tLower = trimmed.toLowerCase();
-            const cleanText = trimmed.replace(/\[.*?\]/g, '').trim(); 
+            const cleanText = trimmed.replace(/\[.*?\]/g, '').trim();
             const bKey = BUILDING_NAMES.find(name => tLower.includes(name));
 
             if (bKey) {
@@ -283,8 +283,9 @@
     function init() {
         let storage = JSON.parse(localStorage.getItem('buildingObject') || "{}");
         if (storage[game_data.village.id]) {
-            buildingObject = storage[game_data.village.id];
+            buildingObject = { ...buildingObject, ...storage[game_data.village.id] };
             if (!buildingObject.instructions) buildingObject.instructions = [];
+            if (buildingObject.autoFarmLimit === undefined) buildingObject.autoFarmLimit = 0;
         }
 
         let menuHtml = `
@@ -304,14 +305,23 @@
                         </td>
                     </tr>
                     <tr>
-                        <td style="padding: 4px 0;">
-                            <div style="display:flex; align-items:center; gap:4px; max-width: 170px;">
+                        <td style="padding: 4px 0; width: 45%;">
+                            <div style="display:flex; align-items:center; gap:2px;">
                                 <select id="bSelect" style="flex:1; width:100%;"></select>
                                 <button id="addBBtn" class="tcm-btn" style="font-size: 14px; padding: 4px 6px;">➕</button>
                             </div>
                         </td>
-                        <td colspan="2" style="text-align:right; padding: 4px 0;">
-                            Max: <select id="qLenInput" style="width:40px; text-align:center;">
+                        <td style="text-align:center; padding: 4px 0; font-size: 11px; white-space: nowrap;">
+                            Zagr: <select id="farmLimitInput" style="width:45px; text-align:center; padding:2px;">
+                                <option value="0" ${buildingObject.autoFarmLimit === 0 ? 'selected' : ''}>Wył</option>
+                                <option value="5" ${buildingObject.autoFarmLimit === 5 ? 'selected' : ''}>5%</option>
+                                <option value="10" ${buildingObject.autoFarmLimit === 10 ? 'selected' : ''}>10%</option>
+                                <option value="15" ${buildingObject.autoFarmLimit === 15 ? 'selected' : ''}>15%</option>
+                                <option value="20" ${buildingObject.autoFarmLimit === 20 ? 'selected' : ''}>20%</option>
+                            </select>
+                        </td>
+                        <td style="text-align:right; padding: 4px 0; font-size: 11px; white-space: nowrap;">
+                            Max: <select id="qLenInput" style="width:40px; text-align:center; padding:2px;">
                                 ${[1,2,3,4,5].map(n => `<option value="${n}" ${n === buildingObject.buildingQueueLength ? 'selected' : ''}>${n}</option>`).join('')}
                             </select>
                         </td>
@@ -331,13 +341,13 @@
                     <button id="btn-eko2" class="tcm-btn" style="flex: 1 1 30%;">EKO27</button>
                     <button id="btn-manual" class="tcm-btn" style="flex: 1 1 30%; color: #00bcd4 !important;">WŁASNY</button>
                 </div>
-                
+
                 <div id="manual-tpl-container" style="display:none; margin-top: 6px; flex-direction:column; gap:4px;">
                     <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:100%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj szablon"></textarea>
                     <button id="btn-analyze-manual" class="tcm-btn" style="border-color:#00bcd4 !important;">Importuj</button>
                 </div>
             </div>
-            
+
             <div id="tcm-modal-inst" class="tcm-modal">
                 <div class="tcm-modal-content">
                     <div class="tcm-modal-header">
@@ -352,36 +362,35 @@
         $('#content_value').prepend(menuHtml);
 
         $('#clearQueueBtn').click(() => {
-            if(confirm("Wyczyścić kolejkę oraz notatki?")) { 
-                buildingObject.buildingQueue = []; 
-                buildingObject.instructions = []; 
-                updateLocalStorage(); 
-                reloadQueueDisplay(); 
-                $('#instrukcjeBtn').hide(); 
+            if(confirm("Wyczyścić kolejkę oraz notatki?")) {
+                buildingObject.buildingQueue = [];
+                buildingObject.instructions = [];
+                updateLocalStorage();
+                reloadQueueDisplay();
+                $('#instrukcjeBtn').hide();
             }
         });
 
         $('#addWWBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Surowce 30%"); updateLocalStorage(); reloadQueueDisplay(); });
         $('#addWBBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Budowa 10%"); updateLocalStorage(); reloadQueueDisplay(); });
-        
-        // Logika weryfikująca maksymalny poziom podczas dodawania do kolejki z palca
-        $('#addBBtn').click(() => { 
-            const v = $('#bSelect').val(); 
-            if(v) { 
+
+        $('#addBBtn').click(() => {
+            const v = $('#bSelect').val();
+            if(v) {
                 const effLevels = getEffectiveLevels();
                 const maxLvl = (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings[v]) ? BuildingMain.buildings[v].max_level : (MAX_LEVELS[v] || 30);
-                
+
                 if(effLevels[v] >= maxLvl) {
                     UI.ErrorMessage(`Osiągnięto maksymalny poziom dla: ${PL_NAMES[v]}`);
                     return;
                 }
 
-                buildingObject.buildingQueue.push(v); 
-                updateLocalStorage(); 
-                reloadQueueDisplay(); 
+                buildingObject.buildingQueue.push(v);
+                updateLocalStorage();
+                reloadQueueDisplay();
             }
         });
-        
+
         $('#startBtn').click(function() {
             buildingObject.status = !buildingObject.status;
             $(this).text(buildingObject.status ? "❎️ Stop" : "✅️ Start").toggleClass('tcm-btn-active', buildingObject.status);
@@ -393,6 +402,13 @@
             isQueueMinimized = !isQueueMinimized; localStorage.setItem('queueMinimized', JSON.stringify(isQueueMinimized));
             $(this).text(isQueueMinimized ? '🔽' : '🔼'); $('.q-row').toggle(!isQueueMinimized);
         });
+
+        $('#farmLimitInput').on('change', function() {
+            buildingObject.autoFarmLimit = parseInt($(this).val(), 10) || 0;
+            updateLocalStorage();
+        });
+
+        $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); });
 
         $('#kalkulatorBudowyTabela').on('click', '.q-action-wait', function() {
             buildingObject.status = false;
@@ -451,8 +467,6 @@
             dragEl = null; dragIdx = -1;
         });
 
-        $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); });
-
         $('#btn-eko1').click(() => fetchTemplate(LINKS.eko1));
         $('#btn-eko2').click(() => fetchTemplate(LINKS.eko2));
         $('#instrukcjeBtn').click(showInstructions);
@@ -471,14 +485,63 @@
         if (buildingObject.instructions.length > 0) $('#instrukcjeBtn').show();
     }
 
+    // Nasłuchiwacz globalny odpowiedzi serwera na akcje wbudowane w grę
+    $(document).ajaxSuccess(function(event, xhr, settings, data) {
+        if (settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
+            if (data && data.response && data.response.success) {
+                buildingObject.buildingQueue.shift();
+                updateLocalStorage();
+                reloadQueueDisplay();
+                expectedBuild = null;
+                isBuilding = false;
+                setTimeout(uruchomBudowe, Math.floor(Math.random() * 1000) + 2000);
+            } else {
+                isBuilding = false;
+                expectedBuild = null;
+            }
+        }
+    });
+
+    $(document).ajaxError(function(event, xhr, settings, thrownError) {
+        if (settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
+            isBuilding = false;
+            expectedBuild = null;
+        }
+    });
+
     function uruchomBudowe() {
         if (!buildingObject.status || isBuilding) return;
 
         const $freeBtn = $('.btn-instant-free:visible');
-        if ($freeBtn.length) { 
-            $freeBtn.click(); 
-            setTimeout(uruchomBudowe, Math.floor(Math.random() * 1000) + 2500); 
-            return; 
+        if ($freeBtn.length) {
+            $freeBtn.click();
+            setTimeout(uruchomBudowe, Math.floor(Math.random() * 1000) + 2500);
+            return;
+        }
+
+        // Automatyczna obsługa zagrody na podstawie dostępnej populacji (zabezpieczenie przed przepełnieniem)
+        if (buildingObject.autoFarmLimit > 0) {
+            let currentPop = parseInt($('#pop_current_label').text(), 10);
+            let maxPop = parseInt($('#pop_max_label').text(), 10);
+
+            if (!isNaN(currentPop) && !isNaN(maxPop) && maxPop > 0) {
+                let freePopPercent = ((maxPop - currentPop) / maxPop) * 100;
+                if (freePopPercent <= buildingObject.autoFarmLimit) {
+                    let inGameQueue = getInQueueCounts()['farm'] || 0;
+
+                    if (inGameQueue === 0 && buildingObject.buildingQueue[0] !== 'farm') {
+                        const maxFarmLvl = (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings['farm']) ? BuildingMain.buildings['farm'].max_level : 30;
+                        let currentFarmLvl = getEffectiveLevels()['farm'] || 0;
+
+                        if (currentFarmLvl < maxFarmLvl) {
+                            buildingObject.buildingQueue.unshift('farm');
+                            updateLocalStorage();
+                            reloadQueueDisplay();
+                            UI.SuccessMessage("Dodano zagrodę na początek kolejki (brak wolnego miejsca).");
+                        }
+                    }
+                }
+            }
         }
 
         if (buildingObject.buildingQueue.length > 0) {
@@ -494,7 +557,9 @@
                 if (currentQueue < buildingObject.buildingQueueLength) {
                     const $buildBtn = $(`.btn-build[data-building="${nextItem}"]`);
                     if ($buildBtn.length && $buildBtn.css('display') !== 'none') {
-                        isBuilding = true; buildAjax(nextItem); return;
+                        isBuilding = true;
+                        buildAjax(nextItem);
+                        return;
                     }
                 }
             }
@@ -503,16 +568,15 @@
     }
 
     function buildAjax(bId) {
-        $.ajax({
-            url: `/game.php?village=${game_data.village.id}&screen=main&ajaxaction=upgrade_building&type=main&h=${game_data.csrf}`,
-            type: "post", data: { id: bId, force: 1, destroy: 0, source: game_data.village.id }, headers: { "TribalWars-Ajax": 1 }
-        }).done(function(r) {
-            let res = typeof r === "string" ? JSON.parse(r) : r;
-            if (res.response && res.response.success) {
-                buildingObject.buildingQueue.shift(); updateLocalStorage();
-                setTimeout(() => location.reload(), 1500);
-            } else { isBuilding = false; }
-        }).fail(() => { isBuilding = false; });
+        expectedBuild = bId;
+        const $btn = $(`.btn-build[data-building="${bId}"]`);
+        if ($btn.length) {
+            // Symulujemy kliknięcie natywnego przycisku gry. Plemiona zajmą się AJAX-em i aktualizacją UI.
+            $btn[0].click();
+        } else {
+            isBuilding = false;
+            expectedBuild = null;
+        }
     }
 
     if (document.readyState === 'complete') init();
