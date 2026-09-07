@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Zarządzanie Znajomymi
 // @namespace    https://viayoo.com/
-// @version      1.2
+// @version      1.3
 // @description  Automatyczne dodawanie i masowe usuwanie znajomych na podstawie plemienia, braku plemienia oraz punktów.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=buddies*
@@ -276,6 +276,9 @@
                 return;
             }
 
+            // Tworzenie zbioru istniejących znajomych (zapisanych w małych literach)
+            const existingFriendsSet = new Set(friends.map(f => f.name.toLowerCase()));
+
             let playersToAdd = [];
             playerRes.split('\n').forEach(line => {
                 if (!line) return;
@@ -283,13 +286,21 @@
                 if (parts.length >= 3) {
                     let name = decodeURIComponent(parts[1].replace(/\+/g, ' '));
                     let allyId = parts[2];
-                    if (targetAllyIds.has(allyId)) {
+
+                    // Dodajemy tylko tych, którzy są w danym plemieniu ORAZ nie znajdują się jeszcze na liście znajomych
+                    if (targetAllyIds.has(allyId) && !existingFriendsSet.has(name.toLowerCase())) {
                         playersToAdd.push(name);
                     }
                 }
             });
 
-            logAdd(`Znaleziono: ${playersToAdd.length} graczy. Wysyłam zaproszenia...`);
+            if (playersToAdd.length === 0) {
+                logAdd('ℹ️ Wszyscy gracze z wybranego plemienia są już na Twojej liście.');
+                genBtn.disabled = false;
+                return;
+            }
+
+            logAdd(`Znaleziono: ${playersToAdd.length} nowych graczy. Wysyłam zaproszenia...`);
 
             const csrfToken = (window.csrf_token || (window.game_data && window.game_data.csrf));
             const postUrl = TribalWars.buildURL('POST', 'buddies', { action: 'add_buddy' });
