@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator Rekrutacji
 // @namespace    https://viayoo.com/
-// @version      3.8
-// @description  Zarządzanie rekrutacją wojsk z niezależnymi kolejkami budynków (działanie w tle)
+// @version      4.0
+// @description  Zarządzanie rekrutacją wojsk z niezależnymi kolejkami budynków, estymacją czasu i podglądem populacji. Dynamiczna detekcja łuczników.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=train*
 // @match        *://*.plemiona.pl/game.php?*screen=barracks*
@@ -19,10 +19,38 @@
     const keyQueueSize = `TCM_CR_queueSize_${villageId}`;
     const keyActive = `TCM_CR_active_${villageId}`;
 
-    let unitData = JSON.parse(localStorage.getItem(keyUnitData)) || { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
-    let limitData = JSON.parse(localStorage.getItem(keyLimitData)) || { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
+    // Weryfikacja aktywnych jednostek na podstawie ustawień świata
+    const availableUnits = ['spear', 'sword', 'axe', 'archer', 'spy', 'light', 'marcher', 'heavy', 'ram', 'catapult'];
+    const activeUnits = availableUnits.filter(u => typeof game_data !== 'undefined' && game_data.units && game_data.units.includes(u));
+
+    // Odczyt lub inicjalizacja danych lokalnych (odfiltrowane tylko do istniejących jednostek)
+    let loadedUnitData = JSON.parse(localStorage.getItem(keyUnitData)) || {};
+    let loadedLimitData = JSON.parse(localStorage.getItem(keyLimitData)) || {};
+    
+    let unitData = {};
+    let limitData = {};
+    
+    activeUnits.forEach(u => {
+        unitData[u] = loadedUnitData[u] || 0;
+        limitData[u] = loadedLimitData[u] || 0;
+    });
+
     let maxQueueSize = parseInt(localStorage.getItem(keyQueueSize)) || 4; 
     let isActive = parseInt(localStorage.getItem(keyActive)) || 2;
+
+    // Wspólna mapa budynków
+    const buildingMap = {
+        'spear': 'barracks', 'sword': 'barracks', 'axe': 'barracks', 'archer': 'barracks',
+        'spy': 'stable', 'light': 'stable', 'marcher': 'stable', 'heavy': 'stable',
+        'ram': 'garage', 'catapult': 'garage'
+    };
+
+    // Mapa kosztów populacji
+    const popCost = {
+        'spear': 1, 'sword': 1, 'axe': 1, 'archer': 1,
+        'spy': 2, 'light': 4, 'marcher': 5, 'heavy': 6,
+        'ram': 5, 'catapult': 8
+    };
 
     const addGlobalStyle = (css) => {
         if (document.getElementById('tcm-global-style')) return;
@@ -65,7 +93,9 @@
             border: 2px solid var(--border-color) !important; 
             border-radius: 6px; 
             padding: 6px; 
-            width: 320px; 
+            width: auto; 
+            max-width: 95vw;
+            min-width: 280px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.8); 
             font-family: Verdana,Arial,sans-serif; 
             color: var(--text-color);
@@ -88,11 +118,27 @@
             border-bottom: 1px solid var(--border-color);
         }
 
+        .tcm-table-wrapper {
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
         #tcm-rtable { width: 100%; margin-top: 4px; border-collapse: collapse; }
-        #tcm-rtable td { text-align: center; padding: 2px; background: var(--bg-row-alt); border: 1px solid var(--border-color); }
+        #tcm-rtable td { text-align: center; padding: 2px 1px; background: var(--bg-row-alt); border: 1px solid var(--border-color); }
+        #tcm-rtable td.tcm-no-bg { background: transparent; border: none; }
         
+        .tcm-row-label { 
+            font-size: 9px; 
+            font-weight: bold; 
+            color: var(--title-color); 
+            text-align: right !important; 
+            padding-right: 4px !important; 
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
         input.tcm-ri { 
-            width: 100%; 
+            width: 42px; 
             font-size: 11px; 
             text-align: center; 
             background: #111; 
@@ -100,9 +146,24 @@
             border: 1px solid var(--border-color); 
             border-radius: 3px; 
             padding: 2px 0;
+            -moz-appearance: textfield;
         }
+        input.tcm-ri::-webkit-outer-spin-button,
+        input.tcm-ri::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
         .tcm-status-val { font-size: 10px; font-weight: bold; color: var(--title-color); }
+        .tcm-pop-val { color: #aaa; }
+
+        #tcm-finish-time-box {
+            margin-top: 5px;
+            padding: 4px;
+            background: #202225;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
 
         .tcm-controls-bar { 
             margin-top: 6px; 
@@ -123,8 +184,8 @@
             font-weight: bold;
         }
 
-        .tcm-queue-inline input {
-            width: 35px;
+        .tcm-queue-inline select {
+            width: 36px;
             text-align: center;
             font-size: 11px;
             background: #111;
@@ -132,6 +193,7 @@
             border: 1px solid var(--border-color);
             border-radius: 3px;
             padding: 2px;
+            cursor: pointer;
         }
         
         .tcm-btns-wrapper {
@@ -160,66 +222,56 @@
 
     const iconUrl = (unit) => `https://dspl.innogamescdn.com/asset/45436e33/graphic/unit/unit_${unit}.png`;
 
+    // Budowanie dynamicznego HTML (reagującego na aktywne jednostki na świecie)
+    let thHtml = '<td class="tcm-no-bg"></td>';
+    let stanHtml = '<td class="tcm-row-label">Stan</td>';
+    let limitHtml = '<td class="tcm-row-label">Limit</td>';
+    let pakaHtml = '<td class="tcm-row-label">Paka</td>';
+    let popHtml = '<td class="tcm-row-label">Pop. (<span id="tcm-total-pop" style="color:var(--btn-green-hover)">0</span>)</td>';
+
+    activeUnits.forEach(u => {
+        thHtml += `<td><img src="${iconUrl(u)}"></td>`;
+        stanHtml += `<td id="tcm-curr-${u}" class="tcm-status-val">0</td>`;
+        limitHtml += `<td><input class="tcm-ri limit-in" data-unit="${u}" type="number"></td>`;
+        pakaHtml += `<td><input class="tcm-ri paczka-in" data-unit="${u}" type="number"></td>`;
+        popHtml += `<td id="tcm-pop-${u}" class="tcm-status-val tcm-pop-val">0</td>`;
+    });
+
     const uiHtml = `
     <div id="tcm-rekrutacja-ui">
         <div id="tcm-rekrutacja-header">
             <span>Kalkulator Rekrutacji</span>
             <span>⚙️</span>
         </div>
-        <table id="tcm-rtable">
-            <tbody>
-                <tr>
-                    <td><img src="${iconUrl('spear')}"></td>
-                    <td><img src="${iconUrl('sword')}"></td>
-                    <td><img src="${iconUrl('axe')}"></td>
-                    <td><img src="${iconUrl('spy')}"></td>
-                    <td><img src="${iconUrl('light')}"></td>
-                    <td><img src="${iconUrl('heavy')}"></td>
-                    <td><img src="${iconUrl('ram')}"></td>
-                    <td><img src="${iconUrl('catapult')}"></td>
-                </tr>
-                <tr>
-                    <td id="tcm-curr-spear" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-sword" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-axe" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-spy" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-light" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-heavy" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-ram" class="tcm-status-val">0</td>
-                    <td id="tcm-curr-catapult" class="tcm-status-val">0</td>
-                </tr>
-                <tr>
-                    <td><input class="tcm-ri limit-in" data-unit="spear" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="sword" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="axe" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="spy" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="light" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="heavy" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="ram" type="number"></td>
-                    <td><input class="tcm-ri limit-in" data-unit="catapult" type="number"></td>
-                </tr>
-                <tr>
-                    <td><input class="tcm-ri paczka-in" data-unit="spear" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="sword" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="axe" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="spy" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="light" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="heavy" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="ram" type="number"></td>
-                    <td><input class="tcm-ri paczka-in" data-unit="catapult" type="number"></td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="tcm-table-wrapper">
+            <table id="tcm-rtable">
+                <tbody>
+                    <tr>${thHtml}</tr>
+                    <tr>${stanHtml}</tr>
+                    <tr>${limitHtml}</tr>
+                    <tr>${pakaHtml}</tr>
+                    <tr>${popHtml}</tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="tcm-finish-time-box">Obliczanie...</div>
 
         <div class="tcm-controls-bar">
             <div class="tcm-queue-inline">
-                <span>Kolejka:</span>
-                <input type="number" id="tcm-queue-size-in" min="1" max="20">
+                <span>Kol:</span>
+                <select id="tcm-queue-size-in">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
             </div>
             <div class="tcm-btns-wrapper">
                 <button id='tcm-clear-btn' class='tcm-btn tcm-btn-clear tcm-btn-stop' title="Wyczyść">🗑️</button>
                 <button id='tcm-save-btn' class='tcm-btn'>💾 Zapisz</button>
-                <button id='tcm-toggle-btn' class='tcm-btn'>✅️ Start</button>
+                <button id='tcm-toggle-btn' class='tcm-btn'>✅ Start</button>
             </div>
         </div>
     </div>`;
@@ -239,9 +291,7 @@
             clearInterval(checkAndInject);
         }
         
-        if (++injectAttempts > 50) {
-            clearInterval(checkAndInject);
-        }
+        if (++injectAttempts > 50) clearInterval(checkAndInject);
     }, 100);
 
     function initLogic() {
@@ -260,24 +310,16 @@
         const dragStart = (e) => {
             isDragging = true;
             let evt = e.type.includes('mouse') ? e : e.touches[0];
-            
-            startX = evt.clientX; 
-            startY = evt.clientY;
-            
-            initialX = uiBox.offsetLeft;
-            initialY = uiBox.offsetTop;
+            startX = evt.clientX; startY = evt.clientY;
+            initialX = uiBox.offsetLeft; initialY = uiBox.offsetTop;
         };
 
         const dragMove = (e) => {
             if (!isDragging) return;
             if (e.cancelable) e.preventDefault(); 
-            
             let evt = e.type.includes('mouse') ? e : e.touches[0];
-            let dx = evt.clientX - startX;
-            let dy = evt.clientY - startY;
-            
-            uiBox.style.left = `${initialX + dx}px`;
-            uiBox.style.top = `${initialY + dy}px`;
+            uiBox.style.left = `${initialX + (evt.clientX - startX)}px`;
+            uiBox.style.top = `${initialY + (evt.clientY - startY)}px`;
         };
 
         const dragEnd = () => { 
@@ -294,8 +336,72 @@
         document.addEventListener('mouseup', dragEnd);
         document.addEventListener('touchend', dragEnd);
 
+        // Funkcja obliczająca całościową i szczątkową populację na bazie Limitu
+        const calcPop = () => {
+            let totalPop = 0;
+            activeUnits.forEach(u => {
+                let limit = parseInt(limitData[u]) || 0;
+                let pop = limit * (popCost[u] || 1);
+                totalPop += pop;
+                $(`#tcm-pop-${u}`).text(pop);
+            });
+            $('#tcm-total-pop').text(totalPop);
+        };
+
+        const calcTime = () => {
+            let bTimes = { barracks: 0, stable: 0, garage: 0 };
+            
+            ['barracks', 'stable', 'garage'].forEach(b => {
+                let wrap = $(`#trainqueue_wrap_${b}`);
+                if (wrap.length) {
+                    wrap.find('tr').each(function() {
+                        let timeCell = $(this).find('td:nth-child(2)');
+                        let timerSpan = $(this).find('span.timer');
+                        let textToParse = timerSpan.length ? timerSpan.text() : (timeCell.length ? timeCell.text() : '');
+                        
+                        let match = textToParse.match(/^(\d+):(\d{2}):(\d{2})/);
+                        if (match) {
+                            bTimes[b] += (+match[1])*3600 + (+match[2])*60 + (+match[3]);
+                        }
+                    });
+                }
+            });
+
+            activeUnits.forEach(key => {
+                let limit = parseInt(limitData[key]) || 0;
+                let current = parseInt($(`#tcm-curr-${key}`).text()) || 0;
+                let missing = limit - current;
+                
+                if (missing > 0) {
+                    let row = $(`#train_form input[name="${key}"]`).closest('tr');
+                    let timeText = row.find('td').text(); 
+                    let match = timeText.match(/(\d+):(\d{2}):(\d{2})/); 
+                    if (match) {
+                        let sec = (+match[1]) * 3600 + (+match[2]) * 60 + (+match[3]);
+                        bTimes[buildingMap[key]] += missing * sec;
+                    }
+                }
+            });
+
+            let maxSec = Math.max(bTimes.barracks, bTimes.stable, bTimes.garage);
+            let finishBox = $('#tcm-finish-time-box');
+            
+            if (maxSec > 0) {
+                let finish = new Date(Date.now() + maxSec * 1000);
+                let d = finish.getDate().toString().padStart(2, '0');
+                let m = (finish.getMonth()+1).toString().padStart(2, '0');
+                let h = finish.getHours().toString().padStart(2, '0');
+                let min = finish.getMinutes().toString().padStart(2, '0');
+                finishBox.html(`⏳ <span style="color:#6bbf6b">${d}.${m} ${h}:${min}</span>`);
+            } else {
+                finishBox.html(`✅ <span style="color:#6bbf6b">Gotowe</span>`);
+            }
+        };
+
         const getUnitsInQueue = () => {
-            let queueUnits = { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
+            let queueUnits = {};
+            activeUnits.forEach(u => queueUnits[u] = 0);
+
             $('.trainqueue_wrap table tr').each(function() {
                 let row = $(this);
                 let sprite = row.find('.unit_sprite_smaller');
@@ -315,7 +421,7 @@
             let currentUnits = {};
             let queueUnits = getUnitsInQueue();
 
-            Object.keys(unitData).forEach(key => {
+            activeUnits.forEach(key => {
                 const input = $(`#train_form input[name="${key}"]`);
                 if (input.length) {
                     let rowText = input.closest('tr').find('td').eq(2).text().replace(/\s+/g, '');
@@ -339,12 +445,14 @@
             
             const btn = $('#tcm-toggle-btn');
             if (isActive === 1) {
-                btn.html('❎️ Stop').removeClass('tcm-btn-start').addClass('tcm-btn-stop');
+                btn.html('❎ Stop').removeClass('tcm-btn-start').addClass('tcm-btn-stop');
             } else {
-                btn.html('✅️ Start').removeClass('tcm-btn-stop').addClass('tcm-btn-start');
+                btn.html('✅ Start').removeClass('tcm-btn-stop').addClass('tcm-btn-start');
             }
             
             getVillageUnits();
+            calcPop();
+            calcTime(); 
         };
 
         $('.limit-in').on('change', function() {
@@ -360,10 +468,23 @@
                 $(`.paczka-in[data-unit="${u}"]`).val('');
             }
             getVillageUnits();
+            calcPop();
+            calcTime();
         });
 
-        $('.paczka-in').on('input', function() { unitData[$(this).data('unit')] = parseInt($(this).val()) || 0; });
-        $('#tcm-queue-size-in').on('input', function() { maxQueueSize = parseInt($(this).val()) || 4; });
+        // Dynamiczne odświeżanie czasu i populacji
+        $('.limit-in, .paczka-in').on('input', function() {
+            let u = $(this).data('unit');
+            if($(this).hasClass('limit-in')) {
+                limitData[u] = parseInt($(this).val()) || 0;
+                calcPop(); 
+            } else {
+                unitData[u] = parseInt($(this).val()) || 0;
+            }
+            calcTime(); 
+        });
+        
+        $('#tcm-queue-size-in').on('change', function() { maxQueueSize = parseInt($(this).val()) || 4; });
 
         $('#tcm-save-btn').click(function() {
             localStorage.setItem(keyUnitData, JSON.stringify(unitData));
@@ -371,16 +492,13 @@
             localStorage.setItem(keyQueueSize, maxQueueSize);
             
             let btn = $(this);
-            btn.html('ദ്ദി ˉ͈̀꒳ˉ͈́ )✧').addClass('tcm-btn-start');
-            setTimeout(() => {
-                btn.html('💾 Zapisz').removeClass('tcm-btn-start');
-            }, 1500);
+            btn.html('Zapisano!').addClass('tcm-btn-start');
+            setTimeout(() => { btn.html('💾 Zapisz').removeClass('tcm-btn-start'); }, 1500);
         });
 
         $('#tcm-clear-btn').click(function() {
             if (confirm('Czy na pewno chcesz usunąć wszystkie limity i wielkości paczek?')) {
-                unitData = { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
-                limitData = { 'spear': 0, 'sword': 0, 'axe': 0, 'spy': 0, 'light': 0, 'heavy': 0, 'ram': 0, 'catapult': 0 };
+                activeUnits.forEach(u => { unitData[u] = 0; limitData[u] = 0; });
                 localStorage.setItem(keyUnitData, JSON.stringify(unitData));
                 localStorage.setItem(keyLimitData, JSON.stringify(limitData));
                 updateUI();
@@ -389,12 +507,6 @@
 
         const recruitIfPossible = () => {
             if (isActive !== 1 || isRecruiting) return;
-
-            const buildingMap = {
-                'spear': 'barracks', 'sword': 'barracks', 'axe': 'barracks',
-                'spy': 'stable', 'light': 'stable', 'heavy': 'stable',
-                'ram': 'garage', 'catapult': 'garage'
-            };
 
             const getBuildingQueueCount = (buildingName) => {
                 let wrap = document.getElementById(`trainqueue_wrap_${buildingName}`);
@@ -405,7 +517,7 @@
             let currentUnits = getVillageUnits();
             let candidates = [];
 
-            Object.keys(limitData).forEach(key => {
+            activeUnits.forEach(key => {
                 let limit = parseInt(limitData[key]) || 0;
                 let paczka = parseInt(unitData[key]) || 0;
                 if (limit <= 0 || paczka <= 0) return;
@@ -426,12 +538,7 @@
                         let targetAmount = Math.min(paczka, missing);
                         
                         if (maxAfford >= targetAmount && targetAmount > 0) {
-                            candidates.push({
-                                unit: key,
-                                targetAmount: targetAmount,
-                                missingPercentage: missing / limit,
-                                missingAbsolute: missing
-                            });
+                            candidates.push({ unit: key, targetAmount: targetAmount, missingPercentage: missing / limit, missingAbsolute: missing });
                         }
                     }
                 }
@@ -446,7 +553,6 @@
 
                     if (input.length && !input.prop('disabled')) {
                         isRecruiting = true;
-                        
                         document.querySelectorAll('#train_form input[type="text"]').forEach(el => el.value = '');
                         
                         input.val(candidate.targetAmount);
@@ -455,15 +561,8 @@
 
                         setTimeout(() => {
                             let submitBtn = $('#train_form .btn-recruit');
-                            if (submitBtn.length) {
-                                submitBtn.click();
-                            }
-                            
-                            // Resetujemy blokadę z opóźnieniem, dając grze czas na zaktualizowanie DOM przez AJAX
-                            setTimeout(() => {
-                                isRecruiting = false; 
-                            }, 1500); 
-                            
+                            if (submitBtn.length) submitBtn.click();
+                            setTimeout(() => { isRecruiting = false; }, 1500); 
                         }, 400);
                         break; 
                     }
@@ -471,7 +570,6 @@
             }
         };
 
-        // --- WEB WORKER (Obejście usypiania kart w mobilnych przeglądarkach) ---
         let workerBlob = new Blob([`
             let intervalId;
             self.onmessage = function(e) {
@@ -498,11 +596,7 @@
             recruitWorker.postMessage({ command: 'start', time: 3500 });
         };
 
-        const stopLoop = () => {
-            if (recruitWorker) {
-                recruitWorker.postMessage({ command: 'stop' });
-            }
-        };
+        const stopLoop = () => { if (recruitWorker) recruitWorker.postMessage({ command: 'stop' }); };
 
         $('#tcm-toggle-btn').click(() => {
             isActive = isActive === 1 ? 2 : 1;
