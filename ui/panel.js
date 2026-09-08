@@ -21,29 +21,29 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Tworzenie elementu otwieracza
+    // Tworzenie elementu otwieracza (zwiększony rozmiar i precyzyjne dopasowanie)
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-    opener.style.cssText = 'cursor: pointer; width: 25px !important; height: 25px !important; display: inline-flex !important; justify-content: center !important; align-items: center !important; margin-right: 5px; vertical-align: middle; z-index: 999999 !important;';
+    opener.style.cssText = 'cursor: pointer; width: 38px !important; height: 38px !important; display: inline-flex !important; justify-content: center !important; align-items: center !important; margin: 0 !important; padding: 2px !important; vertical-align: middle; z-index: 999999 !important; background: transparent; border: none;';
 
-    // Montowanie w lewym górnym rogu paska skrótów
+    // Montowanie w samym rogu paska skrótów
     const quickbarContents = document.querySelector('#quickbar_contents');
     if (quickbarContents) {
         const firstUl = quickbarContents.querySelector('ul.menu');
         if (firstUl) {
             const newLi = document.createElement('li');
             newLi.className = 'quickbar_item';
-            newLi.style.cssText = 'display: inline-block; vertical-align: middle; margin-right: 4px;';
+            newLi.style.cssText = 'display: inline-block; vertical-align: middle; margin: 0 4px 0 0 !important; padding: 0 !important;';
             newLi.appendChild(opener);
             firstUl.insertBefore(newLi, firstUl.firstChild);
         } else {
             quickbarContents.insertBefore(opener, quickbarContents.firstChild);
         }
     } else {
-        // Fallback w przypadku braku paska skrótów
-        opener.style.cssText += 'position: fixed !important; top: 5px !important; left: 5px !important; width: 35px !important; height: 35px !important;';
+        // Fallback w przypadku braku paska skrótów - rogowo i powiększony
+        opener.style.cssText += 'position: fixed !important; top: 2px !important; left: 2px !important; width: 45px !important; height: 45px !important; background: var(--bg-main) !important; border: 1px solid var(--border-color) !important; border-radius: 4px !important;';
         document.body.appendChild(opener);
     }
 
@@ -71,7 +71,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-square-btn tw-btn-inactive';
-    closeBtn.innerText = 'X';
+    closeBtn.innerText = '❌';
 
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
@@ -162,7 +162,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-square-btn tw-btn-active';
-            infoIcon.innerText = 'i';
+            infoIcon.innerText = 'ℹ️';
 
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
@@ -293,4 +293,3 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         }
     });
 };
-
