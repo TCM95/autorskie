@@ -684,37 +684,26 @@
     }
 
     function startCountdown() {
-    function startCountdown() {
-    clearInterval(countdownIntervalId);
-    
-    // 1. Zamieniamy minuty na sekundy (np. 5 min -> 300s, 10 min -> 600s)
-    const minSeconds = Math.round((parseFloat(settings.reloadMin) || 1) * 60);
-    const maxSeconds = Math.round((parseFloat(settings.reloadMax) || minSeconds) * 60);
-    
-    // 2. Losujemy dowolną SEKUNDĘ z przedziału np. [300, 600]
-    let timeLeft = randomDelay(minSeconds, maxSeconds);
-    
-    countdownIntervalId = setInterval(() => {
-        if (!isRunning) {
-            clearInterval(countdownIntervalId);
-            countdownIntervalId = null;
-            return;
-        }
-        if (timeLeft <= 0) {
-            clearInterval(countdownIntervalId);
-            countdownIntervalId = null;
-            setStatus('Odświeżanie...');
-            location.reload();
-            return;
-        }
+        clearInterval(countdownIntervalId);
+        // Przeliczenie minut na sekundy do wewnętrznego silnika odliczania
+        let timeLeft = randomDelay(settings.reloadMin * 60, settings.reloadMax * 60);
         
-        // 3. Wyświetlanie formatu Xm Ys (np. 6m 48s)
-        let m = Math.floor(timeLeft / 60);
-        let s = timeLeft % 60;
-        setStatus(`${m}m ${s < 10 ? '0' : ''}${s}s`);
-        timeLeft--;
-    }, 1000);
-        
+        countdownIntervalId = setInterval(() => {
+            if (!isRunning) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+                return;
+            }
+            if (timeLeft <= 0) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+                setStatus('Odświeżanie...');
+                location.reload();
+                return;
+            }
+            setStatus(`${Math.floor(timeLeft / 60)}m ${timeLeft % 60}s`);
+            timeLeft--;
+        }, 1000);
     }
 
     function startProcess() {
@@ -865,26 +854,26 @@
             collapsibleArea.innerHTML = `
                 <div class="tcm-cfg-container">
                     <div>
-                        <div class="tcm-cfg-section-title">Parametry</div>
+                        <div class="tcm-cfg-section-title">Parametry Farmowania</div>
                         <div style="margin-bottom:6px;">
-                            <label>Grupa:</label>
+                            <label>Grupa wiosek:</label>
                             ${groupSelectHtml}
                         </div>
                         <div class="tcm-row-fields">
                             <div>
-                                <label>Dystans:
+                                <label>Max kratki:
                                     <input type="number" id="cfgDistance" value="${settings.fgDistance}" class="tcm-input">
                                 </label>
                             </div>
                             <div>
-                                <label>Odstęp na wioske:
+                                <label>Odstęp (min):
                                     <input type="number" id="cfgTime" value="${settings.fgTime}" class="tcm-input">
                                 </label>
                             </div>
                         </div>
                         <!-- Wyśrodkowane opcje na dole kolumny -->
                         <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:12px; font-size:11px;">
-                            <label style="cursor:pointer;"><input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}> Full(B)</label>
+                            <label style="cursor:pointer;"><input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}> Full loot</label>
                             <label style="cursor:pointer;"><input type="checkbox" id="cfgLosses" ${settings.fgLosses ? 'checked' : ''}> Straty</label>
                             <label style="cursor:pointer;"><input type="checkbox" id="cfgNewBarbs" ${settings.fgNewBarbs ? 'checked' : ''}> Nowe barby</label>
                         </div>
