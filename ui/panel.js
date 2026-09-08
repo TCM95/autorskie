@@ -371,3 +371,4 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     opener.addEventListener('mousedown', dragStart, { passive: false });
     opener.addEventListener('touchstart', dragStart, { passive: false });
 };
+
