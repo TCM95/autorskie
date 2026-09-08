@@ -1,4 +1,4 @@
-Window.TCM_UI = window.TCM_UI || {};
+window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     let currentCategory = null;
@@ -21,20 +21,31 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
-
+    // Tworzenie elementu otwieracza
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
+    opener.style.cssText = 'cursor: pointer; width: 25px !important; height: 25px !important; display: inline-flex !important; justify-content: center !important; align-items: center !important; margin-right: 5px; vertical-align: middle; z-index: 999999 !important;';
 
-    if (savedOpenerPos) {
-        opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
-        opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
+    // Montowanie w lewym górnym rogu paska skrótów
+    const quickbarContents = document.querySelector('#quickbar_contents');
+    if (quickbarContents) {
+        const firstUl = quickbarContents.querySelector('ul.menu');
+        if (firstUl) {
+            const newLi = document.createElement('li');
+            newLi.className = 'quickbar_item';
+            newLi.style.cssText = 'display: inline-block; vertical-align: middle; margin-right: 4px;';
+            newLi.appendChild(opener);
+            firstUl.insertBefore(newLi, firstUl.firstChild);
+        } else {
+            quickbarContents.insertBefore(opener, quickbarContents.firstChild);
+        }
+    } else {
+        // Fallback w przypadku braku paska skrótów
+        opener.style.cssText += 'position: fixed !important; top: 5px !important; left: 5px !important; width: 35px !important; height: 35px !important;';
+        document.body.appendChild(opener);
     }
-
-    document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
@@ -243,14 +254,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     updateCategoryStatus();
 
-    let wasDragged = false; 
-
     opener.onclick = (e) => { 
-        if (wasDragged) {
-            wasDragged = false; 
-            return; 
-        }
-
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
@@ -260,11 +264,10 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
 
-            const absoluteLeft = parseInt(opener.style.left) || 0;
-            const absoluteTop = parseInt(opener.style.top) || 0;
-
-            panel.style.setProperty('left', (absoluteLeft + 55) + 'px', 'important');
-            panel.style.setProperty('top', absoluteTop + 'px', 'important');
+            const rect = opener.getBoundingClientRect();
+            panel.style.setProperty('position', 'fixed', 'important');
+            panel.style.setProperty('left', rect.left + 'px', 'important');
+            panel.style.setProperty('top', (rect.bottom + 5) + 'px', 'important');
         }
     };
 
@@ -289,86 +292,4 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             }
         }
     });
-
-    let isDragging = false;
-    let draggedElement = null;
-    let initialX = 0, initialY = 0;
-    let startX = 0, startY = 0;
-
-    function dragStart(e) {
-        if (e.currentTarget !== opener) return;
-
-        draggedElement = opener;
-        wasDragged = false; 
-
-        if (e.type === "touchstart") {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        } else {
-            startX = e.clientX;
-            startY = e.clientY;
-        }
-
-        const rect = draggedElement.getBoundingClientRect();
-        initialX = rect.left;
-        initialY = rect.top;
-
-        isDragging = true;
-
-        panel.style.setProperty('display', 'none', 'important');
-        opener.classList.remove('tw-opener-open');
-        opener.classList.add('tw-opener-closed');
-        globalTooltip.style.display = 'none';
-
-        document.addEventListener('mousemove', dragMove, { passive: false });
-        document.addEventListener('touchmove', dragMove, { passive: false });
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('touchend', dragEnd);
-    }
-
-    function dragMove(e) {
-        if (!isDragging || !draggedElement) return;
-        if (e.cancelable) e.preventDefault(); 
-        window.getSelection().removeAllRanges(); 
-
-        let currentX, currentY;
-        if (e.type === "touchmove") {
-            currentX = e.touches[0].clientX;
-            currentY = e.touches[0].clientY;
-        } else {
-            currentX = e.clientX;
-            currentY = e.clientY;
-        }
-
-        const dx = currentX - startX;
-        const dy = currentY - startY;
-
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-            wasDragged = true; 
-        }
-
-        draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
-        draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
-    }
-
-    function dragEnd() {
-        if (!isDragging) return;
-
-        localStorage.setItem('tw_opener_pos', JSON.stringify({
-            x: parseInt(opener.style.left) || 0,
-            y: parseInt(opener.style.top) || 0
-        }));
-
-        isDragging = false;
-        draggedElement = null;
-
-        document.removeEventListener('mousemove', dragMove);
-        document.removeEventListener('touchmove', dragMove);
-        document.removeEventListener('mouseup', dragEnd);
-        document.removeEventListener('touchend', dragEnd);
-    }
-
-    opener.addEventListener('mousedown', dragStart, { passive: false });
-    opener.addEventListener('touchstart', dragStart, { passive: false });
 };
-
