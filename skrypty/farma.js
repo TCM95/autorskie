@@ -684,26 +684,37 @@
     }
 
     function startCountdown() {
-        clearInterval(countdownIntervalId);
-        // Przeliczenie minut na sekundy do wewnętrznego silnika odliczania
-        let timeLeft = randomDelay(settings.reloadMin * 60, settings.reloadMax * 60);
+    function startCountdown() {
+    clearInterval(countdownIntervalId);
+    
+    // 1. Zamieniamy minuty na sekundy (np. 5 min -> 300s, 10 min -> 600s)
+    const minSeconds = Math.round((parseFloat(settings.reloadMin) || 1) * 60);
+    const maxSeconds = Math.round((parseFloat(settings.reloadMax) || minSeconds) * 60);
+    
+    // 2. Losujemy dowolną SEKUNDĘ z przedziału np. [300, 600]
+    let timeLeft = randomDelay(minSeconds, maxSeconds);
+    
+    countdownIntervalId = setInterval(() => {
+        if (!isRunning) {
+            clearInterval(countdownIntervalId);
+            countdownIntervalId = null;
+            return;
+        }
+        if (timeLeft <= 0) {
+            clearInterval(countdownIntervalId);
+            countdownIntervalId = null;
+            setStatus('Odświeżanie...');
+            location.reload();
+            return;
+        }
         
-        countdownIntervalId = setInterval(() => {
-            if (!isRunning) {
-                clearInterval(countdownIntervalId);
-                countdownIntervalId = null;
-                return;
-            }
-            if (timeLeft <= 0) {
-                clearInterval(countdownIntervalId);
-                countdownIntervalId = null;
-                setStatus('Odświeżanie...');
-                location.reload();
-                return;
-            }
-            setStatus(`${Math.floor(timeLeft / 60)}m ${timeLeft % 60}s`);
-            timeLeft--;
-        }, 1000);
+        // 3. Wyświetlanie formatu Xm Ys (np. 6m 48s)
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        setStatus(`${m}m ${s < 10 ? '0' : ''}${s}s`);
+        timeLeft--;
+    }, 1000);
+        
     }
 
     function startProcess() {
