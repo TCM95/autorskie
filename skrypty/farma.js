@@ -865,26 +865,26 @@
             collapsibleArea.innerHTML = `
                 <div class="tcm-cfg-container">
                     <div>
-                        <div class="tcm-cfg-section-title">Parametry Farmowania</div>
+                        <div class="tcm-cfg-section-title">Parametry</div>
                         <div style="margin-bottom:6px;">
-                            <label>Grupa wiosek:</label>
+                            <label>Grupa:</label>
                             ${groupSelectHtml}
                         </div>
                         <div class="tcm-row-fields">
                             <div>
-                                <label>Max kratki:
+                                <label>Dystans:
                                     <input type="number" id="cfgDistance" value="${settings.fgDistance}" class="tcm-input">
                                 </label>
                             </div>
                             <div>
-                                <label>Odstęp (min):
+                                <label>Odstęp na wioske:
                                     <input type="number" id="cfgTime" value="${settings.fgTime}" class="tcm-input">
                                 </label>
                             </div>
                         </div>
                         <!-- Wyśrodkowane opcje na dole kolumny -->
                         <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:12px; font-size:11px;">
-                            <label style="cursor:pointer;"><input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}> Full loot</label>
+                            <label style="cursor:pointer;"><input type="checkbox" id="cfgMaxLoot" ${settings.fgMaxLoot ? 'checked' : ''}> Full(B)</label>
                             <label style="cursor:pointer;"><input type="checkbox" id="cfgLosses" ${settings.fgLosses ? 'checked' : ''}> Straty</label>
                             <label style="cursor:pointer;"><input type="checkbox" id="cfgNewBarbs" ${settings.fgNewBarbs ? 'checked' : ''}> Nowe barby</label>
                         </div>
