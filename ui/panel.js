@@ -1,4 +1,4 @@
-window.TCM_UI = window.TCM_UI || {};
+Window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     let currentCategory = null;
@@ -21,31 +21,20 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Tworzenie elementu otwieracza (zwiększony rozmiar i precyzyjne dopasowanie)
+    const savedOpenerPos = JSON.parse(localStorage.getItem('tw_opener_pos') || 'null');
+
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-    opener.style.cssText = 'cursor: pointer; width: 38px !important; height: 38px !important; display: inline-flex !important; justify-content: center !important; align-items: center !important; margin: 0 !important; padding: 2px !important; vertical-align: middle; z-index: 999999 !important; background: transparent; border: none;';
+    opener.style.cssText = 'position: absolute !important; top: 60px !important; left: 10px !important; z-index: 999999 !important;';
 
-    // Montowanie w samym rogu paska skrótów
-    const quickbarContents = document.querySelector('#quickbar_contents');
-    if (quickbarContents) {
-        const firstUl = quickbarContents.querySelector('ul.menu');
-        if (firstUl) {
-            const newLi = document.createElement('li');
-            newLi.className = 'quickbar_item';
-            newLi.style.cssText = 'display: inline-block; vertical-align: middle; margin: 0 4px 0 0 !important; padding: 0 !important;';
-            newLi.appendChild(opener);
-            firstUl.insertBefore(newLi, firstUl.firstChild);
-        } else {
-            quickbarContents.insertBefore(opener, quickbarContents.firstChild);
-        }
-    } else {
-        // Fallback w przypadku braku paska skrótów - rogowo i powiększony
-        opener.style.cssText += 'position: fixed !important; top: 2px !important; left: 2px !important; width: 45px !important; height: 45px !important; background: var(--bg-main) !important; border: 1px solid var(--border-color) !important; border-radius: 4px !important;';
-        document.body.appendChild(opener);
+    if (savedOpenerPos) {
+        opener.style.setProperty('left', savedOpenerPos.x + 'px', 'important');
+        opener.style.setProperty('top', savedOpenerPos.y + 'px', 'important');
     }
+
+    document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
@@ -71,7 +60,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'tw-square-btn tw-btn-inactive';
-    closeBtn.innerText = '❌';
+    closeBtn.innerText = 'X';
 
     closeBtn.onclick = () => { 
         panel.style.setProperty('display', 'none', 'important'); 
@@ -162,7 +151,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
             const infoIcon = document.createElement('button');
             infoIcon.className = 'tw-square-btn tw-btn-active';
-            infoIcon.innerText = 'ℹ️';
+            infoIcon.innerText = 'i';
 
             infoIcon.onclick = (e) => {
                 e.stopPropagation();
@@ -254,7 +243,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     updateCategoryStatus();
 
+    let wasDragged = false; 
+
     opener.onclick = (e) => { 
+        if (wasDragged) {
+            wasDragged = false; 
+            return; 
+        }
+
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
@@ -264,10 +260,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
 
-            const rect = opener.getBoundingClientRect();
-            panel.style.setProperty('position', 'fixed', 'important');
-            panel.style.setProperty('left', rect.left + 'px', 'important');
-            panel.style.setProperty('top', (rect.bottom + 5) + 'px', 'important');
+            const absoluteLeft = parseInt(opener.style.left) || 0;
+            const absoluteTop = parseInt(opener.style.top) || 0;
+
+            panel.style.setProperty('left', (absoluteLeft + 55) + 'px', 'important');
+            panel.style.setProperty('top', absoluteTop + 'px', 'important');
         }
     };
 
@@ -292,4 +289,85 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             }
         }
     });
+
+    let isDragging = false;
+    let draggedElement = null;
+    let initialX = 0, initialY = 0;
+    let startX = 0, startY = 0;
+
+    function dragStart(e) {
+        if (e.currentTarget !== opener) return;
+
+        draggedElement = opener;
+        wasDragged = false; 
+
+        if (e.type === "touchstart") {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        } else {
+            startX = e.clientX;
+            startY = e.clientY;
+        }
+
+        const rect = draggedElement.getBoundingClientRect();
+        initialX = rect.left;
+        initialY = rect.top;
+
+        isDragging = true;
+
+        panel.style.setProperty('display', 'none', 'important');
+        opener.classList.remove('tw-opener-open');
+        opener.classList.add('tw-opener-closed');
+        globalTooltip.style.display = 'none';
+
+        document.addEventListener('mousemove', dragMove, { passive: false });
+        document.addEventListener('touchmove', dragMove, { passive: false });
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+    }
+
+    function dragMove(e) {
+        if (!isDragging || !draggedElement) return;
+        if (e.cancelable) e.preventDefault(); 
+        window.getSelection().removeAllRanges(); 
+
+        let currentX, currentY;
+        if (e.type === "touchmove") {
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+        } else {
+            currentX = e.clientX;
+            currentY = e.clientY;
+        }
+
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            wasDragged = true; 
+        }
+
+        draggedElement.style.setProperty('left', (initialX + dx) + 'px', 'important');
+        draggedElement.style.setProperty('top', (initialY + dy) + 'px', 'important');
+    }
+
+    function dragEnd() {
+        if (!isDragging) return;
+
+        localStorage.setItem('tw_opener_pos', JSON.stringify({
+            x: parseInt(opener.style.left) || 0,
+            y: parseInt(opener.style.top) || 0
+        }));
+
+        isDragging = false;
+        draggedElement = null;
+
+        document.removeEventListener('mousemove', dragMove);
+        document.removeEventListener('touchmove', dragMove);
+        document.removeEventListener('mouseup', dragEnd);
+        document.removeEventListener('touchend', dragEnd);
+    }
+
+    opener.addEventListener('mousedown', dragStart, { passive: false });
+    opener.addEventListener('touchstart', dragStart, { passive: false });
 };
