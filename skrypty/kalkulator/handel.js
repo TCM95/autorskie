@@ -52,10 +52,22 @@
                 };
                 const script = document.createElement('script');
                 script.src = 'https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieSurki.js?_=' + Date.now();
+                
+                // ✅️ WYWOLANIE SKRYPTU PO POBRANIU (bez zmian w logice):
+                script.onload = function() {
+                    if (typeof HermitowskieSurki !== 'undefined' && typeof HermitowskieSurki.init === 'function') {
+                        HermitowskieSurki.init();
+                    } else if (typeof main === 'function') {
+                        main();
+                    }
+                };
+                
                 document.head.appendChild(script);
             }
             if (attempts > 30) clearInterval(checkAndInject);
         }, 1000);
+    }
+
     }
 
     // --- MODUŁ 3: HANDEL (Inni gracze / Kupno) ---
