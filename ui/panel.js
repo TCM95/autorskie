@@ -267,7 +267,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             // Panel ukazuje się na tej samej wysokości, zaraz obok ikony (50px od lewej)
             panel.style.setProperty('position', 'fixed', 'important');
             panel.style.setProperty('top', '150px', 'important');
-            panel.style.setProperty('left', '55px', 'important');
+            panel.style.setProperty('left', '60px', 'important');
             panel.style.setProperty('bottom', 'auto', 'important');
             panel.style.setProperty('right', 'auto', 'important');
         }
