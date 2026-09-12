@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Klin z Cofki Ręczny
 // @namespace    https://viayoo.com/
-// @version      1.7
-// @description  Planowanie klina z cofki z precyzyjnym zachowaniem milisekund wyjściowych.
+// @version      1.8
+// @description  Planowanie klina z cofki – filtrowanie tylko ataków w przychodzących oraz licznik w formacie MM:SS.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=place*
 // @run-at       document-end
@@ -143,23 +143,23 @@
         return d.toLocaleTimeString("pl-PL", { hour12: false }) + ":" + String(d.getMilliseconds()).padStart(3, "0");
     }
 
+    // Formatowanie czasu odliczania bez milisekund (MM:SS lub HH:MM:SS)
     function formatCountdown(diffMs) {
-        if (diffMs <= 0) return "00:00.000";
+        if (diffMs <= 0) return "00:00";
         
-        const totalSeconds = Math.floor(diffMs / 1000);
+        const totalSeconds = Math.ceil(diffMs / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
-        const ms = Math.floor(diffMs % 1000);
 
-        const pad = (n, z = 2) => String(n).padStart(z, '0');
+        const pad = (n) => String(n).padStart(2, '0');
         
         if (minutes >= 60) {
             const hours = Math.floor(minutes / 60);
             const remMinutes = minutes % 60;
-            return `${pad(hours)}:${pad(remMinutes)}:${pad(seconds)}.${pad(ms, 3)}`;
+            return `${pad(hours)}:${pad(remMinutes)}:${pad(seconds)}`;
         }
 
-        return `${pad(minutes)}:${pad(seconds)}.${pad(ms, 3)}`;
+        return `${pad(minutes)}:${pad(seconds)}`;
     }
 
     function stopCurrentSnipe() {
@@ -206,7 +206,6 @@
             return;
         }
 
-        // Dokładne wyliczenie połowy czasu przelotu
         const durationSec = Math.round((targetMs - startMs) / 1000);
         const halfDurationMs = (durationSec / 2) * 1000;
         const cancelTimeMs = startMs + halfDurationMs;
@@ -332,6 +331,12 @@
         const commandRows = incomingsTable.querySelectorAll('tr.command-row');
         
         commandRows.forEach(row => {
+            // Weryfikacja czy wiersz reprezentuje ATAK (pomijanie wsparcia)
+            const img = row.querySelector('img[src*="graphic/command/"]');
+            if (img && img.src.includes('support.webp')) {
+                return; // Pomijamy wiersze wsparcia
+            }
+
             const nameCell = row.querySelector('td:first-child') || row.querySelector('td');
             if (!nameCell) return;
 
