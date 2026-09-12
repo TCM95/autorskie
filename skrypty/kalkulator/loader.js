@@ -394,16 +394,24 @@
         });
 
     }
-
     // Wbudowana obsługa wezwania handlarzy (ekran market&mode=call)
     if (game_data.screen === 'market' && game_data.query.indexOf('mode=call') !== -1) {
         const callData = JSON.parse(localStorage.getItem(STORAGE_KEY_CALL));
         if (callData) {
-            if (callData.w) $('#wood').val(callData.w);
-            if (callData.g) $('#stone').val(callData.g);
-            if (callData.i) $('#iron').val(callData.i);
-            localStorage.removeItem(STORAGE_KEY_CALL);
+            // Opóźnienie 600ms pozwala grze podpiąć skrypty i zapobiega odświeżaniu strony
+            setTimeout(() => {
+                if (callData.w) $('#wood').val(callData.w);
+                if (callData.g) $('#stone').val(callData.g);
+                if (callData.i) $('#iron').val(callData.i);
+                
+                localStorage.removeItem(STORAGE_KEY_CALL);
+                
+                // Automatyczne kliknięcie przycisku
+                const btn = $('input[type="submit"], input[value="Oblicz"], .btn').first();
+                if(btn.length) btn.click();
+            }, 600);
         }
+        
     }
 
     (function init() {
