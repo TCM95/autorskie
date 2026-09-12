@@ -1,4 +1,4 @@
-// ==UserScript==
+5// ==UserScript==
 // @name         Kalkulator Surowców
 // @namespace    https://viayoo.com/
 // @version      2.2
@@ -373,11 +373,18 @@
             if (w||g||i) r.find('td:first').prepend($(`<input type="checkbox" class="calc-check" data-w="${w}" data-g="${g}" data-i="${i}" style="margin-right:8px; width:20px; height:20px;">`));
         });
 
-        $(document).on('change', '.calc-check', function() {
+                $(document).on('change', '.calc-check', function() {
             let tw=0, tg=0, ti=0, names=[];
             $('.calc-check:checked').each(function() {
                 tw+=parseInt($(this).data('w')); tg+=parseInt($(this).data('g')); ti+=parseInt($(this).data('i'));
-                let bName = $(this).parent().text().replace(/\s+/g, ' ').trim().split(' (')[0];
+                
+                // 🧹 Czysta nazwa bez aktualnych poziomów
+                let bName = $(this).parent().text()
+                    .replace(/\(?poziom\s*\d+\)?/gi, '') // Usuwa słowo "poziom" i cyfry
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .split(' (')[0];
+                    
                 if(bName) names.push(bName);
             });
             $('#c_w').val(tw); $('#c_g').val(tg); $('#c_i').val(ti);
@@ -385,6 +392,7 @@
             localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({w:tw, g:tg, i:ti, name: finalName}));
             calculateTrade();
         });
+
     }
 
     // Wbudowana obsługa wezwania handlarzy (ekran market&mode=call)
