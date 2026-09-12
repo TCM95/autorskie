@@ -21,12 +21,15 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Tworzenie elementu otwieracza - zmienione na boczną ikonę z ramką
+    // Tworzenie elementu otwieracza - przylepiony do lewej krawędzi ekranu
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = `
+        position: fixed !important; 
+        top: 150px !important; /* Wysokość - możesz edytować */
+        left: 5px !important;  /* Zawsze 5px od lewej krawędzi ekranu */
         cursor: pointer; 
         width: 40px !important; 
         height: 40px !important; 
@@ -38,19 +41,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         border-radius: 5px; 
         box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
         padding: 4px; 
-        margin-bottom: 8px; 
         z-index: 999999 !important;
     `;
 
-    // Montowanie nad dziennikiem zadań z lewej strony
-    const questlog = document.getElementById('questlog_new');
-    if (questlog && questlog.parentNode) {
-        questlog.parentNode.insertBefore(opener, questlog);
-    } else {
-        // Fallback w przypadku braku elementu zadań
-        opener.style.cssText += 'position: fixed !important; top: 120px !important; left: 5px !important;';
-        document.body.appendChild(opener);
-    }
+    // Montowanie bezpośrednio do body (całkowicie uniezależnia od kontenerów gry)
+    document.body.appendChild(opener);
 
     const panel = document.createElement('div');
     panel.id = 'tw-script-panel';
