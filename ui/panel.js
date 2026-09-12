@@ -29,7 +29,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     opener.style.cssText = `
         position: fixed !important; 
         top: 150px !important; /* Idealnie pod ikoną zadań */
-        left: 10px !important;  /* Doklejone do lewej krawędzi */
+        left: 30px !important;  /* Doklejone do lewej krawędzi */
         cursor: pointer; 
         width: 35px !important; 
         height: 35px !important; 
