@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Klin z Cofki Ręczny (Minimal UI)
+// @name         Klin z Cofki Ręczny
 // @namespace    https://viayoo.com/
-// @version      1.3
-// @description  Planowanie klina z cofki z minimalistycznymi przyciskami (dostosowane pod ekrany dotykowe)
+// @version      1.7
+// @description  Planowanie klina z cofki z precyzyjnym zachowaniem milisekund wyjściowych.
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php?*screen=place*
 // @run-at       document-end
@@ -12,7 +12,6 @@
 (function() {
     'use strict';
 
-    // --- STYL SHINKO (CSS) - UZUPEŁNIONY WZORZEC ---
     const style = document.createElement('style');
     style.textContent = `
         :root {
@@ -32,15 +31,14 @@
             --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
         }
 
-        /* Przyciski zoptymalizowane pod dotyk */
         .shinko-btn-snipe {
             background: var(--btn-bg) !important;
             border: 1px solid var(--border-color) !important;
             color: var(--text-color) !important;
             border-radius: 4px !important;
             cursor: pointer !important;
-            font-size: 16px !important;
-            padding: 6px 14px !important;
+            font-size: 14px !important;
+            padding: 4px 10px !important;
             margin-left: 6px !important;
             box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
             transition: all 0.2s;
@@ -48,8 +46,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 44px;
-            min-height: 36px;
+            min-width: 36px;
+            min-height: 30px;
         }
 
         .shinko-btn-snipe:hover {
@@ -67,48 +65,51 @@
         }
 
         .shinko-timer-display {
-            margin-left: 8px !important;
+            margin-left: 6px !important;
             font-weight: bold !important;
             font-family: monospace !important;
-            font-size: 12px !important;
-            padding: 4px 6px !important;
+            font-size: 13px !important;
+            padding: 3px 6px !important;
             background-color: var(--bg-header) !important;
             border: 1px solid var(--border-color) !important;
             border-radius: 3px !important;
             vertical-align: middle;
         }
 
-        /* Nowe style dla RĘCZNEGO PANELU */
         .tcm-manual-panel {
             background: var(--bg-main);
             border: 1px solid var(--border-color);
-            margin: 15px 0;
-            padding: 12px;
+            margin: 10px 0 15px 0;
+            padding: 10px;
             border-radius: 6px;
             color: var(--text-color);
             display: flex;
             align-items: center;
             justify-content: flex-start;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
         }
 
         .tcm-manual-panel span.tcm-label {
             font-weight: bold;
             color: var(--title-color);
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .tcm-manual-input {
             background: var(--bg-row-alt);
             color: var(--text-color);
             border: 1px solid var(--border-color);
-            padding: 8px;
+            padding: 6px;
             border-radius: 4px;
-            width: 140px;
+            width: 130px;
             text-align: center;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 13px;
+        }
+
+        .tcm-input-auto {
+            border-color: #5cad5c !important;
         }
     `;
     document.head.appendChild(style);
@@ -137,6 +138,30 @@
         return d.getTime();
     }
 
+    function formatMsToTime(ms) {
+        const d = new Date(ms);
+        return d.toLocaleTimeString("pl-PL", { hour12: false }) + ":" + String(d.getMilliseconds()).padStart(3, "0");
+    }
+
+    function formatCountdown(diffMs) {
+        if (diffMs <= 0) return "00:00.000";
+        
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        const ms = Math.floor(diffMs % 1000);
+
+        const pad = (n, z = 2) => String(n).padStart(z, '0');
+        
+        if (minutes >= 60) {
+            const hours = Math.floor(minutes / 60);
+            const remMinutes = minutes % 60;
+            return `${pad(hours)}:${pad(remMinutes)}:${pad(seconds)}.${pad(ms, 3)}`;
+        }
+
+        return `${pad(minutes)}:${pad(seconds)}.${pad(ms, 3)}`;
+    }
+
     function stopCurrentSnipe() {
         if (globalAnimationFrameId) {
             cancelAnimationFrame(globalAnimationFrameId);
@@ -154,24 +179,41 @@
         }
     }
 
-    function startSnipeEngine(btnElement, timerElement, targetMs, specificCancelLink = null) {
-        const savedStart = sessionStorage.getItem("snip_start_time");
+    function getCancelLinkForOutgoingCommand() {
+        const outgoingTable = document.querySelector("#commands_outgoings");
+        if (!outgoingTable) return null;
+        
+        return outgoingTable.querySelector("tr.command-row a.command-cancel");
+    }
+
+    function startSnipeEngine(btnElement, timerElement, targetMs, customStartMs = null) {
+        let startMs = customStartMs;
+        
+        if (!startMs) {
+            const savedStart = sessionStorage.getItem("snip_start_time");
+            if (savedStart) {
+                startMs = Number(savedStart);
+            }
+        }
 
         if (!targetMs) {
-            UI.ErrorMessage("Nie udało się odczytać czasu. Format: HH:MM:SS:ms");
-            return;
-        }
-        if (!savedStart) {
-            UI.ErrorMessage("Brak czasu wysłania wojska. Wyślij wojsko z ekranu potwierdzenia!");
+            UI.ErrorMessage("Błędny czas celu. Format: HH:MM:SS:ms");
             return;
         }
 
-        const startMs = Number(savedStart);
-        const cancelTimeMs = startMs + (targetMs - startMs) / 2;
+        if (!startMs) {
+            UI.ErrorMessage("Brak czasu wysłania! Wyślij wojsko lub wpisz czas wysłania ręcznie.");
+            return;
+        }
+
+        // Dokładne wyliczenie połowy czasu przelotu
+        const durationSec = Math.round((targetMs - startMs) / 1000);
+        const halfDurationMs = (durationSec / 2) * 1000;
+        const cancelTimeMs = startMs + halfDurationMs;
 
         if (cancelTimeMs <= Timing.getCurrentServerTime()) {
-             UI.ErrorMessage("Czas na anulowanie już minął!");
-             return;
+            UI.ErrorMessage("Czas na anulowanie rozkazu już minął!");
+            return;
         }
 
         btnElement.dataset.originalText = btnElement.innerHTML;
@@ -192,13 +234,12 @@
                 timerElement.textContent = "COFANIE...";
                 timerElement.style.color = "#ff4444";
                 
-                // Użycie konkretnego linku anulowania (jeśli dostarczono) lub pierwszego z brzegu
-                const btnCancel = specificCancelLink || document.querySelector("a.command-cancel");
+                const btnCancel = getCancelLinkForOutgoingCommand();
                 
                 if (btnCancel) {
                     btnCancel.click();
                 } else {
-                    UI.ErrorMessage("Nie znaleziono przycisku anulowania!");
+                    UI.ErrorMessage("Nie znaleziono przycisku odwołania w rozkazach wychodzących!");
                 }
 
                 btnElement.innerHTML = btnElement.dataset.originalText;
@@ -208,7 +249,7 @@
                 return;
             }
 
-            timerElement.textContent = "Cofka za: " + (diff / 1000).toFixed(3) + "s";
+            timerElement.textContent = "Cofka za: " + formatCountdown(diff);
             timerElement.style.color = "#55ff55";
             
             globalAnimationFrameId = requestAnimationFrame(checkTime);
@@ -217,7 +258,6 @@
         globalAnimationFrameId = requestAnimationFrame(checkTime);
     }
 
-    // Zapisywanie czasu startu
     if (window.location.href.includes("try=confirm")) {
         const confirmBtn = document.querySelector("#troop_confirm_submit");
         if (confirmBtn) {
@@ -229,23 +269,44 @@
     }
 
     function setupManualUI() {
-        const targetContainer = document.querySelector('#paged_view_content') || document.querySelector('.maincolumn');
-        if(!targetContainer) return;
+        const outgoingTable = document.querySelector("#commands_outgoings");
+        const mainContent = document.querySelector('#paged_view_content') || document.querySelector('.maincolumn');
+
+        if (!outgoingTable && !mainContent) return;
+
+        const existingPanel = document.querySelector('.tcm-manual-panel');
+        if (existingPanel) existingPanel.remove();
 
         const manualPanel = document.createElement('div');
         manualPanel.className = 'tcm-manual-panel';
         
+        const savedStart = sessionStorage.getItem("snip_start_time");
+        let formattedStart = "";
+        let autoClass = "";
+        
+        if (savedStart) {
+            formattedStart = formatMsToTime(Number(savedStart));
+            autoClass = "tcm-input-auto";
+        }
+
         manualPanel.innerHTML = `
-            <span class="tcm-label">Wejście (Cel):</span>
-            <input type="text" id="tcm_manual_time" class="tcm-manual-input" placeholder="np. 14:30:15:123">
+            <span class="tcm-label">Wysłano:</span>
+            <input type="text" id="tcm_manual_start" class="tcm-manual-input ${autoClass}" placeholder="HH:MM:SS:ms" value="${formattedStart}">
+            <span class="tcm-label">Cel:</span>
+            <input type="text" id="tcm_manual_target" class="tcm-manual-input" placeholder="HH:MM:SS:ms">
             <button id="tcm_manual_btn" class="shinko-btn-snipe">⚔️</button>
             <span id="tcm_manual_timer" class="shinko-timer-display" style="display:none;"></span>
         `;
 
-        targetContainer.insertBefore(manualPanel, targetContainer.firstChild);
+        if (outgoingTable) {
+            outgoingTable.parentNode.insertBefore(manualPanel, outgoingTable);
+        } else {
+            mainContent.insertBefore(manualPanel, mainContent.firstChild);
+        }
 
         const btn = document.getElementById('tcm_manual_btn');
-        const input = document.getElementById('tcm_manual_time');
+        const inputStart = document.getElementById('tcm_manual_start');
+        const inputTarget = document.getElementById('tcm_manual_target');
         const timer = document.getElementById('tcm_manual_timer');
 
         btn.addEventListener('click', (e) => {
@@ -257,20 +318,22 @@
             }
 
             stopCurrentSnipe();
-            const targetMs = parseTimeFromText(input.value);
-            startSnipeEngine(btn, timer, targetMs, null); // Manual użyje pierwszego dostępnego anulowania
+            const startMs = parseTimeFromText(inputStart.value);
+            const targetMs = parseTimeFromText(inputTarget.value);
+            
+            startSnipeEngine(btn, timer, targetMs, startMs);
         });
     }
 
     function setupRowButtons() {
-        const commandRows = document.querySelectorAll('tr.command-row');
+        const incomingsTable = document.querySelector("#commands_incomings");
+        if (!incomingsTable) return;
+
+        const commandRows = incomingsTable.querySelectorAll('tr.command-row');
         
         commandRows.forEach(row => {
             const nameCell = row.querySelector('td:first-child') || row.querySelector('td');
-            if(!nameCell) return;
-
-            // Szukanie linku anulowania w obrębie danego wiersza
-            const specificCancelLink = row.querySelector('a.command-cancel');
+            if (!nameCell) return;
 
             const btn = document.createElement('button');
             btn.className = 'shinko-btn-snipe';
@@ -292,9 +355,15 @@
                 }
 
                 stopCurrentSnipe();
-                const targetMs = parseTimeFromText(row.innerText);
-                // Przekazujemy konkretny link anulowania przypisany do tego wiersza
-                startSnipeEngine(btn, timerDisplay, targetMs, specificCancelLink);
+                
+                const timeCell = row.querySelectorAll('td')[1];
+                const targetText = timeCell ? timeCell.innerText : row.innerText;
+                const targetMs = parseTimeFromText(targetText);
+                
+                const manualStartInput = document.getElementById('tcm_manual_start');
+                const startMs = manualStartInput ? parseTimeFromText(manualStartInput.value) : null;
+
+                startSnipeEngine(btn, timerDisplay, targetMs, startMs);
             };
         });
     }
