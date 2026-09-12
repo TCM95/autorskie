@@ -28,11 +28,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = `
         position: fixed !important; 
-        top: 150px !important; /* Idealnie pod ikoną zadań */
-        left: 5px !important;  /* Doklejone do lewej krawędzi */
+        top: 100px !important; /* Idealnie pod ikoną zadań */
+        left: 0px !important;  /* Doklejone do lewej krawędzi */
         cursor: pointer; 
-        width: 40px !important; 
-        height: 40px !important; 
+        width: 35px !important; 
+        height: 35px !important; 
         display: flex !important; 
         justify-content: center !important; 
         align-items: center !important; 
