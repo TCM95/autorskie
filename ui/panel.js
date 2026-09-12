@@ -21,29 +21,34 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Tworzenie elementu otwieracza
+    // Tworzenie elementu otwieracza - zmienione na boczną ikonę z ramką
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
-    opener.style.cssText = 'cursor: pointer; width: 25px !important; height: 25px !important; display: inline-flex !important; justify-content: center !important; align-items: center !important; margin-right: 5px; vertical-align: middle; z-index: 999999 !important;';
+    opener.style.cssText = `
+        cursor: pointer; 
+        width: 40px !important; 
+        height: 40px !important; 
+        display: flex !important; 
+        justify-content: center !important; 
+        align-items: center !important; 
+        background: var(--bg-row-alt, #32353b); 
+        border: 2px solid var(--border-color, #3e4147); 
+        border-radius: 5px; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+        padding: 4px; 
+        margin-bottom: 8px; 
+        z-index: 999999 !important;
+    `;
 
-    // Montowanie w lewym górnym rogu paska skrótów
-    const quickbarContents = document.querySelector('#quickbar_contents');
-    if (quickbarContents) {
-        const firstUl = quickbarContents.querySelector('ul.menu');
-        if (firstUl) {
-            const newLi = document.createElement('li');
-            newLi.className = 'quickbar_item';
-            newLi.style.cssText = 'display: inline-block; vertical-align: middle; margin-right: 4px;';
-            newLi.appendChild(opener);
-            firstUl.insertBefore(newLi, firstUl.firstChild);
-        } else {
-            quickbarContents.insertBefore(opener, quickbarContents.firstChild);
-        }
+    // Montowanie nad dziennikiem zadań z lewej strony
+    const questlog = document.getElementById('questlog_new');
+    if (questlog && questlog.parentNode) {
+        questlog.parentNode.insertBefore(opener, questlog);
     } else {
-        // Fallback w przypadku braku paska skrótów
-        opener.style.cssText += 'position: fixed !important; top: 5px !important; left: 5px !important; width: 35px !important; height: 35px !important;';
+        // Fallback w przypadku braku elementu zadań
+        opener.style.cssText += 'position: fixed !important; top: 120px !important; left: 5px !important;';
         document.body.appendChild(opener);
     }
 
