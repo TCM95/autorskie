@@ -1,4 +1,4 @@
-window.TCM_UI = window.TCM_UI || {};
+Window.TCM_UI = window.TCM_UI || {};
 
 window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
     let currentCategory = null;
@@ -21,30 +21,34 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Tworzenie elementu otwieracza - przylepiony do lewej krawędzi ekranu
+    // ZMODYFIKOWANY ELEMENT: Pływający przycisk w prawym dolnym rogu
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
-    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
+    opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain; border-radius: 50%;">`;
     opener.style.cssText = `
         position: fixed !important; 
-        top: 150px !important; /* Wysokość - możesz edytować */
-        left: 5px !important;  /* Zawsze 5px od lewej krawędzi ekranu */
+        bottom: 25px !important;  /* Pozycja w prawym dolnym rogu - strefa kciuka */
+        right: 25px !important; 
         cursor: pointer; 
-        width: 40px !important; 
-        height: 40px !important; 
+        width: 50px !important;   /* Powiększony do 50px dla wygody dotyku */
+        height: 50px !important; 
         display: flex !important; 
         justify-content: center !important; 
         align-items: center !important; 
-        background: var(--bg-row-alt, #32353b); 
-        border: 2px solid var(--border-color, #3e4147); 
-        border-radius: 5px; 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+        background: var(--btn-bg); 
+        border: 2px solid var(--border-color); 
+        border-radius: 50%;       /* Estetyczny okrągły wygląd */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.6); 
         padding: 4px; 
         z-index: 999999 !important;
+        transition: transform 0.2s ease-in-out, background 0.2s;
     `;
+    
+    // Subtelny hover dla estetyki (działa też po dotknięciu na smartfonie)
+    opener.onmouseenter = () => { opener.style.background = 'var(--btn-hover)'; };
+    opener.onmouseleave = () => { opener.style.background = 'var(--btn-bg)'; };
 
-    // Montowanie bezpośrednio do body (całkowicie uniezależnia od kontenerów gry)
     document.body.appendChild(opener);
 
     const panel = document.createElement('div');
@@ -77,6 +81,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         panel.style.setProperty('display', 'none', 'important'); 
         opener.classList.remove('tw-opener-open');
         opener.classList.add('tw-opener-closed');
+        opener.style.transform = 'scale(1)'; // reset animacji
         globalTooltip.style.display = 'none';
     };
 
@@ -254,20 +259,27 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     updateCategoryStatus();
 
+    // ZMODYFIKOWANA LOGIKA OTWIERANIA:
     opener.onclick = (e) => { 
         if (panel.style.display === 'flex') {
             panel.style.setProperty('display', 'none', 'important');
             opener.classList.remove('tw-opener-open');
             opener.classList.add('tw-opener-closed');
+            opener.style.transform = 'scale(1)'; // Koniec animacji przycisku
         } else {
             panel.style.setProperty('display', 'flex', 'important');
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
+            opener.style.transform = 'scale(1.05)'; // Animacja kliknięcia
 
-            const rect = opener.getBoundingClientRect();
+            // Ustawienie panelu bezpośrednio nad ikoną w prawym rogu (uniezależnienie od top/left)
             panel.style.setProperty('position', 'fixed', 'important');
-            panel.style.setProperty('left', rect.left + 'px', 'important');
-            panel.style.setProperty('top', (rect.bottom + 5) + 'px', 'important');
+            panel.style.setProperty('bottom', '85px', 'important'); // Margines nad przyciskiem (25px + 50px ikony + 10px luzu)
+            panel.style.setProperty('right', '25px', 'important');  // Wyrównanie w tej samej linii co ikona
+            
+            // Czyszczenie właściwości top/left zapobiegające błędom układu
+            panel.style.setProperty('top', 'auto', 'important');
+            panel.style.setProperty('left', 'auto', 'important');
         }
     };
 
@@ -289,6 +301,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
                 panel.style.setProperty('display', 'none', 'important');
                 opener.classList.remove('tw-opener-open');
                 opener.classList.add('tw-opener-closed');
+                opener.style.transform = 'scale(1)';
             }
         }
     });
