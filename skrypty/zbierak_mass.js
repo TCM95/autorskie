@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         zbierak
 // @namespace    https://viayoo.com/
-// @version      1.7
+// @version      1.8
 // @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
@@ -33,25 +33,32 @@
             z-index: 99999;
             background-color: var(--bg-main);
             border: 1px solid var(--border-color);
-            padding: 10px;
+            padding: 8px;
             border-radius: 5px;
             color: var(--text-color);
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
             font-family: Verdana, Arial, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             user-select: none;
-            width: 200px;
+            width: 270px;
+        }
+        #scav-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-top: 6px;
         }
         .scav-btn {
             width: 100%;
-            padding: 6px;
-            margin-bottom: 5px;
+            padding: 6px 2px;
             cursor: pointer;
             color: var(--text-color);
             border: 1px solid var(--border-color);
             border-radius: 3px;
             background: var(--btn-bg);
             font-weight: bold;
+            font-size: 11px;
+            text-align: center;
         }
         .scav-btn:hover { background: var(--btn-hover); }
         .scav-btn-blue { background: var(--btn-blue-bg); }
@@ -61,7 +68,7 @@
         .scav-btn-red { background: var(--btn-red-bg); }
         .scav-btn-red:hover { background: var(--btn-red-hover); }
         .scav-input {
-            width: 35px;
+            width: 32px;
             background: var(--bg-row-alt);
             color: var(--text-color);
             border: 1px solid var(--border-color);
@@ -75,7 +82,7 @@
     let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
 
     let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
-    let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '20px' };
+    let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '10px' };
 
     let URLReq = game_data.player.sitter > 0
         ? `game.php?t=${game_data.player.id}&screen=place&mode=scavenge_mass`
@@ -558,9 +565,9 @@
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
-        header.style.marginBottom = '8px';
+        header.style.marginBottom = '6px';
         header.style.borderBottom = '1px solid var(--border-color)';
-        header.style.paddingBottom = '4px';
+        header.style.paddingBottom = '3px';
 
         const title = document.createElement('span');
         title.textContent = 'zbierak';
@@ -581,20 +588,32 @@
         header.appendChild(title);
         header.appendChild(pinBtn);
 
+        // Zegary (godzina zakończenia + odliczanie)
+        const clockContainer = document.createElement('div');
+        clockContainer.style.textAlign = 'center';
+        clockContainer.style.marginBottom = '6px';
+
+        const targetTimeDisplay = document.createElement('div');
+        targetTimeDisplay.id = 'scav-target-time';
+        targetTimeDisplay.style.fontSize = '11px';
+        targetTimeDisplay.style.color = 'var(--title-color)';
+        targetTimeDisplay.textContent = "";
+
         const clock = document.createElement('div');
         clock.id = 'scav-clock';
-        clock.style.textAlign = 'center';
-        clock.style.fontSize = '14px';
+        clock.style.fontSize = '13px';
         clock.style.fontWeight = 'bold';
         clock.style.color = '#5cb85c';
-        clock.style.marginBottom = '8px';
         clock.textContent = isRunning ? "⏳..." : "Wyłączony";
+
+        clockContainer.appendChild(targetTimeDisplay);
+        clockContainer.appendChild(clock);
 
         const delayRow = document.createElement('div');
         delayRow.style.display = 'flex';
         delayRow.style.alignItems = 'center';
         delayRow.style.justifyContent = 'space-between';
-        delayRow.style.marginBottom = '8px';
+        delayRow.style.marginBottom = '6px';
 
         const delayLabel = document.createElement('span');
         delayLabel.textContent = 'Opóźnienie (s):';
@@ -632,25 +651,29 @@
         delayRow.appendChild(delayLabel);
         delayRow.appendChild(delayInputs);
 
+        // Przyciski w 2 kolumnach
+        const btnGrid = document.createElement('div');
+        btnGrid.id = 'scav-grid';
+
         const btnManualRun = document.createElement('button');
-        btnManualRun.textContent = '🚀 Uruchom Zbierak';
+        btnManualRun.textContent = 'Ręczny';
         btnManualRun.className = 'scav-btn scav-btn-blue';
         btnManualRun.onclick = () => { loadShinkoMassScavenge(false); };
 
         const btnOverview = document.createElement('button');
-        btnOverview.textContent = 'ℹ️ Pokaż Czasy';
+        btnOverview.textContent = 'Czasy';
         btnOverview.className = 'scav-btn';
         btnOverview.onclick = () => { loadVisualTable(); };
 
         const btnUnlock = document.createElement('button');
-        btnUnlock.textContent = '⚙️ Odblokuj Zbierak';
+        btnUnlock.textContent = 'Odblokuj';
         btnUnlock.className = 'scav-btn scav-btn-blue';
         btnUnlock.onclick = () => {
             $.getScript('https://twscripts.dev/scripts/massUnlockScav.js');
         };
 
         const btnStart = document.createElement('button');
-        btnStart.textContent = isRunning ? '❎️ Stop ZBIERACTWO' : '✅️ Start ZBIERACTWO';
+        btnStart.textContent = isRunning ? 'Stop' : 'Start';
         btnStart.className = `scav-btn ${isRunning ? 'scav-btn-red' : 'scav-btn-green'}`;
 
         btnStart.onclick = () => {
@@ -659,13 +682,15 @@
             location.reload();
         };
 
+        btnGrid.appendChild(btnManualRun);
+        btnGrid.appendChild(btnOverview);
+        btnGrid.appendChild(btnUnlock);
+        btnGrid.appendChild(btnStart);
+
         div.appendChild(header);
-        div.appendChild(clock);
+        div.appendChild(clockContainer);
         div.appendChild(delayRow);
-        div.appendChild(btnManualRun);
-        div.appendChild(btnOverview);
-        div.appendChild(btnUnlock);
-        div.appendChild(btnStart);
+        div.appendChild(btnGrid);
         document.body.appendChild(div);
 
         let isDragging = false;
@@ -738,12 +763,14 @@
 
     function checkScavengeData() {
         const clock = document.getElementById('scav-clock');
+        const targetDisplay = document.getElementById('scav-target-time');
+        
         if (!isRunning) {
             clock.textContent = "Wyłączony";
+            if (targetDisplay) targetDisplay.textContent = "";
             return;
         }
 
-        // POBRANIE AKTUALNYCH USTAWIEŃ SHINKO
         let categoryEnabled = JSON.parse(localStorage.getItem("categoryEnabled")) || [true, true, true, true];
         let troopTypeEnabled = JSON.parse(localStorage.getItem("troopTypeEnabled")) || {};
         let keepHome = JSON.parse(localStorage.getItem("keepHome")) || {};
@@ -787,7 +814,6 @@
                         let hasAvailableTroops = false;
                         let totalCarry = 0;
 
-                        // DYNAMICZNE SPRAWDZANIE WOJSKA NA BAZIE USTAWIEŃ "BACKUP" I WŁĄCZONYCH JEDNOSTEK
                         if (units) {
                             let unitHaul = { "spear": 25, "sword": 15, "axe": 10, "archer": 10, "light": 80, "marcher": 50, "heavy": 50, "knight": 100 };
                             
@@ -801,21 +827,18 @@
                                 }
                             }
                             
-                            // Próg min. ładowności – żeby skrypt nie zapętlał się dla samotnego pikiniera
-                            if (totalCarry >= 50) {
+                            // Zabezpieczenie: Minimalna ładowność 375 (równowartość 15 lekkiej kawalerii) zapobiega zapętleniu
+                            if (totalCarry >= 375) {
                                 hasAvailableTroops = true;
                             }
-                        } else {
-                            hasAvailableTroops = true;
                         }
 
                         $.each(scavengeInfo[villageNr]["options"], function (villageCategoryNr) {
                             let option = scavengeInfo[villageNr]["options"][villageCategoryNr];
-                            let catIndex = parseInt(villageCategoryNr) - 1; // mapowanie z "1" na index 0
+                            let catIndex = parseInt(villageCategoryNr) - 1;
 
                             if (option["is_locked"] !== true) {
                                 if (option["scavenging_squad"] == null) {
-                                    // DODANO WERYFIKACJĘ CZY DANY POZIOM ZBIERACTWA JEST W OGÓLE WŁĄCZONY W PANELU
                                     if (categoryEnabled[catIndex] === true && hasAvailableTroops) {
                                         hasReadyVillages = true;
                                     }
@@ -829,10 +852,19 @@
 
                     if (hasReadyVillages) {
                         clock.textContent = "Wysyłka...";
+                        if (targetDisplay) targetDisplay.textContent = "";
                         loadShinkoMassScavenge(true);
                     } else if (minTime !== Infinity) {
                         let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
                         let targetTime = minTime + addedSeconds;
+
+                        // Wyznaczenie godziny i minuty zakończenia zbieraka (bez sekund)
+                        let targetDateObj = new Date(targetTime * 1000);
+                        let finishHours = String(targetDateObj.getHours()).padStart(2, '0');
+                        let finishMinutes = String(targetDateObj.getMinutes()).padStart(2, '0');
+                        if (targetDisplay) {
+                            targetDisplay.textContent = `Powrót: ${finishHours}:${finishMinutes}`;
+                        }
 
                         const interval = setInterval(() => {
                             let currentNow = Math.floor(Date.now() / 1000);
@@ -844,11 +876,12 @@
                             } else {
                                 let mins = Math.floor(diff / 60);
                                 let secs = diff % 60;
-                                clock.textContent = `Zegarek: ${mins}:${secs.toString().padStart(2, '0')}`;
+                                clock.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                             }
                         }, 1000);
                     } else {
                         clock.textContent = "Brak ruchu (60s)";
+                        if (targetDisplay) targetDisplay.textContent = "";
                         setTimeout(() => { location.reload(); }, 60000);
                     }
                 } catch (err) {
