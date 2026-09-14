@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         FEJKOMAT Własny
+// @name         FEJKOMAT PRO (Naprawiony)
 // @namespace    https://viayoo.com/
-// @version      1.0
+// @version      1.2
 // @description  Wysyłanie z własnego skryptu na pasku
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place*
@@ -186,7 +186,7 @@
             </div>
         </div>
         
-        <textarea id="f_custom_script" class="tcn-input" placeholder="Wklej tutaj SWÓJ skrypt z paska (nadpisuje ustawienia poniżej)..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical; background: #2f3136; border: 1px solid #7289da;">${customScript}</textarea>
+        <textarea id="f_custom_script" class="tcn-input" placeholder="Wklej tutaj SWÓJ skrypt z paska..." style="width:100%; height:55px; margin-bottom:6px; resize:vertical; background: #2f3136; border: 1px solid #7289da;">${customScript}</textarea>
 
         <div style="font-size:10px; margin-bottom:8px; color:var(--title-color); text-align:center;">
             Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
@@ -234,9 +234,9 @@
     document.body.appendChild(ui);
 
     // --- EVENTY UI ---
-    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="text-decoration:none; padding: 0 5px;"><img src="${window.image_base}unit/unit_spy.png" style="vertical-align: middle; width: 18px; height: 18px;" alt="zwiadowca"></a></td>`);
-$('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
-$('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
+    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">⚙️</a></td>`);
+    $('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
+    $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
 
     $('#pin_fejk').click(() => {
         isPinned = !isPinned;
@@ -343,52 +343,47 @@ $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'fa
             return; 
         }
 
-        // ====== TRYB WŁASNEGO SKRYPTU ======
+        // ====== OBSŁUGA WŁASNEGO SKRYPTU Z PASKA ======
         if (customScript.trim().length > 10) {
-            let cleanScript = customScript.replace(/^javascript:/i, '').trim();
-            
-            try {
-                // Uruchamiamy Twój skrypt z paska
-                let externalCode = new Function(cleanScript);
-                externalCode();
-            } catch(e) {
-                console.error("Błąd ładowania własnego skryptu:", e);
-                document.getElementById('status_info').innerText = "Błąd własnego skryptu!";
-            }
-
-            setTimeout(() => {
-                if (location.href.includes('confirm')) {
-                    let b = document.querySelector('#troop_confirm_submit');
-                    if (b) {
-                        let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
-                        if (target) { sentCoords[target[0]] = Date.now(); setS('sent_list', JSON.stringify(sentCoords)); }
-                        count++; localStorage.setItem(cKey, count); b.click();
-                    }
-                } else {
-                    let t = 0;
-                    let c = setInterval(() => {
-                        let inp = document.querySelector('.target-input-field');
-                        // Skrypt zewnętrzny wypełnia inputa
-                        if (inp && inp.value.length >= 5) {
-                            clearInterval(c);
-                            setTimeout(() => { 
-                                let atkBtn = document.getElementById('target_attack');
-                                if(atkBtn) atkBtn.click();
-                            }, 800);
-                        }
-                        if (t++ > 20) {
-                            clearInterval(c);
-                            delayedNextV("Brak celu ze skryptu, pomijam...");
-                        }
-                    }, 300);
+            if (location.href.includes('confirm')) {
+                // Ekran potwierdzenia
+                let b = document.querySelector('#troop_confirm_submit');
+                if (b) {
+                    let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
+                    if (target) { sentCoords[target[0]] = Date.now(); setS('sent_list', JSON.stringify(sentCoords)); }
+                    count++; localStorage.setItem(cKey, count); b.click();
                 }
-            }, 600);
-            
-            return; // Kończymy kod tutaj, omijamy natywną logikę poniżej
-        }
-        // ===================================
+            } else {
+                // Wyciąganie czystego kodu i wstrzykiwanie go w strukturę DOM
+                let cleanScript = customScript.replace(/^javascript:/i, '').replace(/void\(0\);?$/i, '').trim();
+                
+                let scriptNode = document.createElement('script');
+                scriptNode.type = 'text/javascript';
+                scriptNode.textContent = cleanScript;
+                document.head.appendChild(scriptNode);
 
-        // Odtąd zaczyna się stara logika wbudowanego skryptu (uruchomi się tylko jeśli panel własnego skryptu jest pusty)
+                // Oczekiwanie aż zewnętrzny skrypt pobierze dane i uzupełni cel
+                let t = 0;
+                let c = setInterval(() => {
+                    let inp = document.querySelector('.target-input-field');
+                    if (inp && inp.value.length >= 5) {
+                        clearInterval(c);
+                        setTimeout(() => { 
+                            let atkBtn = document.getElementById('target_attack');
+                            if(atkBtn) atkBtn.click();
+                        }, 800);
+                    }
+                    if (t++ > 40) { // Czeka maksymalnie 10 sekund (40 x 250ms)
+                        clearInterval(c);
+                        delayedNextV("Brak celu ze skryptu, pomijam...");
+                    }
+                }, 250);
+            }
+            return;
+        }
+        // ==============================================
+
+        // Standardowy Hermit (puste pole własnego skryptu)
         if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
             if (!hasEnoughTroops()) {
                 delayedNextV("Brak wojska!");
