@@ -21,18 +21,18 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Otwieracz - nad ikoną kalkulatora
+    // Otwieracz - większa ikona (48px) umieszczona nad kalkulatorem
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = `
         position: fixed !important; 
-        bottom: 1160px !important; /* 1110px (kalk) + 42px (wysokość kalk) + 8px (odstęp) */
-        left: -1px !important;  /* W równej linii z kalkulatorem */
+        bottom: 1160px !important; /* Nad kalkulatorem (1110px) */
+        left: -1px !important;     /* Doklejone do lewej krawędzi jak kalkulator */
         cursor: pointer; 
-        width: 35px !important; 
-        height: 35px !important; 
+        width: 48px !important;    /* Większa od kalkulatora (42px) */
+        height: 48px !important;   /* Większa od kalkulatora (42px) */
         display: flex !important; 
         justify-content: center !important; 
         align-items: center !important; 
@@ -253,7 +253,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     updateCategoryStatus();
 
-    // Nowa logika otwierania 
+    // Logika otwierania z właściwym pozycjonowaniem panelu i kart z kategoriami
     opener.onclick = (e) => { 
         if (panel.style.display === 'flex' || panel.style.display === 'block') {
             panel.style.setProperty('display', 'none', 'important');
@@ -264,11 +264,11 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
 
-            // Panel ukazuje się na tej samej wysokości, zaraz obok ikony
+            // Panel i jego karty otwierają się równolegle na wysokości 1160px
             panel.style.setProperty('position', 'fixed', 'important');
-            panel.style.setProperty('bottom', '1160px', 'important'); // <-- Idealnie obok nowej wysokości ikony
-            panel.style.setProperty('left', '40px', 'important'); // <-- Wysuwa się o 40px od lewej, by nie zasłaniać ikony
-            panel.style.setProperty('top', 'auto', 'important'); // <-- Kasujemy przestarzałe "top"
+            panel.style.setProperty('bottom', '1160px', 'important'); // Równo z ikoną
+            panel.style.setProperty('left', '52px', 'important');     // Obok ikony 48px
+            panel.style.setProperty('top', 'auto', 'important');      // Kasujemy stare pozycjonowanie 'top'
             panel.style.setProperty('right', 'auto', 'important');
         }
     };
