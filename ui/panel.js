@@ -21,14 +21,14 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
         document.body.appendChild(globalTooltip);
     }
 
-    // Otwieracz - większa ikona (48px) umieszczona nad kalkulatorem
+    // Otwieracz - większa ikona (48px) umieszczona nad kalkulatorem (bottom: 1160px)
     const opener = document.createElement('button');
     opener.id = 'tw-panel-opener';
     opener.className = 'tw-opener-closed'; 
     opener.innerHTML = `<img src="https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/ui/ikony/logo_tcm_tw1.png" alt="ikona" style="width:100%; height:100%; object-fit:contain;">`;
     opener.style.cssText = `
         position: fixed !important; 
-        bottom: 1160px !important; /* Nad kalkulatorem (1110px) */
+        bottom: 1160px !important; /* Nad kalkulatorem */
         left: -1px !important;     /* Doklejone do lewej krawędzi jak kalkulator */
         cursor: pointer; 
         width: 48px !important;    /* Większa od kalkulatora (42px) */
@@ -253,7 +253,7 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
 
     updateCategoryStatus();
 
-    // Logika otwierania z właściwym pozycjonowaniem panelu i kart z kategoriami
+    // Logika otwierania z właściwym wyrównaniem górnej krawędzi panelu do ikony
     opener.onclick = (e) => { 
         if (panel.style.display === 'flex' || panel.style.display === 'block') {
             panel.style.setProperty('display', 'none', 'important');
@@ -264,11 +264,12 @@ window.TCM_UI.initPanel = function(scriptsArray, categories, callbacks) {
             opener.classList.remove('tw-opener-closed');
             opener.classList.add('tw-opener-open');
 
-            // Panel i jego karty otwierają się równolegle na wysokości 1160px
+            // Ustawiamy pozycję panelu tak, by jego górny lewy róg był w linii z ikoną
             panel.style.setProperty('position', 'fixed', 'important');
-            panel.style.setProperty('bottom', '1160px', 'important'); // Równo z ikoną
-            panel.style.setProperty('left', '52px', 'important');     // Obok ikony 48px
-            panel.style.setProperty('top', 'auto', 'important');      // Kasujemy stare pozycjonowanie 'top'
+            panel.style.setProperty('bottom', '1160px', 'important');
+            panel.style.setProperty('left', '52px', 'important');     // Obok ikony (48px + mały odstęp)
+            panel.style.setProperty('transform', 'translateY(100%)', 'important'); // Przesunięcie sprawiające, że górna krawędź panelu startuje na wysokości 1160px
+            panel.style.setProperty('top', 'auto', 'important');
             panel.style.setProperty('right', 'auto', 'important');
         }
     };
