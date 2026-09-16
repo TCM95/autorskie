@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Handlowy
 // @namespace    https://viayoo.com/
-// @version      1.7
+// @version      1.8
 // @description  Zintegrowany kalkulator surowców z szarym przyciskiem na dole paska skrótów.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*
@@ -118,18 +118,23 @@
 
     if (game_data.screen === 'market') {
         if (window.location.href.includes('mode=call')) {
-            const savedHermitData = localStorage.getItem('Etykiety_Hermit_Dynamic');
-            if (savedHermitData) {
-                window.HermitowskieSurki = {
-                    target_resources: JSON.parse(savedHermitData),
-                    storage_percentage_limit: { 'wood': 98, 'stone': 98, 'iron': 98 },
-                    resources_safeguard: { 'wood': 0, 'stone': 0, 'iron': 0 },
-                    trim_to_storage_capacity: true,
-                    traders_safeguard: 0,
-                    idle_time: 5,
-                    trader_capacity_threshold: 0
-                };
-                $.getScript('https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieSurki.js?_=' + Date.now());
+            const savedChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_CHECKS));
+            const isCallEnabled = savedChecks ? savedChecks.call : true;
+
+            if (isCallEnabled) {
+                const savedHermitData = localStorage.getItem('Etykiety_Hermit_Dynamic');
+                if (savedHermitData) {
+                    window.HermitowskieSurki = {
+                        target_resources: JSON.parse(savedHermitData),
+                        storage_percentage_limit: { 'wood': 98, 'stone': 98, 'iron': 98 },
+                        resources_safeguard: { 'wood': 0, 'stone': 0, 'iron': 0 },
+                        trim_to_storage_capacity: true,
+                        traders_safeguard: 0,
+                        idle_time: 5,
+                        trader_capacity_threshold: 0
+                    };
+                    $.getScript('https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieSurki.js?_=' + Date.now());
+                }
             }
 
             const callData = JSON.parse(localStorage.getItem(STORAGE_KEY_CALL));
@@ -324,7 +329,13 @@
         resBox.style.display = "block";
 
         $('#target_label').text(target.name || 'Brak');
-        updateHermitData(target.w, target.g, target.i);
+        
+        // Zależność skryptu Hermit od checkboxa "Wezwij"
+        if ($('#chk_call').is(':checked')) {
+            updateHermitData(target.w, target.g, target.i);
+        } else {
+            localStorage.removeItem('Etykiety_Hermit_Dynamic');
+        }
 
         let html = `<div style="padding-bottom:8px; border-bottom:1px solid var(--border-color); margin-bottom:8px; text-align:center;"><b style="color:var(--title-color);">STAN AKTUALNY</b><br><b style="font-size: 12px;">[ ${formatFullDate(tReal)} ]</b></div>`;
 
@@ -626,18 +637,32 @@
             const ids = [...new Set(returning.map((i,x) => $(x).attr('data-id')).get())];
             cachedFarmData.count = ids.length;
             
-            for (const id of ids) {
-                let cmd = JSON.parse(sessionStorage.getItem("RC.v1.8.Cmd_"+id));
-                if (!cmd) {
+            // Optymalizacja ładowania: filtrujemy komendy, których jeszcze nie mamy w storage
+            const idsToFetch = ids.filter(id => !sessionStorage.getItem("RC.v1.8.Cmd_"+id));
+            
+            // Wysyłamy zapytania równolegle w paczkach po 5 sztuk
+            const chunkSize = 5;
+            for (let i = 0; i < idsToFetch.length; i += chunkSize) {
+                const chunk = idsToFetch.slice(i, i + chunkSize);
+                await Promise.all(chunk.map(async id => {
                     try {
                         const cRes = await $.ajax({url:`/game.php?village=${vId}&screen=info_command&ajax=details&id=${id}`, dataType:'json'});
                         if(cRes?.booty) {
-                            cmd = {w:parseInt(cRes.booty.wood)||0, s:parseInt(cRes.booty.stone)||0, i:parseInt(cRes.booty.iron)||0};
-                            sessionStorage.setItem("RC.v1.8.Cmd_"+id, JSON.stringify(cmd));
+                            sessionStorage.setItem("RC.v1.8.Cmd_"+id, JSON.stringify({
+                                w:parseInt(cRes.booty.wood)||0, 
+                                s:parseInt(cRes.booty.stone)||0, 
+                                i:parseInt(cRes.booty.iron)||0
+                            }));
                         }
                     } catch(e){}
-                    await new Promise(r => setTimeout(r, 100));
-                }
+                }));
+                // Dużo mniejszy delay pomiędzy paczkami dla bezpieczeństwa serwera
+                if (i + chunkSize < idsToFetch.length) await new Promise(r => setTimeout(r, 50)); 
+            }
+            
+            // Zliczanie ostateczne
+            for (const id of ids) {
+                let cmd = JSON.parse(sessionStorage.getItem("RC.v1.8.Cmd_"+id));
                 if(cmd) { 
                     cachedFarmData.w += (cmd.w || 0); 
                     cachedFarmData.g += (cmd.s !== undefined ? cmd.s : cmd.g || 0); 
@@ -735,8 +760,7 @@
     $('#clear_btn').click(() => {
         $('#c_w,#c_g,#c_i').val(0); $('#set_moneta,#set_gruby').attr('data-count', 0);
         $('#set_moneta').text('🪙 Moneta'); $('#set_gruby').text('👑 Gruby');
-        $('#chk_farm, #chk_scav, #chk_call').prop('checked', false);
-        saveCheckboxesState();
+        // Usunięto zerowanie chceckboxów i zapisywanie ich wyczyszczonego stanu
         $('#kombi_preview').hide();
         localStorage.removeItem(STORAGE_KEY_TARGET);
         localStorage.removeItem(STORAGE_KEY_BUILDING_CHECKS);
@@ -774,7 +798,6 @@
             }
         });
 
-        // Wczytywanie stanu dla checkboxów przy budynkach/jednostkach
         const savedBChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_BUILDING_CHECKS)) || [];
         $('.calc-check').each(function(index) {
             if (savedBChecks.includes(index)) {
@@ -809,7 +832,7 @@
             $('#chk_scav').prop('checked', !!savedChecks.scav);
             $('#chk_call').prop('checked', !!savedChecks.call);
         } else {
-            $('#chk_call').prop('checked', true); // Domyślnie włączone jeśli brak zapisu
+            $('#chk_call').prop('checked', true); 
         }
 
         const savedT = JSON.parse(localStorage.getItem(STORAGE_KEY_TARGET));
