@@ -1,14 +1,10 @@
-// ==UserScript==
-// @name         zbierak
-// @namespace    https://viayoo.com/
-// @version      1.8
-// @description  Kalkulator i automatyzacja masowej wysyłki zbieractwa
-// @author       TCM
-// @match        https://*.plemiona.pl/game.php?*screen=place&mode=scavenge_mass*
-// ==/UserScript==
-
 (function () {
     'use strict';
+
+    const urlKey = window.location.hostname.split('.')[0];
+    let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
+    let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
+    let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '10px' };
 
     const style = document.createElement('style');
     style.innerHTML = `
@@ -29,7 +25,7 @@
             --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
         }
         #scav-container {
-            position: fixed;
+            position: fixed !important;
             z-index: 99999;
             background-color: var(--bg-main);
             border: 1px solid var(--border-color);
@@ -78,15 +74,57 @@
     `;
     document.head.appendChild(style);
 
-    const urlKey = window.location.hostname.split('.')[0];
-    let isRunning = localStorage.getItem(`scav_run_${urlKey}`) === 'true';
+    function initQuickbarIcon() {
+        if (document.getElementById('quickbar_scavenge_btn')) return;
 
-    let delayConfig = JSON.parse(localStorage.getItem(`scav_delay_${urlKey}`)) || { min: 5, max: 10 };
-    let uiState = JSON.parse(localStorage.getItem(`scav_ui_${urlKey}`)) || { pinned: false, top: 'auto', left: 'auto', bottom: '150px', right: '10px' };
+        const allLists = document.querySelectorAll('#quickbar_contents ul, #quickbar_inner ul');
+        if (allLists.length === 0) return;
+
+        const lastUl = allLists[allLists.length - 1];
+
+        const li = document.createElement('li');
+        li.id = 'quickbar_scavenge_btn';
+        li.className = 'quickbar_item';
+        li.style.display = 'inline-block';
+        li.style.marginLeft = '4px';
+        li.style.verticalAlign = 'middle';
+
+        const link = document.createElement('a');
+        link.href = `/game.php?village=${game_data.village.id}&screen=place&mode=scavenge_mass`;
+
+        link.style.display = 'inline-flex';
+        link.style.alignItems = 'center';
+        link.style.justifyContent = 'center';
+        link.style.width = '31px';
+        link.style.height = '31px';
+        link.style.background = 'var(--btn-bg)';
+        link.style.border = '1px solid var(--border-color)';
+        link.style.borderRadius = '3px';
+        link.style.boxShadow = '0 0 3px rgba(0,0,0,0.5)';
+        link.style.textDecoration = 'none';
+        link.onmouseenter = () => { link.style.background = 'var(--btn-hover)'; };
+        link.onmouseleave = () => { link.style.background = 'var(--btn-bg)'; };
+
+        const img = document.createElement('img');
+        img.src = 'https://dspl.innogamescdn.com/asset/d624386d/graphic/awards/scavenge.webp';
+        img.style.width = '28px';
+        img.style.height = '28px';
+        img.style.pointerEvents = 'none';
+
+        link.appendChild(img);
+        li.appendChild(link);
+        lastUl.appendChild(li);
+    }
+
+    initQuickbarIcon();
+
+    if (window.location.href.indexOf('screen=place&mode=scavenge_mass') < 0) {
+        return;
+    }
 
     let URLReq = game_data.player.sitter > 0
         ? `game.php?t=${game_data.player.id}&screen=place&mode=scavenge_mass`
-        : "game.php?&screen=place&mode=scavenge_mass";
+        : 'game.php?&screen=place&mode=scavenge_mass';
 
     function randomDelay(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -98,119 +136,119 @@
                 window.squads = {};
                 window.squads_premium = {};
 
-                let serverTimeTemp = $("#serverDate")[0].innerText + " " + $("#serverTime")[0].innerText;
-                let serverTime = serverTimeTemp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
-                let serverDate = serverTime ? Date.parse(serverTime[3] + "/" + serverTime[2] + "/" + serverTime[1] + serverTime[4]) : Date.now();
+                const serverTimeTemp = $('#serverDate')[0].innerText + ' ' + $('#serverTime')[0].innerText;
+                const serverTime = serverTimeTemp.match(/^([0][1-9]|[12][0-9]|3[01])[\/\-]([0][1-9]|1[012])[\/\-](\d{4})( (0?[0-9]|[1][0-9]|[2][0-3])[:]([0-5][0-9])([:]([0-5][0-9]))?)?$/);
+                const serverDate = serverTime ? Date.parse(serverTime[3] + '/' + serverTime[2] + '/' + serverTime[1] + serverTime[4]) : Date.now();
 
-                var is_mobile = !!navigator.userAgent.match(/iphone|android|blackberry/ig) || false;
-                var scavengeInfo;
-                var tempElementSelection = "";
+                const is_mobile = !!navigator.userAgent.match(/iphone|android|blackberry/ig) || false;
+                let scavengeInfo;
+                let tempElementSelection = '';
                 if (window.location.href.indexOf('screen=place&mode=scavenge_mass') < 0) {
-                    window.location.assign(game_data.link_base_pure + "place&mode=scavenge_mass");
+                    window.location.assign(game_data.link_base_pure + 'place&mode=scavenge_mass');
                 }
-                $("#massScavengeSophie").remove();
-                if (typeof version == 'undefined') { version = "new"; }
-                var langShinko = [ "Mass scavenging", "Select unit types/ORDER to scavenge with (drag units to order)", "Select categories to use", "When do you want your scav runs to return (approximately)?", "Runtime here", "Calculate runtimes for each page", "Creator: ", "Mass scavenging: send per 50 villages", "Launch group " ];
-                
-                if (localStorage.getItem("troopTypeEnabled") == null) {
-                    let worldUnits = game_data.units;
-                    var troopTypeEnabled = {};
-                    for (var i = 0; i < worldUnits.length; i++) {
-                        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
+                $('#massScavengeSophie').remove();
+                if (typeof version == 'undefined') version = 'new';
+                const langShinko = ['Mass scavenging', 'Select unit types/ORDER to scavenge with (drag units to order)', 'Select categories to use', 'When do you want your scav runs to return (approximately)?', 'Runtime here', 'Calculate runtimes for each page', 'Creator: ', 'Mass scavenging: send per 50 villages', 'Launch group'];
+
+                if (localStorage.getItem('troopTypeEnabled') == null) {
+                    const worldUnits = game_data.units;
+                    let troopTypeEnabled = {};
+                    for (let i = 0; i < worldUnits.length; i++) {
+                        if (worldUnits[i] != 'militia' && worldUnits[i] != 'snob' && worldUnits[i] != 'ram' && worldUnits[i] != 'catapult' && worldUnits[i] != 'spy' && worldUnits[i] != 'knight') {
                             troopTypeEnabled[worldUnits[i]] = false;
                         }
                     }
-                    localStorage.setItem("troopTypeEnabled", JSON.stringify(troopTypeEnabled));
+                    localStorage.setItem('troopTypeEnabled', JSON.stringify(troopTypeEnabled));
                 } else {
-                    var troopTypeEnabled = JSON.parse(localStorage.getItem("troopTypeEnabled"));
+                    var troopTypeEnabled = JSON.parse(localStorage.getItem('troopTypeEnabled'));
                 }
-                if (localStorage.getItem("keepHome") == null) {
-                    var keepHome = { "spear": 0, "sword": 0, "axe": 0, "archer": 0, "light": 0, "marcher": 0, "heavy": 0 };
-                    localStorage.setItem("keepHome", JSON.stringify(keepHome));
+                if (localStorage.getItem('keepHome') == null) {
+                    var keepHome = { spear: 0, sword: 0, axe: 0, archer: 0, light: 0, marcher: 0, heavy: 0 };
+                    localStorage.setItem('keepHome', JSON.stringify(keepHome));
                 } else {
-                    var keepHome = JSON.parse(localStorage.getItem("keepHome"));
+                    var keepHome = JSON.parse(localStorage.getItem('keepHome'));
                 }
-                if (localStorage.getItem("categoryEnabled") == null) {
+                if (localStorage.getItem('categoryEnabled') == null) {
                     var categoryEnabled = [true, true, true, true];
-                    localStorage.setItem("categoryEnabled", JSON.stringify(categoryEnabled));
+                    localStorage.setItem('categoryEnabled', JSON.stringify(categoryEnabled));
                 } else {
-                    var categoryEnabled = JSON.parse(localStorage.getItem("categoryEnabled"));
+                    var categoryEnabled = JSON.parse(localStorage.getItem('categoryEnabled'));
                 }
-                if (localStorage.getItem("prioritiseHighCat") == null) {
+                if (localStorage.getItem('prioritiseHighCat') == null) {
                     var prioritiseHighCat = false;
-                    localStorage.setItem("prioritiseHighCat", JSON.stringify(prioritiseHighCat));
+                    localStorage.setItem('prioritiseHighCat', JSON.stringify(prioritiseHighCat));
                 } else {
-                    var prioritiseHighCat = JSON.parse(localStorage.getItem("prioritiseHighCat"));
+                    var prioritiseHighCat = JSON.parse(localStorage.getItem('prioritiseHighCat'));
                 }
-                if (localStorage.getItem("timeElement") == null) {
-                    localStorage.setItem("timeElement", "Date");
-                    tempElementSelection = "Date";
+                if (localStorage.getItem('timeElement') == null) {
+                    localStorage.setItem('timeElement', 'Date');
+                    tempElementSelection = 'Date';
                 } else {
-                    tempElementSelection = localStorage.getItem("timeElement");
+                    tempElementSelection = localStorage.getItem('timeElement');
                 }
-                if (localStorage.getItem("sendOrder") == null) {
-                    let worldUnits = game_data.units;
+                if (localStorage.getItem('sendOrder') == null) {
+                    const worldUnits = game_data.units;
                     var sendOrder = [];
-                    for (var i = 0; i < worldUnits.length; i++) {
-                        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy" && worldUnits[i] != "knight") {
+                    for (let i = 0; i < worldUnits.length; i++) {
+                        if (worldUnits[i] != 'militia' && worldUnits[i] != 'snob' && worldUnits[i] != 'ram' && worldUnits[i] != 'catapult' && worldUnits[i] != 'spy' && worldUnits[i] != 'knight') {
                             sendOrder.push(worldUnits[i]);
                         }
                     }
-                    localStorage.setItem("sendOrder", JSON.stringify(sendOrder));
+                    localStorage.setItem('sendOrder', JSON.stringify(sendOrder));
                 } else {
-                    var sendOrder = JSON.parse(localStorage.getItem("sendOrder"));
+                    var sendOrder = JSON.parse(localStorage.getItem('sendOrder'));
                 }
-                if (localStorage.getItem("runTimes") == null) {
-                    var runTimes = { "off": 4, "def": 3 };
-                    localStorage.setItem("runTimes", JSON.stringify(runTimes));
+                if (localStorage.getItem('runTimes') == null) {
+                    var runTimes = { off: 4, def: 3 };
+                    localStorage.setItem('runTimes', JSON.stringify(runTimes));
                 } else {
-                    var runTimes = JSON.parse(localStorage.getItem("runTimes"));
+                    var runTimes = JSON.parse(localStorage.getItem('runTimes'));
                 }
 
                 if (game_data.player.sitter > 0) {
-                    URLReq = "game.php?t=" + game_data.player.id + "&screen=place&mode=scavenge_mass";
+                    URLReq = 'game.php?t=' + game_data.player.id + '&screen=place&mode=scavenge_mass';
                 } else {
-                    URLReq = "game.php?&screen=place&mode=scavenge_mass";
+                    URLReq = 'game.php?&screen=place&mode=scavenge_mass';
                 }
 
-                var arrayWithData;
-                var enabledCategories = [];
-                var squad_requests = [];
-                var squad_requests_premium = [];
-                var duration_factor = 0;
-                var duration_exponent = 0;
-                var duration_initial_seconds = 0;
+                let arrayWithData;
+                let enabledCategories = [];
+                let squad_requests = [];
+                let squad_requests_premium = [];
+                let duration_factor = 0;
+                let duration_exponent = 0;
+                let duration_initial_seconds = 0;
 
-                var categoryNames = [{ name: "" }, { name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }];
+                let categoryNames = [{ name: '' }, { name: '1' }, { name: '2' }, { name: '3' }, { name: '4' }];
                 try {
-                    var rawCatScript = $.find('script:contains("ScavengeMassScreen")')[0].innerHTML;
-                    var catMatches = rawCatScript.match(/\{.*\:\{.*\:.*\}\}/g);
+                    const rawCatScript = $.find('script:contains("ScavengeMassScreen")')[0].innerHTML;
+                    const catMatches = rawCatScript.match(/\{.*\:\{.*\:.*\}\}/g);
                     if (catMatches && catMatches[0]) {
-                        categoryNames = JSON.parse("[" + catMatches[0] + "]")[0];
+                        categoryNames = JSON.parse('[' + catMatches[0] + ']')[0];
                     }
                 } catch (e) {
-                    console.warn("Nie udało się pobrać nazw kategorii, używam domyślnych.", e);
+                    console.warn('Nie udało się pobrać nazw kategorii, używam domyślnych.', e);
                 }
 
-                var time = { 'off': 0, 'def': 0 };
-                var backgroundColor = "#36393f"; var borderColor = "#3e4147"; var headerColor = "#202225"; var titleColor = "#ffffdf";
-                var cssClassesSophie = "<style> .sophRowA { background-color: #32353b; color: white; } .sophRowB { background-color: #36393f; color: white; } .sophHeader { background-color: #202225; font-weight: bold; color: white; } .btnSophie { background-image: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%); } .btnSophie:hover { background-image: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%); } #x { position: absolute; background: red; color: white; top: 0px; right: 0px; width: 30px; height: 30px; } #cog { position: absolute; background: #32353b; color: white; top: 0px; right: 30px; width: 30px; height: 30px; } </style>";
-                
-                $("#contentContainer").eq(0).prepend(cssClassesSophie);
-                $("#mobileHeader").eq(0).prepend(cssClassesSophie);
+                const time = { off: 0, def: 0 };
+                const backgroundColor = '#36393f'; const borderColor = '#3e4147'; const headerColor = '#202225'; const titleColor = '#ffffdf';
+                const cssClassesSophie = '<style> .sophRowA { background-color: #32353b; color: white; } .sophRowB { background-color: #36393f; color: white; } .sophHeader { background-color: #202225; font-weight: bold; color: white; } .btnSophie { background-image: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%); } .btnSophie:hover { background-image: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%); } #x { position: absolute; background: red; color: white; top: 0px; right: 0px; width: 30px; height: 30px; } #cog { position: absolute; background: #32353b; color: white; top: 0px; right: 30px; width: 30px; height: 30px; } </style>';
 
-                $.getAll = function ( urls, onLoad, onDone, onError ) {
-                    var numDone = 0; var lastRequestTime = 0; var minWaitTime = 200;
+                $('#contentContainer').eq(0).prepend(cssClassesSophie);
+                $('#mobileHeader').eq(0).prepend(cssClassesSophie);
+
+                $.getAll = function (urls, onLoad, onDone, onError) {
+                    let numDone = 0; let lastRequestTime = 0; const minWaitTime = 200;
                     loadNext();
                     function loadNext() {
                         if (numDone == urls.length) { onDone(); return; }
-                        let now = Date.now();
-                        let timeElapsed = now - lastRequestTime;
+                        const now = Date.now();
+                        const timeElapsed = now - lastRequestTime;
                         if (timeElapsed < minWaitTime) {
-                            let timeRemaining = minWaitTime - timeElapsed;
+                            const timeRemaining = minWaitTime - timeElapsed;
                             setTimeout(loadNext, timeRemaining); return;
                         }
-                        $("#progress").css("width", ((numDone + 1) / urls.length * 100) + "%");
+                        $('#progress').css('width', ((numDone + 1) / urls.length * 100) + '%');
                         lastRequestTime = now;
                         $.get(urls[numDone]).done((data) => {
                             try { onLoad(numDone, data); ++numDone; loadNext(); } catch (e) { onError(e); }
@@ -219,27 +257,27 @@
                 };
 
                 function getData() {
-                    $("#massScavengeSophie").remove();
-                    var URLs = [];
+                    $('#massScavengeSophie').remove();
+                    const URLs = [];
                     $.get(URLReq, function (data) {
-                        var amountOfPages = 0;
-                        if ($(data).find(".paged-nav-item").length > 0) {
-                            let navItems = $(data).find(".paged-nav-item");
-                            let lastPageHref = navItems[navItems.length - 1].href;
-                            let pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
+                        let amountOfPages = 0;
+                        if ($(data).find('.paged-nav-item').length > 0) {
+                            const navItems = $(data).find('.paged-nav-item');
+                            const lastPageHref = navItems[navItems.length - 1].href;
+                            const pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
                             amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
                         }
-                        for (var i = 0; i <= amountOfPages; i++) {
-                            URLs.push(URLReq + "&page=" + i);
+                        for (let i = 0; i <= amountOfPages; i++) {
+                            URLs.push(URLReq + '&page=' + i);
                         }
 
                         try {
-                            let scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
+                            const scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
                             if (scriptContent) {
-                                let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                                const matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
                                 if (matches && matches.length > 0) {
-                                    let tempData = JSON.parse(matches[0]);
-                                    let configObj = tempData[1] || tempData;
+                                    const tempData = JSON.parse(matches[0]);
+                                    const configObj = tempData[1] || tempData;
                                     duration_exponent = configObj.duration_exponent || 0.45;
                                     duration_factor = configObj.duration_factor || 0.6;
                                     duration_initial_seconds = configObj.duration_initial_seconds || 1800;
@@ -250,40 +288,39 @@
                             duration_factor = 0.6;
                             duration_initial_seconds = 1800;
                         }
-
                     }).done(function () {
-                        arrayWithData = "[";
+                        arrayWithData = '[';
                         $.getAll(URLs, (i, data) => {
-                            let scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
+                            const scriptContent = $(data).find('script:contains("ScavengeMassScreen")').html();
                             if (scriptContent) {
-                                let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                                const matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
                                 if (matches && matches.length >= 3) {
-                                    arrayWithData += matches[2] + ",";
+                                    arrayWithData += matches[2] + ',';
                                 } else if (matches && matches.length > 0) {
-                                    arrayWithData += matches[matches.length - 1] + ",";
+                                    arrayWithData += matches[matches.length - 1] + ',';
                                 }
                             }
                         }, () => {
-                            if (arrayWithData.endsWith(",")) {
+                            if (arrayWithData.endsWith(',')) {
                                 arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1);
                             }
-                            arrayWithData += "]";
-                            
+                            arrayWithData += ']';
+
                             try {
                                 scavengeInfo = JSON.parse(arrayWithData);
-                            } catch(e) {
+                            } catch (e) {
                                 scavengeInfo = [];
                             }
 
-                            var count = 0;
-                            for (var i = 0; i < scavengeInfo.length; i++) {
+                            let count = 0;
+                            for (let i = 0; i < scavengeInfo.length; i++) {
                                 calculateHaulCategories(scavengeInfo[i]);
                                 count++;
                             }
                             if (count == scavengeInfo.length) {
-                                window.squads = {}; window.squads_premium = {}; var per200 = 0; var groupNumber = 0;
+                                window.squads = {}; window.squads_premium = {}; let per200 = 0; let groupNumber = 0;
                                 window.squads[groupNumber] = []; window.squads_premium[groupNumber] = [];
-                                for (var k = 0; k < squad_requests.length; k++) {
+                                for (let k = 0; k < squad_requests.length; k++) {
                                     if (per200 == 200) {
                                         groupNumber++; window.squads[groupNumber] = []; window.squads_premium[groupNumber] = []; per200 = 0;
                                     }
@@ -291,85 +328,85 @@
                                     window.squads[groupNumber].push(squad_requests[k]);
                                     window.squads_premium[groupNumber].push(squad_requests_premium[k]);
                                 }
-                                var htmlWithLaunchButtons = '<div id="massScavengeFinal" class="ui-widget-content" style="position:fixed;background-color:'+backgroundColor+';cursor:move;z-index:50;"><button class="btn" id = "x" onclick="closeWindow(\'massScavengeFinal\')"> X </button><table id="massScavengeSophieFinalTable" class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[7]+'</font></u></center></h3></td></tr>';
-                                for (var s = 0; s < Object.keys(window.squads).length; s++) {
-                                    htmlWithLaunchButtons += '<tr id="sendRow'+s+'" style="text-align:center; width:auto; background-color:'+backgroundColor+'"><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btnSophie btn-launch-group" id="sendGroupBtn'+s+'" onclick="sendGroup('+s+',false)" value="'+langShinko[8]+(s + 1)+'"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="button" class="btn btn-pp btn-send-premium" id="sendMassPremium" onclick="sendGroup('+s+',true)" value="'+langShinko[8]+(s + 1)+' WITH PREMIUM" style="display:none"></center></td></tr>';
+                                let htmlWithLaunchButtons = '<div id="massScavengeFinal" class="ui-widget-content" style="position:fixed;background-color:' + backgroundColor + ';cursor:move;z-index:50;"><button class="btn" id = "x" onclick="closeWindow(\'massScavengeFinal\')"> X </button><table id="massScavengeSophieFinalTable" class="vis" border="1" style="width: 100%;background-color:' + backgroundColor + ';border-color:' + borderColor + '"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:' + headerColor + '"><h3><center style="margin:10px"><u><font color="' + titleColor + '">' + langShinko[7] + '</font></u></center></h3></td></tr>';
+                                for (let s = 0; s < Object.keys(window.squads).length; s++) {
+                                    htmlWithLaunchButtons += '<tr id="sendRow' + s + '" style="text-align:center; width:auto; background-color:' + backgroundColor + '"><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="button" class="btn btnSophie btn-launch-group" id="sendGroupBtn' + s + '" onclick="sendGroup(' + s + ',false)" value="' + langShinko[8] + (s + 1) + '"></center></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="button" class="btn btn-pp btn-send-premium" id="sendMassPremium" onclick="sendGroup(' + s + ',true)" value="' + langShinko[8] + (s + 1) + ' WITH PREMIUM" style="display:none"></center></td></tr>';
                                 }
-                                htmlWithLaunchButtons += "</table></div>";
-                                $(".maincell").eq(0).prepend(htmlWithLaunchButtons);
-                                $("#mobileContent").eq(0).prepend(htmlWithLaunchButtons);
-                                if (is_mobile == false) { $("#massScavengeFinal").draggable(); }
-                                $("#sendGroupBtn0")[0].focus();
+                                htmlWithLaunchButtons += '</table></div>';
+                                $('.maincell').eq(0).prepend(htmlWithLaunchButtons);
+                                $('#mobileContent').eq(0).prepend(htmlWithLaunchButtons);
+                                if (is_mobile == false) { $('#massScavengeFinal').draggable(); }
+                                $('#sendGroupBtn0')[0].focus();
                             }
                         }, (error) => { console.error(error); });
                     });
                 }
 
-                var html = '<div id="massScavengeSophie" class="ui-widget-content" style="width:600px;background-color:'+backgroundColor+';cursor:move;z-index:50;"><button class="btn" id ="cog" onclick="settings()">⚙️</button><button class="btn" id = "x" onclick="closeWindow(\'massScavengeSophie\')"> X </button><table id="massScavengeSophieTable" class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[0]+'</font></u></center></h3></td></tr><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="15"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[1]+'</font></u></center></h3></td></tr><tr id="imgRow"></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tbody><tr style="background-color:'+backgroundColor+'"><td style="text-align:center;background-color:'+headerColor+'" colspan="4"><h3><center style="margin:10px"><u><font color="'+titleColor+'">'+langShinko[2]+'</font></u></center></h3></td></tr><tr id="categories" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[1] ? categoryNames[1].name : '1')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[2] ? categoryNames[2].name : '2')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[3] ? categoryNames[3].name : '3')+'</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">'+(categoryNames[4] ? categoryNames[4].name : '4')+'</font></td></tr><tr><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category1" name="cat1"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category2" name="cat2"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category3" name="cat3"></center></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'"><center><input type="checkbox" ID="category4" name="cat4"></center></td></tr></tbody></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="runtimesTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="3" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">'+langShinko[3]+'</font></center></td></tr><tr id="runtimes" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="background-color:'+headerColor+';"></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Off villages</font></td><td style="text-align:center; width:auto; background-color:'+headerColor+';padding: 10px;"><font color="'+titleColor+'">Def villages</font></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorDate" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="offDay" name="offDay" value="'+setDayToField(runTimes.off)+'"><input type="time" id="offTime" name="offTime" value="'+setTimeToField(runTimes.off)+'"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="date" id="defDay" name="defDay" value="'+setDayToField(runTimes.def)+'"><input type="time" id="defTime" name="defTime" value="'+setTimeToField(runTimes.def)+'"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="timeSelectorHours" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_off" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['off']+'" onclick="this.select();"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><input type="text" class="runTime_def" style="background-color:'+backgroundColor+';color:'+titleColor+';" value="'+runTimes['def']+'" onclick="this.select();"></td></tr><tr><td style="width:22px;background-color:'+backgroundColor+'; padding:5px;"></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="offDisplay"></span></font></td><td style="text-align:center; width:auto; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'"><span id="defDisplay"></span></font></td></tr></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:'+backgroundColor+';border-color:'+borderColor+'"><tr id="settingPriorityTitle" style="text-align:center; width:auto; background-color:'+headerColor+'"><td colspan="2" style="text-align:center; width:auto; background-color:'+headerColor+'"><center style="margin:10px"><font color="'+titleColor+'">Which setting?</font></center></td></tr><tr id="settingPriorityHeader" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Balanced over all categories</font></td><td style="text-align:center; width:50%; background-color:'+headerColor+'; padding:5px;"><font color="'+titleColor+'">Priority on filling higher categories</font></td></tr><tr id="settingPriority" style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityBalanced" name="prio"></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><input type="radio" ID="settingPriorityPriority" name="prio"></td></tr><tr style="text-align:center; width:auto; background-color:'+headerColor+'"><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><font color="'+titleColor+'">Settings bugged?</font></td><td style="text-align:center; width:50%; background-color:'+backgroundColor+'; padding:5px;"><center><input type="button" class="btn btnSophie" id="reset" onclick="resetSettings()" value="Reset settings"></center></td></tr></table><hr><center><input type="button" class="btn btnSophie" id="sendMass" onclick="readyToSend()" value="'+langShinko[5]+'"></center></div>';
-                
-                $(".maincell").eq(0).prepend(html);
-                $("#mobileContent").eq(0).prepend(html);
-                if (is_mobile == false) { $("#massScavengeSophie").css("position", "fixed"); $("#massScavengeSophie").draggable(); }
-                $("#offDisplay")[0].innerText = fancyTimeFormat(runTimes.off * 3600);
-                $("#defDisplay")[0].innerText = fancyTimeFormat(runTimes.def * 3600);
-                if (tempElementSelection == "Date") { $("#timeSelectorDate").prop("checked", true); selectType("Date"); updateTimers(); } else { $("#timeSelectorHours").prop("checked", true); selectType("Hours"); updateTimers(); }
-                $("#offDay")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $("#defDay")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $("#offTime")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $("#defTime")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $(".runTime_off")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $(".runTime_def")[0].addEventListener("input", function () { updateTimers(); }, false);
-                $("#timeSelectorDate")[0].addEventListener("input", function () { selectType('Date'); updateTimers(); }, false);
-                $("#timeSelectorHours")[0].addEventListener("input", function () { selectType('Hours'); updateTimers(); }, false);
-                
-                for (var i = 0; i < sendOrder.length; i++) {
-                    $("#imgRow").eq(0).append('<td align="center" style="background-color:'+backgroundColor+'"><table class="vis" border="1" style="width: 100%"><thead></thead><tbody><tr><td style=" text-align:center;background-color:'+headerColor+';padding: 5px;"><img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_'+sendOrder[i]+'.png" title="'+sendOrder[i]+'" alt="" class=""></td></tr><tr><td align="center" style="background-color:'+backgroundColor+';padding: 5px;"><input type="checkbox" ID="'+sendOrder[i]+'" name="'+sendOrder[i]+'"></td></tr><tr><td style="text-align:center; width:auto; background-color:#202225;padding: 5px;"><font color="#ffffdf">Backup</font></td></tr><tr><td align="center" style="background-color:'+backgroundColor+';padding: 5px;"><input type="text" ID="'+sendOrder[i]+'Backup" name="'+sendOrder[i]+'" value="'+keepHome[sendOrder[i]]+'" size="5"></td></tr></tbody></table></td>');
-                    if($.fn.sortable) {
-                        $("#imgRow").sortable({ axis: "x", revert: 100, containment: "parent", forceHelperSize: true, delay: 100, scroll: false }).disableSelection();
+                let html = '<div id="massScavengeSophie" class="ui-widget-content" style="width:600px;background-color:' + backgroundColor + ';cursor:move;z-index:50;"><button class="btn" id ="cog" onclick="settings()">⚙️</button><button class="btn" id = "x" onclick="closeWindow(\'massScavengeSophie\')"> X </button><table id="massScavengeSophieTable" class="vis" border="1" style="width: 100%;background-color:' + backgroundColor + ';border-color:' + borderColor + '"><tr><td colspan="10" id="massScavengeSophieTitle" style="text-align:center; width:auto; background-color:' + headerColor + '"><h3><center style="margin:10px"><u><font color="' + titleColor + '">' + langShinko[0] + '</font></u></center></h3></td></tr><tr style="background-color:' + backgroundColor + '"><td style="text-align:center;background-color:' + headerColor + '" colspan="15"><h3><center style="margin:10px"><u><font color="' + titleColor + '">' + langShinko[1] + '</font></u></center></h3></td></tr><tr id="imgRow"></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:' + backgroundColor + ';border-color:' + borderColor + '"><tbody><tr style="background-color:' + backgroundColor + '"><td style="text-align:center;background-color:' + headerColor + '" colspan="4"><h3><center style="margin:10px"><u><font color="' + titleColor + '">' + langShinko[2] + '</font></u></center></h3></td></tr><tr id="categories" style="text-align:center; width:auto; background-color:' + headerColor + '"><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">' + (categoryNames[1] ? categoryNames[1].name : '1') + '</font></td><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">' + (categoryNames[2] ? categoryNames[2].name : '2') + '</font></td><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">' + (categoryNames[3] ? categoryNames[3].name : '3') + '</font></td><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">' + (categoryNames[4] ? categoryNames[4].name : '4') + '</font></td></tr><tr><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="checkbox" ID="category1" name="cat1"></center></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="checkbox" ID="category2" name="cat2"></center></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="checkbox" ID="category3" name="cat3"></center></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '"><center><input type="checkbox" ID="category4" name="cat4"></center></td></tr></tbody></table><hr><table class="vis" border="1" style="width: 100%;background-color:' + backgroundColor + ';border-color:' + borderColor + '"><tr id="runtimesTitle" style="text-align:center; width:auto; background-color:' + headerColor + '"><td colspan="3" style="text-align:center; width:auto; background-color:' + headerColor + '"><center style="margin:10px"><font color="' + titleColor + '">' + langShinko[3] + '</font></center></td></tr><tr id="runtimes" style="text-align:center; width:auto; background-color:' + headerColor + '"><td style="background-color:' + headerColor + ';"></td><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">Off villages</font></td><td style="text-align:center; width:auto; background-color:' + headerColor + ';padding: 10px;"><font color="' + titleColor + '">Def villages</font></td></tr><tr><td style="width:22px;background-color:' + backgroundColor + '; padding:5px;"><input type="radio" ID="timeSelectorDate" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><input type="date" id="offDay" name="offDay" value="' + setDayToField(runTimes.off) + '"><input type="time" id="offTime" name="offTime" value="' + setTimeToField(runTimes.off) + '"></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><input type="date" id="defDay" name="defDay" value="' + setDayToField(runTimes.def) + '"><input type="time" id="defTime" name="defTime" value="' + setTimeToField(runTimes.def) + '"></td></tr><tr><td style="width:22px;background-color:' + backgroundColor + '; padding:5px;"><input type="radio" ID="timeSelectorHours" name="timeSelector" ></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><input type="text" class="runTime_off" style="background-color:' + backgroundColor + ';color:' + titleColor + ';" value="' + runTimes.off + '" onclick="this.select();"></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><input type="text" class="runTime_def" style="background-color:' + backgroundColor + ';color:' + titleColor + ';" value="' + runTimes.def + '" onclick="this.select();"></td></tr><tr><td style="width:22px;background-color:' + backgroundColor + '; padding:5px;"></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><font color="' + titleColor + '"><span id="offDisplay"></span></font></td><td style="text-align:center; width:auto; background-color:' + backgroundColor + '; padding:5px;"><font color="' + titleColor + '"><span id="defDisplay"></span></font></td></tr></tr></table><hr><table class="vis" border="1" style="width: 100%;background-color:' + backgroundColor + ';border-color:' + borderColor + '"><tr id="settingPriorityTitle" style="text-align:center; width:auto; background-color:' + headerColor + '"><td colspan="2" style="text-align:center; width:auto; background-color:' + headerColor + '"><center style="margin:10px"><font color="' + titleColor + '">Which setting?</font></center></td></tr><tr id="settingPriorityHeader" style="text-align:center; width:auto; background-color:' + headerColor + '"><td style="text-align:center; width:50%; background-color:' + headerColor + '; padding:5px;"><font color="' + titleColor + '">Balanced over all categories</font></td><td style="text-align:center; width:50%; background-color:' + headerColor + '; padding:5px;"><font color="' + titleColor + '">Priority on filling higher categories</font></td></tr><tr id="settingPriority" style="text-align:center; width:auto; background-color:' + headerColor + '"><td style="text-align:center; width:50%; background-color:' + backgroundColor + '; padding:5px;"><input type="radio" ID="settingPriorityBalanced" name="prio"></td><td style="text-align:center; width:50%; background-color:' + backgroundColor + '; padding:5px;"><input type="radio" ID="settingPriorityPriority" name="prio"></td></tr><tr style="text-align:center; width:auto; background-color:' + headerColor + '"><td style="text-align:center; width:50%; background-color:' + backgroundColor + '; padding:5px;"><font color="' + titleColor + '">Settings bugged?</font></td><td style="text-align:center; width:50%; background-color:' + backgroundColor + '; padding:5px;"><center><input type="button" class="btn btnSophie" id="reset" onclick="resetSettings()" value="Reset settings"></center></td></tr></table><hr><center><input type="button" class="btn btnSophie" id="sendMass" onclick="readyToSend()" value="' + langShinko[5] + '"></center></div>';
+
+                $('.maincell').eq(0).prepend(html);
+                $('#mobileContent').eq(0).prepend(html);
+                if (is_mobile == false) { $('#massScavengeSophie').css('position', 'fixed'); $('#massScavengeSophie').draggable(); }
+                $('#offDisplay')[0].innerText = fancyTimeFormat(runTimes.off * 3600);
+                $('#defDisplay')[0].innerText = fancyTimeFormat(runTimes.def * 3600);
+                if (tempElementSelection == 'Date') { $('#timeSelectorDate').prop('checked', true); selectType('Date'); updateTimers(); } else { $('#timeSelectorHours').prop('checked', true); selectType('Hours'); updateTimers(); }
+                $('#offDay')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('#defDay')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('#offTime')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('#defTime')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('.runTime_off')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('.runTime_def')[0].addEventListener('input', function () { updateTimers(); }, false);
+                $('#timeSelectorDate')[0].addEventListener('input', function () { selectType('Date'); updateTimers(); }, false);
+                $('#timeSelectorHours')[0].addEventListener('input', function () { selectType('Hours'); updateTimers(); }, false);
+
+                for (let i = 0; i < sendOrder.length; i++) {
+                    $('#imgRow').eq(0).append('<td align="center" style="background-color:' + backgroundColor + '"><table class="vis" border="1" style="width: 100%"><thead></thead><tbody><tr><td style=" text-align:center;background-color:' + headerColor + ';padding: 5px;"><img src="https://dsen.innogamescdn.com/asset/cf2959e7/graphic/unit/unit_' + sendOrder[i] + '.png" title="' + sendOrder[i] + '" alt="" class=""></td></tr><tr><td align="center" style="background-color:' + backgroundColor + ';padding: 5px;"><input type="checkbox" ID="' + sendOrder[i] + '" name="' + sendOrder[i] + '"></td></tr><tr><td style="text-align:center; width:auto; background-color:#202225;padding: 5px;"><font color="#ffffdf">Backup</font></td></tr><tr><td align="center" style="background-color:' + backgroundColor + ';padding: 5px;"><input type="text" ID="' + sendOrder[i] + 'Backup" name="' + sendOrder[i] + '" value="' + keepHome[sendOrder[i]] + '" size="5"></td></tr></tbody></table></td>');
+                    if ($.fn.sortable) {
+                        $('#imgRow').sortable({ axis: 'x', revert: 100, containment: 'parent', forceHelperSize: true, delay: 100, scroll: false }).disableSelection();
                     }
-                    if (prioritiseHighCat == true) { $("#settingPriorityPriority").prop("checked", true); } else { $("#settingPriorityBalanced").prop("checked", true); }
+                    if (prioritiseHighCat == true) { $('#settingPriorityPriority').prop('checked', true); } else { $('#settingPriorityBalanced').prop('checked', true); }
                     enableCorrectTroopTypes();
                 }
-                
+
                 function readyToSend() {
-                    if ($("#settingPriorityPriority")[0].checked == false && $("#settingPriorityBalanced")[0].checked == false) { alert("Wybierz metodę wysyłki!"); throw Error("didn't choose type"); }
-                    if ($("#category1").is(":checked") == false && $("#category2").is(":checked") == false && $("#category3").is(":checked") == false && $("#category4").is(":checked") == false) { alert("Wybierz poziomy zbieractwa!"); throw Error("didn't choose category"); }
-                    for (var i = 0; i < sendOrder.length; i++) { troopTypeEnabled[sendOrder[i]] = $(":checkbox#"+sendOrder[i]).is(":checked"); keepHome[sendOrder[i]] = $("#"+sendOrder[i]+"Backup").val(); }
+                    if ($('#settingPriorityPriority')[0].checked == false && $('#settingPriorityBalanced')[0].checked == false) { alert('Wybierz metodę wysyłki!'); throw Error("didn't choose type"); }
+                    if ($('#category1').is(':checked') == false && $('#category2').is(':checked') == false && $('#category3').is(':checked') == false && $('#category4').is(':checked') == false) { alert('Wybierz poziomy zbieractwa!'); throw Error("didn't choose category"); }
+                    for (let i = 0; i < sendOrder.length; i++) { troopTypeEnabled[sendOrder[i]] = $(':checkbox#' + sendOrder[i]).is(':checked'); keepHome[sendOrder[i]] = $('#' + sendOrder[i] + 'Backup').val(); }
                     enabledCategories = [];
-                    enabledCategories.push($("#category1").is(":checked")); enabledCategories.push($("#category2").is(":checked")); enabledCategories.push($("#category3").is(":checked")); enabledCategories.push($("#category4").is(":checked"));
-                    if ($("#timeSelectorDate")[0].checked == true) {
-                        localStorage.setItem("timeElement", "Date");
-                        time.off = Date.parse($("#offDay").val().replace(/-/g, "/") + " " + $("#offTime").val()); time.def = Date.parse($("#defDay").val().replace(/-/g, "/") + " " + $("#defTime").val());
+                    enabledCategories.push($('#category1').is(':checked')); enabledCategories.push($('#category2').is(':checked')); enabledCategories.push($('#category3').is(':checked')); enabledCategories.push($('#category4').is(':checked'));
+                    if ($('#timeSelectorDate')[0].checked == true) {
+                        localStorage.setItem('timeElement', 'Date');
+                        time.off = Date.parse($('#offDay').val().replace(/-/g, '/') + ' ' + $('#offTime').val()); time.def = Date.parse($('#defDay').val().replace(/-/g, '/') + ' ' + $('#defTime').val());
                         time.off = (time.off - serverDate) / 1000 / 3600; time.def = (time.def - serverDate) / 1000 / 3600;
                     } else {
-                        localStorage.setItem("timeElement", "Hours"); time.off = $('.runTime_off').val(); time.def = $('.runTime_def').val();
+                        localStorage.setItem('timeElement', 'Hours'); time.off = $('.runTime_off').val(); time.def = $('.runTime_def').val();
                     }
-                    if ($("#settingPriorityPriority")[0].checked == true) { prioritiseHighCat = true; } else { prioritiseHighCat = false; }
+                    if ($('#settingPriorityPriority')[0].checked == true) { prioritiseHighCat = true; } else { prioritiseHighCat = false; }
                     sendOrder = [];
-                    for (var k = 0; k < $("#imgRow :checkbox").length; k++) { sendOrder.push($("#imgRow :checkbox")[k].name); }
-                    localStorage.setItem("troopTypeEnabled", JSON.stringify(troopTypeEnabled)); localStorage.setItem("keepHome", JSON.stringify(keepHome)); localStorage.setItem("categoryEnabled", JSON.stringify(enabledCategories)); localStorage.setItem("prioritiseHighCat", JSON.stringify(prioritiseHighCat)); localStorage.setItem("sendOrder", JSON.stringify(sendOrder)); localStorage.setItem("runTimes", JSON.stringify(time));
+                    for (let k = 0; k < $('#imgRow :checkbox').length; k++) { sendOrder.push($('#imgRow :checkbox')[k].name); }
+                    localStorage.setItem('troopTypeEnabled', JSON.stringify(troopTypeEnabled)); localStorage.setItem('keepHome', JSON.stringify(keepHome)); localStorage.setItem('categoryEnabled', JSON.stringify(enabledCategories)); localStorage.setItem('prioritiseHighCat', JSON.stringify(prioritiseHighCat)); localStorage.setItem('sendOrder', JSON.stringify(sendOrder)); localStorage.setItem('runTimes', JSON.stringify(time));
                     getData();
                 }
 
                 function sendGroup(groupNr, premiumEnabled) {
-                    var actuallyEnabled = false;
-                    if (premiumEnabled == true) { actuallyEnabled = confirm("Jesteś pewny, że chcesz wysłać za PP?"); }
-                    var tempSquads = (actuallyEnabled == true) ? window.squads_premium[groupNr] : window.squads[groupNr];
-                    
+                    let actuallyEnabled = false;
+                    if (premiumEnabled == true) { actuallyEnabled = confirm('Jesteś pewny, że chcesz wysłać za PP?'); }
+                    const tempSquads = (actuallyEnabled == true) ? window.squads_premium[groupNr] : window.squads[groupNr];
+
                     if (!tempSquads) {
-                        console.error("Brak danych pakietu dla grupy:", groupNr);
+                        console.error('Brak danych pakietu dla grupy:', groupNr);
                         return;
                     }
 
                     $(':button[id^="sendGroupBtn"]').prop('disabled', true);
-                    
-                    TribalWars.post('scavenge_api', { ajaxaction: 'send_squads' }, { "squad_requests": tempSquads }, function () { 
-                        UI.SuccessMessage("Grupa została pomyślnie wysłana!"); 
-                    }, !1 );
 
-                    setTimeout(function () { 
-                        $("#sendRow"+groupNr).remove(); 
-                        $(':button[id^="sendGroupBtn"]').prop('disabled', false); 
+                    TribalWars.post('scavenge_api', { ajaxaction: 'send_squads' }, { squad_requests: tempSquads }, function () {
+                        UI.SuccessMessage('Grupa została pomyślnie wysłana!');
+                    }, !1);
+
+                    setTimeout(function () {
+                        $('#sendRow' + groupNr).remove();
+                        $(':button[id^="sendGroupBtn"]').prop('disabled', false);
                         if ($('.btn-launch-group').length > 0) {
                             $('.btn-launch-group').first().focus();
                         }
@@ -379,80 +416,80 @@
                 function calculateHaulCategories(data) {
                     if (!data) return;
                     if (data.has_rally_point == true) {
-                        var troopsAllowed = {};
-                        for (var key in troopTypeEnabled) {
+                        const troopsAllowed = {};
+                        for (const key in troopTypeEnabled) {
                             if (troopTypeEnabled[key] == true) {
                                 if (data.unit_counts_home[key] - keepHome[key] > 0) { troopsAllowed[key] = data.unit_counts_home[key] - keepHome[key]; } else { troopsAllowed[key] = 0; }
                             }
                         }
-                        var unitType = { "spear": 'def', "sword": 'def', "axe": 'off', "archer": 'def', "light": 'off', "marcher": 'off', "heavy": 'def' };
-                        var typeCount = { 'off': 0, 'def': 0 };
-                        for (var prop in troopsAllowed) { typeCount[unitType[prop]] = typeCount[unitType[prop]] + troopsAllowed[prop]; }
-                        var totalLoot = 0;
-                        for (var key in troopsAllowed) {
-                            if (key == "spear") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 25);
-                            if (key == "sword") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 15);
-                            if (key == "axe") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 10);
-                            if (key == "archer") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 10);
-                            if (key == "light") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 80);
-                            if (key == "marcher") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
-                            if (key == "heavy") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
-                            if (key == "knight") totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 100);
+                        const unitType = { spear: 'def', sword: 'def', axe: 'off', archer: 'def', light: 'off', marcher: 'off', heavy: 'def' };
+                        const typeCount = { off: 0, def: 0 };
+                        for (const prop in troopsAllowed) { typeCount[unitType[prop]] = typeCount[unitType[prop]] + troopsAllowed[prop]; }
+                        let totalLoot = 0;
+                        for (const key in troopsAllowed) {
+                            if (key == 'spear') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 25);
+                            if (key == 'sword') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 15);
+                            if (key == 'axe') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 10);
+                            if (key == 'archer') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 10);
+                            if (key == 'light') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 80);
+                            if (key == 'marcher') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
+                            if (key == 'heavy') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 50);
+                            if (key == 'knight') totalLoot += troopsAllowed[key] * (data.unit_carry_factor * 100);
                         }
                         if (totalLoot == 0) { return; }
-                        var haul = 0;
+                        let haul = 0;
                         if (typeCount.off > typeCount.def) { haul = parseInt(((time.off * 3600) / duration_factor - duration_initial_seconds) ** (1 / (duration_exponent)) / 100) ** (1 / 2); } else { haul = parseInt(((time.def * 3600) / duration_factor - duration_initial_seconds) ** (1 / (duration_exponent)) / 100) ** (1 / 2); }
-                        var haulCategoryRate = {};
+                        const haulCategoryRate = {};
                         if (data.options[1].is_locked == true || data.options[1].scavenging_squad != null) { haulCategoryRate[1] = 0; } else { haulCategoryRate[1] = haul / 0.1; }
                         if (data.options[2].is_locked == true || data.options[2].scavenging_squad != null) { haulCategoryRate[2] = 0; } else { haulCategoryRate[2] = haul / 0.25; }
                         if (data.options[3].is_locked == true || data.options[3].scavenging_squad != null) { haulCategoryRate[3] = 0; } else { haulCategoryRate[3] = haul / 0.50; }
                         if (data.options[4].is_locked == true || data.options[4].scavenging_squad != null) { haulCategoryRate[4] = 0; } else { haulCategoryRate[4] = haul / 0.75; }
-                        for (var i = 0; i < enabledCategories.length; i++) { if (enabledCategories[i] == false) haulCategoryRate[i + 1] = 0; }
-                        var totalHaul = haulCategoryRate[1] + haulCategoryRate[2] + haulCategoryRate[3] + haulCategoryRate[4];
-                        var unitsReadyForSend = calculateUnitsPerVillage(troopsAllowed, totalLoot, totalHaul, haulCategoryRate);
-                        for (var k = 0; k < Object.keys(unitsReadyForSend).length; k++) {
-                            var candidate_squad = { "unit_counts": unitsReadyForSend[k], "carry_max": 9999999999 };
+                        for (let i = 0; i < enabledCategories.length; i++) { if (enabledCategories[i] == false) haulCategoryRate[i + 1] = 0; }
+                        const totalHaul = haulCategoryRate[1] + haulCategoryRate[2] + haulCategoryRate[3] + haulCategoryRate[4];
+                        const unitsReadyForSend = calculateUnitsPerVillage(troopsAllowed, totalLoot, totalHaul, haulCategoryRate);
+                        for (let k = 0; k < Object.keys(unitsReadyForSend).length; k++) {
+                            const candidate_squad = { unit_counts: unitsReadyForSend[k], carry_max: 9999999999 };
                             if (data.options[k + 1].is_locked == false) {
-                                squad_requests.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": false });
-                                squad_requests_premium.push({ "village_id": data.village_id, "candidate_squad": candidate_squad, "option_id": k + 1, "use_premium": true });
+                                squad_requests.push({ village_id: data.village_id, candidate_squad, option_id: k + 1, use_premium: false });
+                                squad_requests_premium.push({ village_id: data.village_id, candidate_squad, option_id: k + 1, use_premium: true });
                             }
                         }
                     }
                 }
 
                 function enableCorrectTroopTypes() {
-                    let worldUnits = game_data.units;
-                    for (var i = 0; i < worldUnits.length; i++) {
-                        if (worldUnits[i] != "militia" && worldUnits[i] != "snob" && worldUnits[i] != "ram" && worldUnits[i] != "catapult" && worldUnits[i] != "spy") {
-                            if (troopTypeEnabled[worldUnits[i]] == true) $("#"+worldUnits[i]).prop("checked", true);
+                    const worldUnits = game_data.units;
+                    for (let i = 0; i < worldUnits.length; i++) {
+                        if (worldUnits[i] != 'militia' && worldUnits[i] != 'snob' && worldUnits[i] != 'ram' && worldUnits[i] != 'catapult' && worldUnits[i] != 'spy') {
+                            if (troopTypeEnabled[worldUnits[i]] == true) $('#' + worldUnits[i]).prop('checked', true);
                         }
                     }
-                    for (var i = 0; i < categoryEnabled.length + 1; i++) { if (categoryEnabled[i] == true) { $("#category"+(i + 1)).prop("checked", true); } }
+                    for (let i = 0; i < categoryEnabled.length + 1; i++) { if (categoryEnabled[i] == true) { $('#category' + (i + 1)).prop('checked', true); } }
                 }
 
                 function calculateUnitsPerVillage(troopsAllowed, totalLoot, totalHaul, haulCategoryRate) {
-                    var unitHaul = { "spear": 25, "sword": 15, "axe": 10, "archer": 10, "light": 80, "marcher": 50, "heavy": 50, "knight": 100 };
-                    var unitsReadyForSend = {}; unitsReadyForSend[0] = {}; unitsReadyForSend[1] = {}; unitsReadyForSend[2] = {}; unitsReadyForSend[3] = {};
+                    const unitHaul = { spear: 25, sword: 15, axe: 10, archer: 10, light: 80, marcher: 50, heavy: 50, knight: 100 };
+                    const unitsReadyForSend = { 0: {}, 1: {}, 2: {}, 3: {} };
                     if (totalLoot > totalHaul) {
-                        for (var j = 3; j >= 0; j--) {
-                            var reach = haulCategoryRate[j + 1];
+                        for (let j = 3; j >= 0; j--) {
+                            let reach = haulCategoryRate[j + 1];
                             sendOrder.forEach((unit) => {
                                 if (troopsAllowed.hasOwnProperty(unit) && reach > 0) {
-                                    var amountNeeded = Math.floor(reach / unitHaul[unit]);
+                                    const amountNeeded = Math.floor(reach / unitHaul[unit]);
                                     if (amountNeeded > troopsAllowed[unit]) { unitsReadyForSend[j][unit] = troopsAllowed[unit]; reach = reach - (troopsAllowed[unit] * unitHaul[unit]); troopsAllowed[unit] = 0; } else { unitsReadyForSend[j][unit] = amountNeeded; reach = 0; troopsAllowed[unit] = troopsAllowed[unit] - amountNeeded; }
                                 }
                             });
                         }
                     } else {
-                        var troopNumber = 0; for (var key in troopsAllowed) { troopNumber += troopsAllowed[key]; }
+                        let troopNumber = 0; for (const key in troopsAllowed) { troopNumber += troopsAllowed[key]; }
                         if (prioritiseHighCat != true && troopNumber > 130) {
-                            for (var j = 0; j < 4; j++) { for (var key in troopsAllowed) { unitsReadyForSend[j][key] = Math.floor((totalLoot / totalHaul * haulCategoryRate[j + 1]) * (troopsAllowed[key] / totalLoot)); } }
+                            for (let j = 0; j < 4; j++) { for (const key in troopsAllowed) { unitsReadyForSend[j][key] = Math.floor((totalLoot / totalHaul * haulCategoryRate[j + 1]) * (troopsAllowed[key] / totalLoot)); } }
                         } else {
-                            for (var j = 3; j >= 0; j--) {
-                                var reach = haulCategoryRate[j + 1];
+                            for (let j = 3; j >= 0; j--) {
+                                let reach = haulCategoryRate[j + 1];
                                 sendOrder.forEach((unit) => {
                                     if (troopsAllowed.hasOwnProperty(unit) && reach > 0) {
-                                        var amountNeeded = Math.floor(reach / unitHaul[unit]);
+                                        const amountNeeded = Math.floor(reach / unitHaul[unit]);
                                         if (amountNeeded > troopsAllowed[unit]) { unitsReadyForSend[j][unit] = troopsAllowed[unit]; reach = reach - (troopsAllowed[unit] * unitHaul[unit]); troopsAllowed[unit] = 0; } else { unitsReadyForSend[j][unit] = amountNeeded; reach = 0; troopsAllowed[unit] = troopsAllowed[unit] - amountNeeded; }
                                     }
                                 });
@@ -463,45 +500,45 @@
                 }
 
                 function resetSettings() {
-                    localStorage.removeItem("troopTypeEnabled"); localStorage.removeItem("categoryEnabled"); localStorage.removeItem("prioritiseHighCat"); localStorage.removeItem("sendOrder"); localStorage.removeItem("runTimes"); localStorage.removeItem("keepHome");
-                    UI.BanneredRewardMessage("Settings reset"); window.location.reload();
+                    localStorage.removeItem('troopTypeEnabled'); localStorage.removeItem('categoryEnabled'); localStorage.removeItem('prioritiseHighCat'); localStorage.removeItem('sendOrder'); localStorage.removeItem('runTimes'); localStorage.removeItem('keepHome');
+                    UI.BanneredRewardMessage('Settings reset'); window.location.reload();
                 }
-                function closeWindow(title) { $("#" + title).remove(); }
-                function settings() { alert("coming soon!"); }
+                function closeWindow(title) { $('#' + title).remove(); }
+                function settings() { alert('coming soon!'); }
                 function zeroPadded(val) { if (val >= 10) return val; else return '0' + val; }
-                function setTimeToField(runtimeType) { var d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = zeroPadded(d.getHours()) + ":" + zeroPadded(d.getMinutes()); return d; }
-                function setDayToField(runtimeType) { var d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = d.getFullYear() + "-" + zeroPadded(d.getMonth() + 1) + "-" + zeroPadded(d.getDate()); return d; }
+                function setTimeToField(runtimeType) { let d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = zeroPadded(d.getHours()) + ':' + zeroPadded(d.getMinutes()); return d; }
+                function setDayToField(runtimeType) { let d = Date.parse(new Date(serverDate)) + runtimeType * 1000 * 3600; d = new Date(d); d = d.getFullYear() + '-' + zeroPadded(d.getMonth() + 1) + '-' + zeroPadded(d.getDate()); return d; }
                 function fancyTimeFormat(time) {
-                    if (time < 0) { return "Time is in the past!"; } else {
-                        var hrs = ~~(time / 3600); var mins = ~~((time % 3600) / 60); var secs = ~~time % 60;
-                        var ret = "Max duration: ";
-                        if (hrs > 0) { ret += "" + hrs + ":" + (mins < 10 ? "0" : ""); } else { ret += "0:" + (mins < 10 ? "0" : ""); }
-                        ret += "" + mins + ":" + (secs < 10 ? "0" : ""); ret += "" + secs; return ret;
+                    if (time < 0) { return 'Time is in the past!'; } else {
+                        const hrs = ~~(time / 3600); const mins = ~~((time % 3600) / 60); const secs = ~~time % 60;
+                        let ret = 'Max duration: ';
+                        if (hrs > 0) { ret += '' + hrs + ':' + (mins < 10 ? '0' : ''); } else { ret += '0:' + (mins < 10 ? '0' : ''); }
+                        ret += '' + mins + ':' + (secs < 10 ? '0' : ''); ret += '' + secs; return ret;
                     }
                 }
                 function updateTimers() {
-                    if ($("#timeSelectorDate")[0].checked == true) {
-                        $("#offDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#offDay").val().replace(/-/g, "/") + " " + $("#offTime").val()) - serverDate) / 1000);
-                        $("#defDisplay")[0].innerText = fancyTimeFormat((Date.parse($("#defDay").val().replace(/-/g, "/") + " " + $("#defTime").val()) - serverDate) / 1000);
+                    if ($('#timeSelectorDate')[0].checked == true) {
+                        $('#offDisplay')[0].innerText = fancyTimeFormat((Date.parse($('#offDay').val().replace(/-/g, '/') + ' ' + $('#offTime').val()) - serverDate) / 1000);
+                        $('#defDisplay')[0].innerText = fancyTimeFormat((Date.parse($('#defDay').val().replace(/-/g, '/') + ' ' + $('#defTime').val()) - serverDate) / 1000);
                     } else {
-                        $("#offDisplay")[0].innerText = fancyTimeFormat($(".runTime_off").val() * 3600);
-                        $("#defDisplay")[0].innerText = fancyTimeFormat($(".runTime_def").val() * 3600);
+                        $('#offDisplay')[0].innerText = fancyTimeFormat($('.runTime_off').val() * 3600);
+                        $('#defDisplay')[0].innerText = fancyTimeFormat($('.runTime_def').val() * 3600);
                     }
                 }
                 function selectType(type) {
                     switch (type) {
                         case 'Hours':
-                            if ($("#timeSelectorDate")[0].checked == true) {
-                                $("#offDay").eq(0).removeAttr('disabled'); $("#defDay").eq(0).removeAttr('disabled'); $("#offTime").eq(0).removeAttr('disabled'); $("#defTime").eq(0).removeAttr('disabled'); $(".runTime_off").prop("disabled", true); $(".runTime_def").prop("disabled", true);
+                            if ($('#timeSelectorDate')[0].checked == true) {
+                                $('#offDay').eq(0).removeAttr('disabled'); $('#defDay').eq(0).removeAttr('disabled'); $('#offTime').eq(0).removeAttr('disabled'); $('#defTime').eq(0).removeAttr('disabled'); $('.runTime_off').prop('disabled', true); $('.runTime_def').prop('disabled', true);
                             } else {
-                                $("#offDay").prop("disabled", true); $("#defDay").prop("disabled", true); $("#offTime").prop("disabled", true); $("#defTime").prop("disabled", true); $(".runTime_off").eq(0).removeAttr('disabled'); $(".runTime_def").eq(0).removeAttr('disabled');
+                                $('#offDay').prop('disabled', true); $('#defDay').prop('disabled', true); $('#offTime').prop('disabled', true); $('#defTime').prop('disabled', true); $('.runTime_off').eq(0).removeAttr('disabled'); $('.runTime_def').eq(0).removeAttr('disabled');
                             }
                             break;
                         case 'Date':
-                            if ($("#timeSelectorHours")[0].checked == true) {
-                                $("#offDay").prop("disabled", true); $("#defDay").prop("disabled", true); $("#offTime").prop("disabled", true); $("#defTime").prop("disabled", true); $(".runTime_off").eq(0).removeAttr('disabled'); $(".runTime_def").eq(0).removeAttr('disabled');
+                            if ($('#timeSelectorHours')[0].checked == true) {
+                                $('#offDay').prop('disabled', true); $('#defDay').prop('disabled', true); $('#offTime').prop('disabled', true); $('#defTime').prop('disabled', true); $('.runTime_off').eq(0).removeAttr('disabled'); $('.runTime_def').eq(0).removeAttr('disabled');
                             } else {
-                                $("#offDay").eq(0).removeAttr('disabled'); $("#defDay").eq(0).removeAttr('disabled'); $("#offTime").eq(0).removeAttr('disabled'); $("#defTime").eq(0).removeAttr('disabled'); $(".runTime_off").prop("disabled", true); $(".runTime_def").prop("disabled", true);
+                                $('#offDay').eq(0).removeAttr('disabled'); $('#defDay').eq(0).removeAttr('disabled'); $('#offTime').eq(0).removeAttr('disabled'); $('#defTime').eq(0).removeAttr('disabled'); $('.runTime_off').prop('disabled', true); $('.runTime_def').prop('disabled', true);
                             }
                             break;
                         default: break;
@@ -540,7 +577,6 @@
                         setTimeout(() => { location.reload(); }, 1500);
                     }
                 }, randomDelay(1200, 2200));
-
             }, randomDelay(1000, 2000));
         }
     }
@@ -557,7 +593,7 @@
 
         div.style.top = uiState.top;
         div.style.left = uiState.left;
-        if(uiState.top === 'auto') {
+        if (uiState.top === 'auto') {
             div.style.bottom = uiState.bottom;
             div.style.right = uiState.right;
         }
@@ -588,7 +624,6 @@
         header.appendChild(title);
         header.appendChild(pinBtn);
 
-        // Zegary (godzina zakończenia + odliczanie)
         const clockContainer = document.createElement('div');
         clockContainer.style.textAlign = 'center';
         clockContainer.style.marginBottom = '6px';
@@ -597,14 +632,14 @@
         targetTimeDisplay.id = 'scav-target-time';
         targetTimeDisplay.style.fontSize = '11px';
         targetTimeDisplay.style.color = 'var(--title-color)';
-        targetTimeDisplay.textContent = "";
+        targetTimeDisplay.textContent = '';
 
         const clock = document.createElement('div');
         clock.id = 'scav-clock';
         clock.style.fontSize = '13px';
         clock.style.fontWeight = 'bold';
         clock.style.color = '#5cb85c';
-        clock.textContent = isRunning ? "⏳..." : "Wyłączony";
+        clock.textContent = isRunning ? '⏳...' : 'Wyłączony';
 
         clockContainer.appendChild(targetTimeDisplay);
         clockContainer.appendChild(clock);
@@ -651,7 +686,6 @@
         delayRow.appendChild(delayLabel);
         delayRow.appendChild(delayInputs);
 
-        // Przyciski w 2 kolumnach
         const btnGrid = document.createElement('div');
         btnGrid.id = 'scav-grid';
 
@@ -699,7 +733,7 @@
         const startDrag = (e) => {
             if (uiState.pinned || e.target === pinBtn || e.target === btnStart || e.target === btnOverview || e.target === btnUnlock || e.target === btnManualRun || e.target === minInput || e.target === maxInput) return;
             isDragging = true;
-            let event = e.type.includes('mouse') ? e : e.touches[0];
+            const event = e.type.includes('mouse') ? e : e.touches[0];
             startX = event.clientX;
             startY = event.clientY;
             initialX = div.offsetLeft;
@@ -711,9 +745,9 @@
         const onDrag = (e) => {
             if (!isDragging) return;
             e.preventDefault();
-            let event = e.type.includes('mouse') ? e : e.touches[0];
-            let dx = event.clientX - startX;
-            let dy = event.clientY - startY;
+            const event = e.type.includes('mouse') ? e : e.touches[0];
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
             div.style.left = (initialX + dx) + 'px';
             div.style.top = (initialY + dy) + 'px';
         };
@@ -732,22 +766,22 @@
         document.addEventListener('mousemove', onDrag);
         document.addEventListener('mouseup', stopDrag);
 
-        header.addEventListener('touchstart', startDrag, {passive: false});
-        document.addEventListener('touchmove', onDrag, {passive: false});
+        header.addEventListener('touchstart', startDrag, { passive: false });
+        document.addEventListener('touchmove', onDrag, { passive: false });
         document.addEventListener('touchend', stopDrag);
     }
 
     function sophieGetAll(urls, onLoad, onDone) {
         let numDone = 0;
         let lastRequestTime = 0;
-        let minWaitTime = 1050;
+        const minWaitTime = 1050;
 
         loadNext();
 
         function loadNext() {
             if (numDone == urls.length) { onDone(); return; }
-            let now = Date.now();
-            let timeElapsed = now - lastRequestTime;
+            const now = Date.now();
+            const timeElapsed = now - lastRequestTime;
             if (timeElapsed < minWaitTime) {
                 setTimeout(loadNext, minWaitTime - timeElapsed);
                 return;
@@ -764,86 +798,85 @@
     function checkScavengeData() {
         const clock = document.getElementById('scav-clock');
         const targetDisplay = document.getElementById('scav-target-time');
-        
+
         if (!isRunning) {
-            clock.textContent = "Wyłączony";
-            if (targetDisplay) targetDisplay.textContent = "";
+            clock.textContent = 'Wyłączony';
+            if (targetDisplay) targetDisplay.textContent = '';
             return;
         }
 
-        let categoryEnabled = JSON.parse(localStorage.getItem("categoryEnabled")) || [true, true, true, true];
-        let troopTypeEnabled = JSON.parse(localStorage.getItem("troopTypeEnabled")) || {};
-        let keepHome = JSON.parse(localStorage.getItem("keepHome")) || {};
+        const categoryEnabled = JSON.parse(localStorage.getItem('categoryEnabled')) || [true, true, true, true];
+        const troopTypeEnabled = JSON.parse(localStorage.getItem('troopTypeEnabled')) || {};
+        const keepHome = JSON.parse(localStorage.getItem('keepHome')) || {};
 
         $.get(URLReq, function (data) {
             let amountOfPages = 0;
-            if ($(data).find(".paged-nav-item").length > 0) {
-                let navItems = $(data).find(".paged-nav-item");
-                let lastPageHref = navItems[navItems.length - 1].href;
-                let pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
+            if ($(data).find('.paged-nav-item').length > 0) {
+                const navItems = $(data).find('.paged-nav-item');
+                const lastPageHref = navItems[navItems.length - 1].href;
+                const pageMatch = lastPageHref ? lastPageHref.match(/page=(\d+)/) : null;
                 amountOfPages = pageMatch ? parseInt(pageMatch[1]) : 0;
             }
-            let URLs = [];
-            for (let i = 0; i <= amountOfPages; i++) URLs.push(URLReq + "&page=" + i);
+            const URLs = [];
+            for (let i = 0; i <= amountOfPages; i++) URLs.push(URLReq + '&page=' + i);
 
-            let arrayWithData = "[";
+            let arrayWithData = '[';
 
             sophieGetAll(URLs, (i, here) => {
-                let scriptContent = $(here).find('script:contains("ScavengeMassScreen")').html();
+                const scriptContent = $(here).find('script:contains("ScavengeMassScreen")').html();
                 if (scriptContent) {
-                    let matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
+                    const matches = scriptContent.match(/\{.*\:\{.*\:.*\}\}/g);
                     if (matches && matches.length >= 3) {
-                        arrayWithData += matches[2] + ",";
+                        arrayWithData += matches[2] + ',';
                     } else if (matches && matches.length > 0) {
-                        arrayWithData += matches[matches.length - 1] + ",";
+                        arrayWithData += matches[matches.length - 1] + ',';
                     }
                 }
             }, () => {
-                if (arrayWithData.endsWith(",")) {
+                if (arrayWithData.endsWith(',')) {
                     arrayWithData = arrayWithData.substring(0, arrayWithData.length - 1);
                 }
-                arrayWithData += "]";
+                arrayWithData += ']';
 
                 try {
-                    let scavengeInfo = JSON.parse(arrayWithData);
+                    const scavengeInfo = JSON.parse(arrayWithData);
                     let minTime = Infinity;
                     let hasReadyVillages = false;
 
                     $.each(scavengeInfo, function (villageNr) {
-                        let units = scavengeInfo[villageNr]["unit_counts_home"];
+                        const units = scavengeInfo[villageNr]['unit_counts_home'];
                         let hasAvailableTroops = false;
                         let totalCarry = 0;
 
                         if (units) {
-                            let unitHaul = { "spear": 25, "sword": 15, "axe": 10, "archer": 10, "light": 80, "marcher": 50, "heavy": 50, "knight": 100 };
-                            
-                            for (let unit in units) {
+                            const unitHaul = { spear: 25, sword: 15, axe: 10, archer: 10, light: 80, marcher: 50, heavy: 50, knight: 100 };
+
+                            for (const unit in units) {
                                 if (troopTypeEnabled[unit] === true) {
-                                    let kept = parseInt(keepHome[unit]) || 0;
-                                    let available = parseInt(units[unit]) - kept;
+                                    const kept = parseInt(keepHome[unit]) || 0;
+                                    const available = parseInt(units[unit]) - kept;
                                     if (available > 0) {
                                         totalCarry += available * (unitHaul[unit] || 0);
                                     }
                                 }
                             }
-                            
-                            // Zabezpieczenie: Minimalna ładowność 375 (równowartość 15 lekkiej kawalerii) zapobiega zapętleniu
+
                             if (totalCarry >= 375) {
                                 hasAvailableTroops = true;
                             }
                         }
 
-                        $.each(scavengeInfo[villageNr]["options"], function (villageCategoryNr) {
-                            let option = scavengeInfo[villageNr]["options"][villageCategoryNr];
-                            let catIndex = parseInt(villageCategoryNr) - 1;
+                        $.each(scavengeInfo[villageNr]['options'], function (villageCategoryNr) {
+                            const option = scavengeInfo[villageNr]['options'][villageCategoryNr];
+                            const catIndex = parseInt(villageCategoryNr) - 1;
 
-                            if (option["is_locked"] !== true) {
-                                if (option["scavenging_squad"] == null) {
+                            if (option['is_locked'] !== true) {
+                                if (option['scavenging_squad'] == null) {
                                     if (categoryEnabled[catIndex] === true && hasAvailableTroops) {
                                         hasReadyVillages = true;
                                     }
                                 } else {
-                                    let endTime = parseInt(option["scavenging_squad"]["return_time"]);
+                                    const endTime = parseInt(option['scavenging_squad']['return_time']);
                                     if (endTime < minTime) minTime = endTime;
                                 }
                             }
@@ -851,42 +884,41 @@
                     });
 
                     if (hasReadyVillages) {
-                        clock.textContent = "Wysyłka...";
-                        if (targetDisplay) targetDisplay.textContent = "";
+                        clock.textContent = 'Wysyłka...';
+                        if (targetDisplay) targetDisplay.textContent = '';
                         loadShinkoMassScavenge(true);
                     } else if (minTime !== Infinity) {
-                        let addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
-                        let targetTime = minTime + addedSeconds;
+                        const addedSeconds = randomDelay(delayConfig.min, delayConfig.max);
+                        const targetTime = minTime + addedSeconds;
 
-                        // Wyznaczenie godziny i minuty zakończenia zbieraka (bez sekund)
-                        let targetDateObj = new Date(targetTime * 1000);
-                        let finishHours = String(targetDateObj.getHours()).padStart(2, '0');
-                        let finishMinutes = String(targetDateObj.getMinutes()).padStart(2, '0');
+                        const targetDateObj = new Date(targetTime * 1000);
+                        const finishHours = String(targetDateObj.getHours()).padStart(2, '0');
+                        const finishMinutes = String(targetDateObj.getMinutes()).padStart(2, '0');
                         if (targetDisplay) {
                             targetDisplay.textContent = `Powrót: ${finishHours}:${finishMinutes}`;
                         }
 
                         const interval = setInterval(() => {
-                            let currentNow = Math.floor(Date.now() / 1000);
-                            let diff = targetTime - currentNow;
+                            const currentNow = Math.floor(Date.now() / 1000);
+                            const diff = targetTime - currentNow;
                             if (diff <= 0) {
                                 clearInterval(interval);
-                                clock.textContent = "Odświeżanie...";
+                                clock.textContent = 'Odświeżanie...';
                                 location.reload();
                             } else {
-                                let mins = Math.floor(diff / 60);
-                                let secs = diff % 60;
+                                const mins = Math.floor(diff / 60);
+                                const secs = diff % 60;
                                 clock.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                             }
                         }, 1000);
                     } else {
-                        clock.textContent = "Brak ruchu (60s)";
-                        if (targetDisplay) targetDisplay.textContent = "";
+                        clock.textContent = 'Brak ruchu (60s)';
+                        if (targetDisplay) targetDisplay.textContent = '';
                         setTimeout(() => { location.reload(); }, 60000);
                     }
                 } catch (err) {
-                    console.error("Błąd parsowania: ", err);
-                    clock.textContent = "Błąd struktury";
+                    console.error('Błąd struktury: ', err);
+                    clock.textContent = 'Błąd struktury';
                 }
             });
         });
