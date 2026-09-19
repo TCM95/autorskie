@@ -24,6 +24,7 @@
     const STORAGE_KEY_BUILDING_CHECKS = `etykiety_bchecks_${vId}_${game_data.screen}`;
 
     let autoSyncTimer = null;
+    let resourceRefreshTimer = null;
 
     const style = document.createElement('style');
     style.innerHTML = `
@@ -110,89 +111,42 @@
         return parseInt(s.replace(/\D/g, '')) || 0;
     };
 
+    function readCurrentResource(resourceId, fallbackValue) {
+        const el = document.getElementById(resourceId);
+        if (el) {
+            const value = parseInt((el.textContent || el.value || '').replace(/[^\d]/g, ''), 10);
+            if (Number.isFinite(value)) return value;
+        }
+        const fallback = Number(fallbackValue);
+        return Number.isFinite(fallback) ? fallback : 0;
+    }
+
+    function startResourceRefresh() {
+        if (resourceRefreshTimer) clearInterval(resourceRefreshTimer);
+        resourceRefreshTimer = setInterval(() => {
+            if (!ui || $(ui).is(':hidden')) return;
+            fillData();
+            calculateTrade();
+        }, 3000);
+    }
+
+    function stopResourceRefresh() {
+        if (resourceRefreshTimer) {
+            clearInterval(resourceRefreshTimer);
+            resourceRefreshTimer = null;
+        }
+    }
+
+    function updateHermitData(w, g, i) {
+        if (w > 0 || g > 0 || i > 0) {
+            localStorage.setItem('Etykiety_Hermit_Dynamic', JSON.stringify({ 'wood': w, 'stone': g, 'iron': i }));
+        }
+    }
+
     function formatFullDate(h) {
         if (h <= 0 || !isFinite(h)) return "Teraz ✅️";
         const d = new Date(); d.setMilliseconds(d.getMilliseconds() + (h * 3600000));
         return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
-
-    if (game_data.screen === 'market') {
-        if (window.location.href.includes('mode=call')) {
-            const savedChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_CHECKS));
-            const isCallEnabled = savedChecks ? savedChecks.call : true;
-
-            if (isCallEnabled) {
-                const savedHermitData = localStorage.getItem('Etykiety_Hermit_Dynamic');
-                if (savedHermitData) {
-                    window.HermitowskieSurki = {
-                        target_resources: JSON.parse(savedHermitData),
-                        storage_percentage_limit: { 'wood': 98, 'stone': 98, 'iron': 98 },
-                        resources_safeguard: { 'wood': 0, 'stone': 0, 'iron': 0 },
-                        trim_to_storage_capacity: true,
-                        traders_safeguard: 0,
-                        idle_time: 5,
-                        trader_capacity_threshold: 0
-                    };
-                    $.getScript('https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieSurki.js?_=' + Date.now());
-                }
-            }
-
-            const callData = JSON.parse(localStorage.getItem(STORAGE_KEY_CALL));
-            if (callData) {
-                if (callData.w) $('#wood').val(callData.w);
-                if (callData.g) $('#stone').val(callData.g);
-                if (callData.i) $('#iron').val(callData.i);
-                localStorage.removeItem(STORAGE_KEY_CALL);
-            }
-        }
-
-        if (window.location.href.includes('mode=other_offer') && urlParams.has('buy_res')) {
-            const my_need = urlParams.get('buy_res');
-            const my_offer = urlParams.get('sell_res');
-            setTimeout(() => {
-                silentSelect(`input[name="res_sell"][value="all"]`);
-                silentSelect(`input[name="res_buy"][value="all"]`);
-                setTimeout(() => {
-                    silentSelect(`input[name="res_sell"][value="${my_need}"]`);
-                    silentSelect(`input[name="res_buy"][value="${my_offer}"]`);
-                    $('#trader_time_max_hours').val(3).trigger('change');
-                    setTimeout(() => {
-                        const btn = $('#offer_filter input[type="submit"]');
-                        if(btn.length) btn.click(); else $('#offer_filter').submit();
-                    }, 600);
-                }, 300);
-            }, 1200);
-        }
-
-        if (window.location.href.includes('mode=own_offer') && urlParams.has('offer_buy')) {
-            const b = urlParams.get('offer_buy');
-            const s = urlParams.get('offer_sell');
-            const needed = parseInt(urlParams.get('needed')) || 0;
-            const merchants = parseInt($('#market_merchant_available_count').text()) || 0;
-            let count = Math.min(merchants, Math.floor((needed + 400) / 1000));
-
-            if (count > 0) {
-                setTimeout(() => {
-                    silentSelect('#res_buy_all');
-                    silentSelect('#res_sell_all');
-                    setTimeout(() => {
-                        $('#res_sell_amount').val(1000).trigger('change');
-                        $('#res_buy_amount').val(1000).trigger('change');
-                        $('input[name="multi"]').val(count).trigger('change');
-                        $('input[name="max_time"]').val(3).trigger('change');
-                        setTimeout(() => {
-                            silentSelect(`#res_sell_${s}`);
-                            silentSelect(`#res_buy_${b}`);
-                            $('#submit_offer')
-                                .css({"border":"4px solid var(--border-color)", "background":"var(--btn-green-bg)", "color":"var(--text-color)", "height":"auto", "padding":"10px", "font-weight":"bold"})
-                                .val("WYSTAW " + count + " OFERT ദ്ദി ˉ͈̀꒳ˉ͈́ )✧");
-                        }, 200);
-                    }, 300);
-                }, 1200);
-            } else {
-                $('#submit_offer').val("BRAKI < 100 - POMINIĘTO").prop('disabled', true);
-            }
-        }
     }
 
     async function syncMarketDataInBackground() {
@@ -214,9 +168,8 @@
                 let header = $(this);
                 header.find('.nowrap').each(function() {
                     let item = $(this);
-                    let html = item.html();
                     let val = parseInt(item.text().replace(/\./g, '').replace(/\s+/g, '')) || 0;
-
+                    let html = item.html();
                     if (html.includes('wood')) inc.w += val;
                     else if (html.includes('stone')) inc.g += val;
                     else if (html.includes('iron')) inc.i += val;
@@ -276,12 +229,6 @@
         }
     }
 
-    function updateHermitData(w, g, i) {
-        if (w > 0 || g > 0 || i > 0) {
-            localStorage.setItem('Etykiety_Hermit_Dynamic', JSON.stringify({ 'wood': w, 'stone': g, 'iron': i }));
-        }
-    }
-
     function saveCheckboxesState() {
         const state = {
             farm: $('#chk_farm').is(':checked'),
@@ -302,9 +249,8 @@
     }
 
     function calculateTrade() {
-        const target = JSON.parse(localStorage.getItem(STORAGE_KEY_TARGET)) || {w:0, g:0, i:0, name: 'Brak'};
+        const target = JSON.parse(localStorage.getItem(STORAGE_KEY_TARGET)) || {w:0, g:0, i:0, name:'Brak'};
         const inc = JSON.parse(localStorage.getItem(`calc_inc_${vId}`)) || { w:0, g:0, i:0 };
-        
         let userPw = parseInt($('#p_w').val());
         let userPg = parseInt($('#p_g').val());
         let userPi = parseInt($('#p_i').val());
@@ -330,7 +276,6 @@
 
         $('#target_label').text(target.name || 'Brak');
         
-        // Zależność skryptu Hermit od checkboxa "Wezwij"
         if ($('#chk_call').is(':checked')) {
             updateHermitData(target.w, target.g, target.i);
         } else {
@@ -364,80 +309,6 @@
             </div>`;
         }
 
-        if ((virtB.w+virtB.g+virtB.i) > 0 && tVirt > 0) {
-            let tradesHtml = '';
-            let virtM_sim = { w: virtM.w, g: virtM.g, i: virtM.i };
-            let realM_sim = { w: realM.w, g: realM.g, i: realM.i };
-            const resMap = { 'w': 'wood', 'g': 'stone', 'i': 'iron' };
-
-            let tradesPlanned = [];
-
-            for (let step = 0; step < 4; step++) {
-                let b = { w: Math.max(0, target.w - virtM_sim.w), g: Math.max(0, target.g - virtM_sim.g), i: Math.max(0, target.i - virtM_sim.i) };
-                if (b.w === 0 && b.g === 0 && b.i === 0) break;
-
-                let t = { w: b.w/p.w, g: b.g/p.g, i: b.i/p.i };
-                let maxT_key = Object.keys(t).reduce((a,k) => t[a] > t[k] ? a : k);
-                let minT_key = Object.keys(t).reduce((a,k) => t[a] < t[k] ? a : k);
-
-                if (t[maxT_key] - t[minT_key] < 0.1) break;
-
-                let tEq = (b.w + b.g + b.i) / (p.w + p.g + p.i);
-                if (isNaN(tEq) || tEq <= 0) break;
-
-                let surplus = virtM_sim[minT_key] - (target[minT_key] - tEq * p[minT_key]);
-                let deficit = (target[maxT_key] - tEq * p[maxT_key]) - virtM_sim[maxT_key];
-
-                let amount = Math.floor(Math.min(surplus, deficit, realM_sim[minT_key]));
-                amount = Math.floor(amount / 10) * 10;
-
-                if (amount >= 100) {
-                    tradesPlanned.push({ sell: minT_key, buy: maxT_key, amt: amount });
-                    virtM_sim[minT_key] -= amount;
-                    virtM_sim[maxT_key] += amount;
-                    realM_sim[minT_key] -= amount;
-                } else {
-                    break;
-                }
-            }
-
-            let aggregatedTrades = {};
-            tradesPlanned.forEach(tr => {
-                let key = `${tr.sell}_${tr.buy}`;
-                aggregatedTrades[key] = (aggregatedTrades[key] || 0) + tr.amt;
-            });
-
-            let stepCount = 1;
-            let displaySim = { w: virtM.w, g: virtM.g, i: virtM.i };
-            
-            for (let key in aggregatedTrades) {
-                let [sellK, buyK] = key.split('_');
-                let amount = aggregatedTrades[key];
-
-                displaySim[sellK] -= amount;
-                displaySim[buyK] += amount;
-                
-                let bAfter = { 
-                    w: Math.max(0, target.w - displaySim.w), 
-                    g: Math.max(0, target.g - displaySim.g), 
-                    i: Math.max(0, target.i - displaySim.i) 
-                };
-                let tAfter = Math.max(bAfter.w/p.w, bAfter.g/p.g, bAfter.i/p.i);
-
-                tradesHtml += `
-                <div style="background: rgba(0,128,0,0.15); border-radius:4px; padding:6px; margin-bottom:8px; border:1px solid rgba(0,128,0,0.3);">
-                    <b style="color:#4caf50; font-size:11px;">⚖️ WYMIANA ${stepCount++}</b><br>
-                    ${amount.toLocaleString()} <span class="icon header ${resMap[sellK]}"></span> ➔ ${amount.toLocaleString()} <span class="icon header ${resMap[buyK]}"></span><br>
-                    <div style="font-size:10px; color:#ccc; margin-top:2px;">Gotowość po wymianie: <b>[ ${formatFullDate(tAfter)} ]</b></div>
-                    <div style="display:flex; gap:4px; margin-top:4px;">
-                        <a href="https://${world}.plemiona.pl/game.php?village=${vId}&screen=market&mode=other_offer&buy_res=${resMap[buyK]}&sell_res=${resMap[sellK]}" class="kalk-btn" style="flex:1; text-align:center; text-decoration:none;">Kup</a>
-                        <a href="https://${world}.plemiona.pl/game.php?village=${vId}&screen=market&mode=own_offer&offer_buy=${resMap[buyK]}&offer_sell=${resMap[sellK]}&needed=${amount}" class="kalk-btn" style="flex:1; text-align:center; text-decoration:none;">Wystaw</a>
-                    </div>
-                </div>`;
-            }
-            if (tradesHtml !== '') html += tradesHtml;
-        }
-
         const buildH = (txt) => `<div style="text-align:center; margin-top:8px; border-top: 1px dashed var(--border-color); padding-top:4px; font-weight:bold;">${txt}</div>`;
         html += buildH("Przychodzące (Rynek)");
         html += `<div style="background:var(--bg-main); border:1px solid var(--border-color); border-radius:3px; padding:4px; display:flex; justify-content:space-around; margin-top:3px; font-size:10px;">
@@ -464,17 +335,14 @@
     savedP.top = parseInt(savedP.top) || 100;
     savedP.left = parseInt(savedP.left) || 20;
 
-    if (savedP.top < 0 || savedP.top > window.innerHeight - 50) savedP.top = 100;
-    if (savedP.left < 0 || savedP.left > window.innerWidth - 50) savedP.left = 20;
-
-    const ui = document.createElement('div');
+    let ui = document.createElement('div');
     ui.id = "etykiety_ui";
     ui.className = "kalk-ui";
     ui.style.top = savedP.top + 'px';
     ui.style.left = savedP.left + 'px';
 
     ui.innerHTML = `<div id="calc_header" class="kalk-header">
-        <span>Kalkulator & Handlarz</span> 
+        <span>Kalkulator & Handlarz</span>
         <span id="close_btn" style="cursor:pointer; padding: 0 2px;">❌</span>
     </div>
     <div style="padding:8px; max-height: 80vh; overflow-y: auto;">
@@ -498,11 +366,9 @@
                 <input id="p_i" type="number" class="kalk-input" style="flex:1; width:50%;">
             </div>
         </div>
-        
         <div style="display:flex; gap:4px; margin-top:8px;">
             <button id="sync_btn" class="kalk-btn" style="flex:1;" title="Pobierz dane ze spichlerza">Spichlerz</button>
         </div>
-
         <div style="margin-top:6px; background:var(--bg-row-alt); border:1px solid var(--border-color); border-radius:3px; padding:6px; font-size:10px;">
             <div style="font-weight:bold; margin-bottom:4px; text-align:center;">Dolicz surowce w drodze / Opcje</div>
             <div style="display:flex; justify-content:space-around; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
@@ -511,12 +377,11 @@
                 <label style="cursor:pointer;"><input type="checkbox" id="chk_call" style="vertical-align:middle;"> Wezwij</label>
             </div>
             <div id="kombi_preview" style="text-align:center; color:#4caf50; display:none;">
-                + <span class="icon header wood" style="transform:scale(0.8);"></span><span id="kp_w">0</span> 
-                <span class="icon header stone" style="transform:scale(0.8);"></span><span id="kp_g">0</span> 
+                + <span class="icon header wood" style="transform:scale(0.8);"></span><span id="kp_w">0</span>
+                <span class="icon header stone" style="transform:scale(0.8);"></span><span id="kp_g">0</span>
                 <span class="icon header iron" style="transform:scale(0.8);"></span><span id="kp_i">0</span>
             </div>
         </div>
-
         <div style="margin-top:8px; border-top:1px solid var(--border-color); padding-top:6px;">
             <div style="margin-bottom:4px;"><b>CEL: <span id="target_label" style="font-weight:normal; color:#4caf50;">Brak</span></b></div>
             <div style="display:flex; gap:4px;">
@@ -525,12 +390,10 @@
                 <input id="c_i" type="number" value="0" class="kalk-input" style="flex:1; width:33%;">
             </div>
         </div>
-
         <div style="display:flex; gap:4px; margin-top:6px;">
             <button id="set_moneta" data-count="0" class="kalk-btn" style="flex:1; font-size:10px;">🪙 Moneta</button>
             <button id="set_gruby" data-count="0" class="kalk-btn" style="flex:1; font-size:10px;">👑 Gruby</button>
         </div>
-
         <div style="display:flex; gap:4px; margin-top:6px;">
             <button id="calc_btn" class="kalk-btn" style="flex:4; font-weight:bold;">OBLICZ</button>
             <button id="clear_btn" class="kalk-btn" style="flex:1;">🗑️</button>
@@ -541,13 +404,10 @@
 
     function addShortcutButton() {
         if ($('#calc_shortcut_btn').length) return;
-
-        const btnContainerHTML = `<ul class="kalk-shortcut-container"><li><button id="calc_shortcut_btn" class="kalk-shortcut-btn" title="Kalkulator Handlowy Kuźnia">🧮</button></li></ul>`;
-        
+        const btnContainerHTML = `<ul class="kalk-shortcut-container"><li><button id="calc_shortcut_btn" class="kalk-shortcut-btn" title="Kalkulator Handlowy">🧮</button></li></ul>`;
         let parentEl = $('#quickbar_contents');
         if (!parentEl.length) parentEl = $('#quickbar_outer');
         if (!parentEl.length) parentEl = $('#menu_row');
-
         if (parentEl.length) {
             parentEl.append(btnContainerHTML);
         } else {
@@ -556,19 +416,19 @@
 
         $('#calc_shortcut_btn').on('click', async (e) => {
             e.preventDefault();
-            let s = $(ui).is(':hidden'); 
+            const shouldOpen = $(ui).is(':hidden');
             $(ui).toggle();
-            localStorage.setItem(STORAGE_KEY_STATE, s ? 'open' : 'closed');
-            if(s) {
-                $('#calc_btn').text('⌛').prop('disabled', true);
+            localStorage.setItem(STORAGE_KEY_STATE, shouldOpen ? 'open' : 'closed');
+            if (shouldOpen) {
                 await loadExternalBootyData();
                 await syncMarketDataInBackground();
                 fillData();
                 calculateTrade();
-                $('#calc_btn').text('OBLICZ').prop('disabled', false);
                 startAutoSync();
+                startResourceRefresh();
             } else {
                 stopAutoSync();
+                stopResourceRefresh();
             }
         });
     }
@@ -614,85 +474,52 @@
     async function loadExternalBootyData() {
         cachedFarmData = { w: 0, g: 0, i: 0, count: 0 };
         cachedScavData = { w: 0, g: 0, i: 0 };
-
         try {
-            const res = await $.ajax({url: `/game.php?village=${vId}&screen=scavenge_api&ajax=villages`, data: {'village_ids':[vId]}, dataType:'json'});
-            const opts = res?.villages?.[vId]?.options;
-            if(opts) {
-                Object.values(opts).forEach(o => {
-                    if(o.scavenging_squad?.loot_res) {
-                        cachedScavData.w += parseInt(o.scavenging_squad.loot_res.wood)||0;
-                        cachedScavData.g += parseInt(o.scavenging_squad.loot_res.stone)||0;
-                        cachedScavData.i += parseInt(o.scavenging_squad.loot_res.iron)||0;
-                    }
-                });
-            }
-            
-            const html = await $.ajax({url: `/game.php?village=${vId}&screen=overview`});
+            const html = await $.ajax({ url: `/game.php?village=${vId}&screen=overview` });
             const doc = new DOMParser().parseFromString(html, 'text/html');
-            const returning = $(doc).find('#commands_outgoings .quickedit-out').filter((i,x) => {
-                return $(x).find('img[src*="return"], img[src*="back"]').length > 0 || $(x).find('.command_hover_details').attr('data-command-type') === "return";
-            });
-            
-            const ids = [...new Set(returning.map((i,x) => $(x).attr('data-id')).get())];
+            const returning = $(doc).find('.command-row, .command').filter((_, x) => $(x).text().includes('powrót'));
+            const ids = [...new Set(returning.map((_, x) => $(x).attr('data-id')).get())];
             cachedFarmData.count = ids.length;
-            
-            // Optymalizacja ładowania: filtrujemy komendy, których jeszcze nie mamy w storage
-            const idsToFetch = ids.filter(id => !sessionStorage.getItem("RC.v1.8.Cmd_"+id));
-            
-            // Wysyłamy zapytania równolegle w paczkach po 5 sztuk
-            const chunkSize = 5;
-            for (let i = 0; i < idsToFetch.length; i += chunkSize) {
-                const chunk = idsToFetch.slice(i, i + chunkSize);
-                await Promise.all(chunk.map(async id => {
-                    try {
-                        const cRes = await $.ajax({url:`/game.php?village=${vId}&screen=info_command&ajax=details&id=${id}`, dataType:'json'});
-                        if(cRes?.booty) {
-                            sessionStorage.setItem("RC.v1.8.Cmd_"+id, JSON.stringify({
-                                w:parseInt(cRes.booty.wood)||0, 
-                                s:parseInt(cRes.booty.stone)||0, 
-                                i:parseInt(cRes.booty.iron)||0
-                            }));
-                        }
-                    } catch(e){}
-                }));
-                // Dużo mniejszy delay pomiędzy paczkami dla bezpieczeństwa serwera
-                if (i + chunkSize < idsToFetch.length) await new Promise(r => setTimeout(r, 50)); 
-            }
-            
-            // Zliczanie ostateczne
             for (const id of ids) {
-                let cmd = JSON.parse(sessionStorage.getItem("RC.v1.8.Cmd_"+id));
-                if(cmd) { 
-                    cachedFarmData.w += (cmd.w || 0); 
-                    cachedFarmData.g += (cmd.s !== undefined ? cmd.s : cmd.g || 0); 
-                    cachedFarmData.i += (cmd.i || 0); 
+                try {
+                    const cRes = await $.ajax({ url: `/game.php?village=${vId}&screen=info_command&ajax=details&id=${id}`, dataType: 'json' });
+                    if (cRes?.booty) {
+                        cachedFarmData.w += parseInt(cRes.booty.wood) || 0;
+                        cachedFarmData.g += parseInt(cRes.booty.stone) || 0;
+                        cachedFarmData.i += parseInt(cRes.booty.iron) || 0;
+                    }
+                } catch (e) {
+                    // ignore
                 }
             }
             $('#f_count').text(cachedFarmData.count);
-        } catch(e) {
-            console.error("❗ Błąd pobierania danych zewnętrznych:", e);
+        } catch (e) {
+            console.error('❗ Błąd pobierania danych zewnętrznych:', e);
         }
     }
 
     function initProdFields() {
-        if(!$('#p_w').val()) $('#p_w').val(Math.round(game_data.village.wood_prod * 3600));
-        if(!$('#p_g').val()) $('#p_g').val(Math.round(game_data.village.stone_prod * 3600));
-        if(!$('#p_i').val()) $('#p_i').val(Math.round(game_data.village.iron_prod * 3600));
+        if (!$('#p_w').val()) $('#p_w').val(Math.round(game_data.village.wood_prod * 3600));
+        if (!$('#p_g').val()) $('#p_g').val(Math.round(game_data.village.stone_prod * 3600));
+        if (!$('#p_i').val()) $('#p_i').val(Math.round(game_data.village.iron_prod * 3600));
     }
 
     function fillData() {
         const sInc = JSON.parse(localStorage.getItem(`calc_inc_${vId}`)) || {w:0, g:0, i:0};
-        let baseW = Math.floor(game_data.village.wood) + sInc.w;
-        let baseG = Math.floor(game_data.village.stone) + sInc.g;
-        let baseI = Math.floor(game_data.village.iron) + sInc.i;
+        const baseW = readCurrentResource('wood', game_data.village.wood) + (sInc.w || 0);
+        const baseG = readCurrentResource('stone', game_data.village.stone) + (sInc.g || 0);
+        const baseI = readCurrentResource('iron', game_data.village.iron) + (sInc.i || 0);
 
         let addW = 0, addG = 0, addI = 0;
         if ($('#chk_farm').is(':checked')) {
-            addW += cachedFarmData.w; addG += cachedFarmData.g; addI += cachedFarmData.i;
+            addW += cachedFarmData.w;
+            addG += cachedFarmData.g;
+            addI += cachedFarmData.i;
         }
         if ($('#chk_scav').is(':checked')) {
-            addW += cachedScavData.w; addG += cachedScavData.g; addI += cachedScavData.i;
+            addW += cachedScavData.w;
+            addG += cachedScavData.g;
+            addI += cachedScavData.i;
         }
 
         if (addW > 0 || addG > 0 || addI > 0) {
@@ -707,19 +534,18 @@
         $('#m_w').val(baseW + addW);
         $('#m_g').val(baseG + addG);
         $('#m_i').val(baseI + addI);
-
         initProdFields();
     }
 
-    $('#chk_farm, #chk_scav, #chk_call').change(async () => { 
+    $('#chk_farm, #chk_scav, #chk_call').change(() => {
         saveCheckboxesState();
-        fillData(); 
-        calculateTrade(); 
+        fillData();
+        calculateTrade();
     });
     $('#p_w, #p_g, #p_i').on('change input', () => calculateTrade());
 
     $('#sync_btn').click(async () => {
-        let btn = $('#sync_btn');
+        const btn = $('#sync_btn');
         btn.text('⌛').prop('disabled', true);
         await loadExternalBootyData();
         fillData();
@@ -727,103 +553,54 @@
         btn.text('Spichlerz').prop('disabled', false);
     });
 
-    $('#calc_btn').click(() => { calculateTrade(); });
-
-    $('#close_btn').click(() => { $(ui).hide(); localStorage.setItem(STORAGE_KEY_STATE, 'closed'); stopAutoSync(); });
+    $('#calc_btn').click(() => calculateTrade());
+    $('#close_btn').click(() => {
+        $(ui).hide();
+        localStorage.setItem(STORAGE_KEY_STATE, 'closed');
+        stopAutoSync();
+        stopResourceRefresh();
+    });
 
     $('#c_w, #c_g, #c_i').on('input change', function() {
-        let tw = parseInt($('#c_w').val()) || 0;
-        let tg = parseInt($('#c_g').val()) || 0;
-        let ti = parseInt($('#c_i').val()) || 0;
-        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({w:tw, g:tg, i:ti, mCount: 0, gCount: 0, name: `Wpis ręczny`}));
+        const tw = parseInt($('#c_w').val()) || 0;
+        const tg = parseInt($('#c_g').val()) || 0;
+        const ti = parseInt($('#c_i').val()) || 0;
+        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({ w: tw, g: tg, i: ti, name: 'Wpis ręczny' }));
         calculateTrade();
     });
 
     $('#set_moneta').click(function() {
-        let n = (parseInt($(this).attr('data-count')) || 0) + 1;
+        const n = (parseInt($(this).attr('data-count')) || 0) + 1;
         $(this).attr('data-count', n).text(`🪙 Moneta x${n}`);
-        $('#set_gruby').attr('data-count', 0).text(`👑 Gruby`);
-        $('#c_w').val(n * 28000); $('#c_g').val(n * 30000); $('#c_i').val(n * 25000);
-        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({w: n*28000, g: n*30000, i: n*25000, mCount: n, gCount: 0, name: `🪙 Moneta x${n}`}));
+        $('#set_gruby').attr('data-count', 0).text('👑 Gruby');
+        $('#c_w').val(n * 28000);
+        $('#c_g').val(n * 30000);
+        $('#c_i').val(n * 25000);
+        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({ w: n * 28000, g: n * 30000, i: n * 25000, name: `🪙 Moneta x${n}` }));
         calculateTrade();
     });
 
     $('#set_gruby').click(function() {
-        let n = (parseInt($(this).attr('data-count')) || 0) + 1;
+        const n = (parseInt($(this).attr('data-count')) || 0) + 1;
         $(this).attr('data-count', n).text(`👑 Gruby x${n}`);
-        $('#set_moneta').attr('data-count', 0).text(`🪙 Moneta`);
-        $('#c_w').val(n * 40000); $('#c_g').val(n * 50000); $('#c_i').val(n * 50000);
-        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({w: n*40000, g: n*50000, i: n*50000, mCount: 0, gCount: n, name: `👑 Gruby x${n}`}));
+        $('#set_moneta').attr('data-count', 0).text('🪙 Moneta');
+        $('#c_w').val(n * 40000);
+        $('#c_g').val(n * 50000);
+        $('#c_i').val(n * 50000);
+        localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({ w: n * 40000, g: n * 50000, i: n * 50000, name: `👑 Gruby x${n}` }));
         calculateTrade();
     });
 
     $('#clear_btn').click(() => {
-        $('#c_w,#c_g,#c_i').val(0); $('#set_moneta,#set_gruby').attr('data-count', 0);
-        $('#set_moneta').text('🪙 Moneta'); $('#set_gruby').text('👑 Gruby');
-        // Usunięto zerowanie chceckboxów i zapisywanie ich wyczyszczonego stanu
+        $('#c_w, #c_g, #c_i').val(0);
+        $('#set_moneta, #set_gruby').attr('data-count', 0);
+        $('#set_moneta').text('🪙 Moneta');
+        $('#set_gruby').text('👑 Gruby');
         $('#kombi_preview').hide();
         localStorage.removeItem(STORAGE_KEY_TARGET);
-        localStorage.removeItem(STORAGE_KEY_BUILDING_CHECKS);
-        $('.calc-check').prop('checked', false);
         fillData();
         calculateTrade();
     });
-
-    if (['main', 'snob', 'smith'].includes(game_data.screen)) {
-        $('#buildings tr, #main_buildrow tr, .train_units tr, table.vis tr').each(function() {
-            const r = $(this);
-            
-            let w = cleanNum(r.find('.cost_wood').text());
-            let g = cleanNum(r.find('.cost_stone').text());
-            let i = cleanNum(r.find('.cost_iron').text());
-
-            if (!w && !g && !i && game_data.screen === 'smith') {
-                r.find('td').each(function() {
-                    let html = $(this).html();
-                    let val = cleanNum($(this).text());
-                    if (val > 0) {
-                        if (html.includes('wood.png') || html.includes('wood')) w = val;
-                        else if (html.includes('stone.png') || html.includes('stone')) g = val;
-                        else if (html.includes('iron.png') || html.includes('iron')) i = val;
-                    }
-                });
-            }
-
-            const hasUnitLink = r.find('.unit_link').length > 0;
-
-            if ((w || g || i || hasUnitLink) && r.find('td:first').length) {
-                if (r.find('.calc-check').length === 0) {
-                    r.find('td:first').prepend($(`<input type="checkbox" class="calc-check" data-w="${w}" data-g="${g}" data-i="${i}" style="margin-right:8px; width:20px; height:20px; vertical-align:middle;">`));
-                }
-            }
-        });
-
-        const savedBChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_BUILDING_CHECKS)) || [];
-        $('.calc-check').each(function(index) {
-            if (savedBChecks.includes(index)) {
-                $(this).prop('checked', true);
-            }
-        });
-
-        $(document).on('change', '.calc-check', function() {
-            saveBuildingCheckboxesState();
-            let tw=0, tg=0, ti=0, names=[];
-            $('.calc-check:checked').each(function() {
-                tw += parseInt($(this).data('w')) || 0; 
-                tg += parseInt($(this).data('g')) || 0; 
-                ti += parseInt($(this).data('i')) || 0;
-                
-                let rawName = $(this).parent().text().replace(/\s+/g, ' ');
-                let bName = rawName.replace(/\s*\(.*?\)/g, '').replace(/poziom\s*\d+/gi, '').trim();
-                
-                if(bName) names.push(bName);
-            });
-            $('#c_w').val(tw); $('#c_g').val(tg); $('#c_i').val(ti);
-            let finalName = names.length > 0 ? names.join(', ') : 'Brak';
-            localStorage.setItem(STORAGE_KEY_TARGET, JSON.stringify({w:tw, g:tg, i:ti, mCount: 0, gCount: 0, name: finalName}));
-            calculateTrade();
-        });
-    }
 
     (function init() {
         const savedChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_CHECKS));
@@ -832,16 +609,21 @@
             $('#chk_scav').prop('checked', !!savedChecks.scav);
             $('#chk_call').prop('checked', !!savedChecks.call);
         } else {
-            $('#chk_call').prop('checked', true); 
+            $('#chk_call').prop('checked', true);
         }
 
         const savedT = JSON.parse(localStorage.getItem(STORAGE_KEY_TARGET));
         if (savedT) {
-            $('#c_w').val(savedT.w); $('#c_g').val(savedT.g); $('#c_i').val(savedT.i);
-            if (savedT.mCount > 0) $('#set_moneta').attr('data-count', savedT.mCount).text(`🪙 Moneta x${savedT.mCount}`);
-            if (savedT.gCount > 0) $('#set_gruby').attr('data-count', savedT.gCount).text(`👑 Gruby x${savedT.gCount}`);
+            $('#c_w').val(savedT.w);
+            $('#c_g').val(savedT.g);
+            $('#c_i').val(savedT.i);
+            if (savedT.name) $('#target_label').text(savedT.name);
         }
-        loadExternalBootyData().then(() => fillData());
+
+        loadExternalBootyData().then(() => {
+            fillData();
+            calculateTrade();
+        });
 
         if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
             $(ui).show();
@@ -850,6 +632,7 @@
                     fillData();
                     calculateTrade();
                     startAutoSync();
+                    startResourceRefresh();
                 });
             });
         }
