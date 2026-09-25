@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Menu Raportow PRO
 // @namespace    https://viayoo.com/
-// @version      1.4
+// @version      1.6
 // @description  Zarządzanie raportami
 // @author       TCM
-// @match        https://*.plemiona.pl/game.php*screen=report*
+// @match        *://*.plemiona.pl/*screen=report*
 // @grant        none
 // ==/UserScript==
 
@@ -60,11 +60,17 @@
 
     window.filtrujDzisiaj = async function() {
         let zaznaczono = 0;
+        
+        // Dynamiczne wyciąganie dzisiejszej daty w formacie DD.MM.
+        const dzisiaj = new Date();
+        const dd = String(dzisiaj.getDate()).padStart(2, '0');
+        const mm = String(dzisiaj.getMonth() + 1).padStart(2, '0');
+        const szukanaData = `${dd}.${mm}.`;
+        
         document.querySelectorAll('#report_list tr').forEach(w => {
-            const dataKomorka = w.querySelector('td:nth-child(2)');
-            if (dataKomorka && dataKomorka.innerText.toLowerCase().includes('dzisiaj')) {
-                const cb = w.querySelector('input[type="checkbox"]');
-                if (cb && !cb.checked) { 
+            const cb = w.querySelector('input[type="checkbox"][name^="id_"]');
+            if (cb && w.innerText.includes(szukanaData)) {
+                if (!cb.checked) { 
                     cb.checked = true; 
                     zaznaczono++; 
                 }
@@ -94,9 +100,15 @@
             }
 
             localStorage.setItem('skocz_do_dzisiaj', 'true');
-            document.querySelector('input[name="arch"]').click();
+            
+            const btnPrzenies = document.querySelector('input[type="submit"][value="Przenieś"]');
+            if (btnPrzenies) {
+                btnPrzenies.click();
+            } else {
+                document.getElementById('report_list').submit();
+            }
         } else {
-            UI.InfoMessage("Brak raportów z dzisiaj na tej stronie.", 2000);
+            UI.InfoMessage("Brak raportów z " + szukanaData + " na tej stronie.", 2000);
         }
     };
 
@@ -109,7 +121,7 @@
 
     const zakonczNotatkowanie = () => {
         localStorage.setItem('notatki_aktywne', 'false');
-        UI.ErrorMessage("Koniec raportów! Automat wyłączony.", 3000);
+        UI.ErrorMessage("Koniec raportów! Mechanizm wyłączony.", 3000);
         setTimeout(() => location.reload(), 2000);
     };
 
@@ -120,7 +132,7 @@
             const code = await response.text();
             new Function(code)();
         } catch (e) {
-            console.error("Błąd ładowania skryptu notatek:", e);
+            console.error("❗ Błąd ładowania skryptu notatek:", e);
         }
     };
 
@@ -145,7 +157,6 @@
                 --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
             }
             
-            /* Wymuszenie nakładania stylów na przyciski w menu */
             button.tcm-ui-btn {
                 all: unset !important;
                 display: block !important;
@@ -206,7 +217,6 @@
         `;
         menu.appendChild(tr);
 
-        // Podpinanie czystych zdarzeń JS
         document.getElementById('tcm-btn-czysc').addEventListener('click', () => window.czyscSmieci());
         document.getElementById('tcm-btn-filtruj').addEventListener('click', () => window.filtrujDzisiaj());
         document.getElementById('tcm-btn-notatkuj').addEventListener('click', () => window.notatkaToggle());
@@ -215,7 +225,7 @@
             const btn = document.getElementById('tcm-btn-notatkuj');
             if (btn) {
                 btn.classList.add('tcm-btn-green');
-                btn.innerText = "● Notatkowanie...";
+                btn.innerText = "✅️ Aktywne...";
             }
         }
     };
