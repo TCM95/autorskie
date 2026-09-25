@@ -170,7 +170,7 @@
         },
 
         go_next_report: function() {
-            let next_report = $('#report-next')[0] || $('a:contains(">>")')[0] \vert{}\vert{} $('.report-nav-next')[0];
+            let next_report = $('#report-next')[0] || $('a:contains(">>")')[0] || $('.report-nav-next')[0];
             if (next_report) {
                 location.href = next_report.href;
             }
@@ -418,6 +418,28 @@
             return `${reports_text}${user_notes}`;
         },
 
+        parse_old_attack_info_properties: function (properties_text) {
+            let properties_texts = properties_text.split(' | ');
+            let properties = {};
+            
+            let battle_time_match = properties_texts[0];
+            if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match);
+            
+            let wall_match = properties_texts.find(x => x.startsWith('Mur:'));
+            if (wall_match) {
+                let matches = wall_match.match(/(\d+)\s*->\s*(\d+)/);
+                if (matches) properties.attack_results = { ram_result: [Number(matches[1]), Number(matches[2])] };
+            }
+            
+            let back_time_match = properties_texts.find(x => x.startsWith('Powrót:'));
+            if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
+            
+            let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' || x === 'PUSTA');
+            if (empty_match) properties.is_empty = empty_match;
+            
+            return properties;
+        },
+
         get_attack_infos_from_text: function (text) {
             let attack_infos_text = text.match(/\[spoiler=.*\[\/spoiler]/g) || [];
             let attack_infos = [];
@@ -426,15 +448,13 @@
                 let attack_info_text = attack_infos_text[i];
                 let properties_text = attack_info_text.match(/\[spoiler=(.*)\]\[report_export/)[1];
                 let properties = this.parse_old_attack_info_properties(properties_text);
-                properties.export_code = attack_info_text.match(/\[report_export].*\[\/report_export\]/)[0];                 properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#(.*)\[\/color\]/)[1], 36);                 attack_infos.push(properties);             }             return attack_infos;         },          parse_old_attack_info_properties: function (properties_text) {             let properties_texts = properties_text.split(' \vert{} ');             let properties = {};                          let battle_time_match = properties_texts.find(x => x.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}$/));             if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);                          let sim_match = properties_texts.find(x => x.includes('Symulator'));             if (sim_match) properties.sim_link = sim_match.match(/url=(.*)\]Sym/)[1];
-
-            let back_time_match = properties_texts.find(x => x.startsWith('Powrót:'));
-            if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
+                properties.export_code = attack_info_text.match(/\[report_export].*\[\/report_export\]/)[0];
+                properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#([a-z0-9]+)/)[1], 36);
+                
+                attack_infos.push(properties);
+            }
             
-            let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' || x === 'PUSTA');
-            if (empty_match) properties.is_empty = empty_match;
-            
-            return properties;
+            return attack_infos;
         },
 
         main: async function () {
