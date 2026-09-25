@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         FEJKOMAT PRO (Naprawiony)
+// @name         FEJKOMAT PRO
 // @namespace    https://viayoo.com/
-// @version      1.2
-// @description  Wysyłanie z własnego skryptu na pasku
+// @version      1.4
+// @description  Wysyłanie fejków z priorytetem zwiadu
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place*
 // @grant        none
@@ -104,6 +104,7 @@
 
     // --- USTAWIENIA ---
     let stan = getS('stan', 'STOP');
+    let tryb = getS('tryb', 'kordy');
     let kordyRaw = getS('kordy', '');
     let customScript = getS('custom_script', '');
     let gracze = getS('gracze', '');
@@ -150,7 +151,7 @@
     unitsList.forEach(unit => {
         unitsHtml += `
             <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
-                <img src="https://dspl.innogamescdn.com/asset/1d2499b/graphic/unit/unit_${unit}.png" style="width:18px; height:18px; margin-bottom:4px;" alt="${unit}">
+                <img src="https://dspl.innogamescdn.com/asset/45436e33/graphic/unit/unit_${unit}.png" style="width:18px; height:18px; margin-bottom:4px;" alt="${unit}">
                 <input id="u_${unit}" class="tcn-input" value="${u[unit] || ''}" style="width:100%; max-width:30px; text-align:center; padding:3px 1px;">
             </div>`;
     });
@@ -169,8 +170,7 @@
         monthsOptionsTo += `<option value="${valM}" ${valM === selMonthTo ? 'selected' : ''}>${valM}</option>`;
     }
 
-    let hoursOptionsFrom = '';
-    let hoursOptionsTo = '';
+    let hoursOptionsFrom = '', hoursOptionsTo = '';
     for(let h=0; h<24; h++) {
         let valH = String(h).padStart(2, '0') + ':00';
         hoursOptionsFrom += `<option value="${valH}" ${valH === timeFrom ? 'selected' : ''}>${valH}</option>`;
@@ -186,16 +186,23 @@
             </div>
         </div>
         
-        <textarea id="f_custom_script" class="tcn-input" placeholder="Wklej tutaj SWÓJ skrypt z paska..." style="width:100%; height:55px; margin-bottom:6px; resize:vertical; background: #2f3136; border: 1px solid #7289da;">${customScript}</textarea>
-
-        <div style="font-size:10px; margin-bottom:8px; color:var(--title-color); text-align:center;">
-            Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
-        </div>
-        <textarea id="f_k" class="tcn-input" placeholder="Wklej kordy tutaj..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical;">${kordyRaw}</textarea>
+        <select id="f_tryb" class="tcn-input" style="width:100%; margin-bottom:6px; font-weight:bold; text-align:center;">
+            <option value="kordy" ${tryb === 'kordy' ? 'selected' : ''}>📋 Z listy kordów (Hermit)</option>
+            <option value="skrypt" ${tryb === 'skrypt' ? 'selected' : ''}>📜 Własny skrypt na pasku</option>
+        </select>
         
-        <div style="display:flex; gap:5px; margin-bottom:6px; width:100%;">
-            <input id="f_g" class="tcn-input" value="${gracze}" placeholder="Gracze" style="flex:1; width:50%;">
-            <input id="f_t" class="tcn-input" value="${tagi}" placeholder="Tagi" style="flex:1; width:50%;">
+        <textarea id="f_custom_script" class="tcn-input" placeholder="Wklej tutaj SWÓJ skrypt z paska..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical; background: #2f3136; border: 1px solid #7289da; display:${tryb === 'skrypt' ? 'block' : 'none'};">${customScript}</textarea>
+
+        <div id="kordy_container" style="display:${tryb === 'kordy' ? 'block' : 'none'};">
+            <div style="font-size:10px; margin-bottom:8px; color:var(--title-color); text-align:center;">
+                Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
+            </div>
+            <textarea id="f_k" class="tcn-input" placeholder="Wklej kordy tutaj..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical;">${kordyRaw}</textarea>
+            
+            <div style="display:flex; gap:5px; margin-bottom:6px; width:100%;">
+                <input id="f_g" class="tcn-input" value="${gracze}" placeholder="Gracze" style="flex:1; width:50%;">
+                <input id="f_t" class="tcn-input" value="${tagi}" placeholder="Tagi" style="flex:1; width:50%;">
+            </div>
         </div>
 
         <div style="font-size:10px; color:var(--title-color); margin-bottom:2px; font-weight:bold;">Data Od:</div>
@@ -226,8 +233,8 @@
         </div>
         
         <div style="display:flex; gap:5px; width:100%;">
-            <button id="sav_btn" class="tcn-btn" style="flex:1;">ZAPISZ</button>
-            <button id="tog_btn" class="tcn-btn" style="flex:1; background:${isRun ? '#d9534f' : '#5cb85c'} !important;">${isRun ? 'STOP' : 'START'}</button>
+            <button id="sav_btn" class="tcn-btn" style="flex:1;">💾 ZAPISZ</button>
+            <button id="tog_btn" class="tcn-btn" style="flex:1; background:${isRun ? '#d9534f' : '#5cb85c'} !important;">${isRun ? '❎ STOP' : '✅ START'}</button>
         </div>
         <div id="status_info" style="text-align:center; font-size:11px; color:#ff4d4d; font-weight:bold; margin-top:8px;"></div>
     `;
@@ -237,6 +244,15 @@
     if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">⚙️</a></td>`);
     $('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
     $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
+
+    $('#f_tryb').change(function() {
+        if ($(this).val() === 'skrypt') {$('#f_custom_script').show();
+            $('#kordy_container').hide();
+        } else {
+            $('#f_custom_script').hide();
+            $('#kordy_container').show();
+        }
+    });
 
     $('#pin_fejk').click(() => {
         isPinned = !isPinned;
@@ -257,6 +273,7 @@
     });
 
     $('#sav_btn').click(() => {
+        setS('tryb', $('#f_tryb').val());
         setS('custom_script', $('#f_custom_script').val());
         setS('kordy', $('#f_k').val()); 
         setS('gracze', $('#f_g').val()); 
@@ -276,7 +293,10 @@
         unitsList.forEach(unit => { newU[unit] = $(`#u_${unit}`).val().trim(); });
         setS('wojsko_obj', JSON.stringify(newU));
         
-        location.reload();
+        let info = document.getElementById('status_info');
+        info.innerText = "Zapisano pomyślnie!";
+        info.style.color = "#5cb85c";
+        setTimeout(() => { info.innerText = ""; info.style.color = "#ff4d4d"; }, 2000);
     });
 
     $('#tog_btn').click(() => {
@@ -307,11 +327,7 @@
             let required = parseInt(val) || 0;
             if (required > 0) {
                 let available = getAvailableTroops(unit);
-                if ((unit === 'ram' || unit === 'catapult')) {
-                    if (available <= 0) return false; 
-                } else {
-                    if (available < required) return false;
-                }
+                if (available < required) return false;
             }
         }
         return true;
@@ -319,13 +335,19 @@
 
     if (isRun) {
         if (isWait) {
-            let diff = Math.ceil((parseInt(getS('next_run', '0')) - Date.now()) / 1000);
-            if (diff <= 0) { setS('loop_wait', 'false'); location.reload(); }
-            else {
-                document.getElementById('status_info').innerText = `RESTART ZA: ${Math.floor(diff/60)}m ${diff%60}s`;
-                setTimeout(() => location.reload(), 5000);
-                return;
-            }
+            let targetTime = parseInt(getS('next_run', '0'));
+            let waitInterval = setInterval(() => {
+                let diff = Math.ceil((targetTime - Date.now()) / 1000);
+                if (diff <= 0) { 
+                    clearInterval(waitInterval);
+                    setS('loop_wait', 'false'); 
+                    location.reload(); 
+                } else {
+                    let info = document.getElementById('status_info');
+                    if(info) info.innerText = `⌛ RESTART ZA: ${Math.floor(diff/60)}m ${String(diff%60).padStart(2, '0')}s`;
+                }
+            }, 1000);
+            return;
         }
 
         let currentC = getMyCoords();
@@ -343,10 +365,9 @@
             return; 
         }
 
-        // ====== OBSŁUGA WŁASNEGO SKRYPTU Z PASKA ======
-        if (customScript.trim().length > 10) {
+        // ====== TRYB: WŁASNY SKRYPT ======
+        if (tryb === 'skrypt' && customScript.trim().length > 10) {
             if (location.href.includes('confirm')) {
-                // Ekran potwierdzenia
                 let b = document.querySelector('#troop_confirm_submit');
                 if (b) {
                     let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
@@ -354,15 +375,12 @@
                     count++; localStorage.setItem(cKey, count); b.click();
                 }
             } else {
-                // Wyciąganie czystego kodu i wstrzykiwanie go w strukturę DOM
                 let cleanScript = customScript.replace(/^javascript:/i, '').replace(/void\(0\);?$/i, '').trim();
-                
                 let scriptNode = document.createElement('script');
                 scriptNode.type = 'text/javascript';
                 scriptNode.textContent = cleanScript;
                 document.head.appendChild(scriptNode);
 
-                // Oczekiwanie aż zewnętrzny skrypt pobierze dane i uzupełni cel
                 let t = 0;
                 let c = setInterval(() => {
                     let inp = document.querySelector('.target-input-field');
@@ -373,7 +391,7 @@
                             if(atkBtn) atkBtn.click();
                         }, 800);
                     }
-                    if (t++ > 40) { // Czeka maksymalnie 10 sekund (40 x 250ms)
+                    if (t++ > 40) { 
                         clearInterval(c);
                         delayedNextV("Brak celu ze skryptu, pomijam...");
                     }
@@ -381,88 +399,80 @@
             }
             return;
         }
-        // ==============================================
 
-        // Standardowy Hermit (puste pole własnego skryptu)
-        if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
-            if (!hasEnoughTroops()) {
-                delayedNextV("Brak wojska!");
-                return;
+        // ====== TRYB: HERMIT Z KORDÓW ======
+        if (tryb === 'kordy') {
+            if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
+                if (!hasEnoughTroops()) {
+                    delayedNextV("Brak wojska!");
+                    return;
+                }
             }
-        }
 
-        let tpl = {};
-        let fillers = [];
-        
-        unitsList.forEach(unit => {
-            let val = u[unit] ? u[unit].trim() : '';
-            if (val) {
-                let num = parseInt(val);
-                if (num > 0) {
-                    if (unit === 'ram' || unit === 'catapult') {
-                        let avail = getAvailableTroops(unit);
-                        if (avail > 0) {
-                            let targetCount = num > 1 ? Math.min(avail, num) : 1;
-                            tpl[unit] = Math.min(targetCount, 5);
-                            fillers.push(unit);
+            let tpl = {};
+            let fillers = [];
+            
+            unitsList.forEach(unit => {
+                let val = u[unit] ? u[unit].trim() : '';
+                if (val) {
+                    let num = parseInt(val);
+                    if (num > 0) {
+                        tpl[unit] = num;
+                        fillers.push(unit);
+                    }
+                }
+            });
+
+            // PRIORYTET DOPEŁNIANIA: Zwiad (spy) na pierwszym miejscu!
+            const priority = { spy: 1, axe: 2, light: 3, heavy: 4, sword: 5, spear: 6 };
+            
+            let customFill = fillers
+                .filter(unit => unit !== 'ram' && unit !== 'catapult') // Usuwamy machiny z dopełniania
+                .sort((a, b) => (priority[a] || 99) - (priority[b] || 99))
+                .join(',');
+            
+            if(!customFill) customFill = 'spy,axe,light,heavy,sword,spear';
+
+            let dateFromStr = `${selDayFrom}.${selMonthFrom}.${defaultYear}`;
+            let dateToStr = `${selDayTo}.${selMonthTo}.${defaultYear}`;
+            let rangeTime = `${dateFromStr} ${timeFrom} - ${dateToStr} ${timeTo}`;
+
+            window.HermitowskieFejki = {
+                troops_templates: [tpl], 
+                fill_troops: customFill,
+                coords: filtrKordy, players: gracze, ally_tags: tagi, date_ranges: [rangeTime],
+                blocking_enabled: true, skip_night_bonus: true, changing_village_enabled: false
+            };
+
+            const s = document.createElement('script');
+            s.src = 'https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieFejki.js';
+            s.onload = () => {
+                setTimeout(() => {
+                    if (location.href.includes('confirm')) {
+                        let b = document.querySelector('#troop_confirm_submit');
+                        if (b) {
+                            let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
+                            if (target) { sentCoords[target[0]] = Date.now(); setS('sent_list', JSON.stringify(sentCoords)); }
+                            count++; localStorage.setItem(cKey, count); b.click();
                         }
                     } else {
-                        tpl[unit] = num;
-                        if (num === 1) fillers.push(unit);
+                        let t = 0;
+                        let c = setInterval(() => {
+                            let inp = document.querySelector('.target-input-field');
+                            if (inp && inp.value.length > 5) {
+                                clearInterval(c);
+                                setTimeout(() => { document.getElementById('target_attack').click(); }, 800);
+                            }
+                            if (t++ > 15) {
+                                clearInterval(c);
+                                delayedNextV("Brak prawidłowego celu");
+                            }
+                        }, 250);
                     }
-                }
-            }
-        });
-
-        let customFill = fillers.sort((a,b) => {
-            if (a === 'spy') return -1;
-            if (b === 'spy') return 1;
-            if (a === 'ram' || a === 'catapult') return -1;
-            if (b === 'ram' || b === 'catapult') return 1;
-            return 0;
-        }).join(',');
-        
-        if(!customFill) customFill = 'spy,ram,catapult,axe,light,heavy,sword,spear';
-
-        let dateFromStr = `${selDayFrom}.${selMonthFrom}.${defaultYear}`;
-        let dateToStr = `${selDayTo}.${selMonthTo}.${defaultYear}`;
-        let rangeTime = `${dateFromStr} ${timeFrom} - ${dateToStr} ${timeTo}`;
-
-        window.HermitowskieFejki = {
-            troops_templates: [tpl], 
-            fill_troops: customFill,
-            coords: filtrKordy, players: gracze, ally_tags: tagi, date_ranges: [rangeTime],
-            blocking_enabled: true, skip_night_bonus: true, changing_village_enabled: false
-        };
-
-        const s = document.createElement('script');
-        s.src = 'https://media.innogamescdn.com/com_DS_PL/skrypty/HermitowskieFejki.js';
-        s.onload = () => {
-            setTimeout(() => {
-                if (location.href.includes('confirm')) {
-                    let b = document.querySelector('#troop_confirm_submit');
-                    if (b) {
-                        let target = document.querySelector('.village_anchor')?.innerText.match(/\d{3}\|\d{3}/);
-                        if (target) { sentCoords[target[0]] = Date.now(); setS('sent_list', JSON.stringify(sentCoords)); }
-                        count++; localStorage.setItem(cKey, count); b.click();
-                    }
-                } else {
-                    let t = 0;
-                    let c = setInterval(() => {
-                        let inp = document.querySelector('.target-input-field');
-                        if (inp && inp.value.length > 5) {
-                            clearInterval(c);
-                            setTimeout(() => { document.getElementById('target_attack').click(); }, 800);
-                        }
-                        if (t++ > 15) {
-                            clearInterval(c);
-                            delayedNextV("Brak prawidłowego celu");
-                        }
-                    }, 250);
-                }
-            }, 600);
-        };
-        document.head.appendChild(s);
+                }, 600);
+            };
+            document.head.appendChild(s);
+        }
     }
 
     // --- Drag&Drop Logic ---
