@@ -1,10 +1,9 @@
 // ==UserScript==
-// @name         Notatki z Raportów
+// @name         Notatki
 // @namespace    https://viayoo.com/
-// @version      2.3
-// @description  Zapisuje do 6 raportów
+// @version      1.2
+// @description  Automatyczne notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i auto-next
 // @author       TCM
-// @match        *://*.plemiona.pl/*
 // ==/UserScript==
 
 ;(async function (TribalWars) {
@@ -19,7 +18,11 @@
     let Settings = {
         simulator_luck: -25,
         simulator_def_wall: 20,
-        simulator_att_troops: { axe: 6000, light: 3000, ram: 300 },
+        simulator_att_troops: {
+            axe: 6000,
+            light: 3000,
+            ram: 300,
+        },
         back_time_delta: 1 * 3600 * 1000,
         rebuild_time_delta: 48 * 3600 * 1000,
         rebuild_time_threshold: 48 * 3600 * 1000,
@@ -64,6 +67,21 @@
                    `${two_digit(date.getHours())}:${two_digit(date.getMinutes())}:${two_digit(date.getSeconds())}`;
         },
 
+        calculate_rebuild_time: function (troops) {
+            let rebuild_time = function (units) {
+                return (
+                    units
+                        .filter(unit => troops[unit] > 0)
+                        .reduce((time, unit) => Settings.build_time[unit] * troops[unit] + time, 0) * 1000
+                );
+            };
+            return Math.max(
+                rebuild_time(['spear', 'sword', 'axe', 'archer']),
+                rebuild_time(['spy', 'light', 'marcher', 'heavy']),
+                rebuild_time(['ram', 'catapult'])
+            );
+        },
+
         get_troops_summary: function (troops) {
             function count_population(units) {
                 return units.reduce((time, unit) => Settings.population[unit] * troops[unit] + time, 0);
@@ -78,12 +96,26 @@
 
         generate_link_to_simulator: function (def_troops) {
             let properties = {
-                mode: 'sim', moral: 100, luck: Settings.simulator_luck, belief_def: 'on', belief_att: 'on', simulate: 1, def_wall: Settings.simulator_def_wall,
+                mode: 'sim',
+                moral: 100,
+                luck: Settings.simulator_luck,
+                belief_def: 'on',
+                belief_att: 'on',
+                simulate: 1,
+                def_wall: Settings.simulator_def_wall,
             };
             let append_units = function (context, units) {
                 for (const unit in units) {
                     if (units[unit] > 0) {
                         properties[`${context}_${unit}`] = units[unit];
+                        switch (Settings.tech) {
+                            case TechnologyEnum.TEN_LEVELS:
+                                properties[`${context}_tech_${unit}`] = 10;
+                                break;
+                            case TechnologyEnum.THREE_LEVELS:
+                                properties[`${context}_tech_${unit}`] = 3;
+                                break;
+                        }
                     }
                 }
             };
@@ -96,7 +128,9 @@
             let march_time_per_field = Object.keys(troops)
                 .filter(unit => troops[unit] > 0)
                 .reduce((time_per_field, unit) => Math.max(Settings.speed[unit], time_per_field), 0);
-            if (march_time_per_field === 0) return 0;
+            
+            if (march_time_per_field === 0) throw 'Nie wykryto wojsk do marszu (prędkość 0).';
+
             let distance = Math.hypot(origin[0] - destination[0], origin[1] - destination[1]);
             return Math.round(distance * march_time_per_field * 60) * 1000;
         },
@@ -121,7 +155,10 @@
                 UI.ErrorMessage(error);
                 return;
             }
-            console.error(error);
+            const gui = `<h2>Błąd Przetwarzania Raportu</h2>
+                <p><strong>Komunikat: </strong><br/>
+                <textarea rows='5' style='width:100%;'>${error}\n\n${error.stack}</textarea></p>`;
+            Dialog.show(SCRIPT_NAME, gui);
         },
     };
 
@@ -135,7 +172,8 @@
                 this.check_screen();
                 this.get_report_id();
                 this.get_battle_time();
-                this.get_context();
+                
+                await this.get_context();
                 this.get_village_coords();
 
                 if (this.context.side === 'att') {
@@ -144,19 +182,25 @@
                     this.check_if_is_empty();
                     this.get_sim();
                     this.get_units_away();
-                } else {
+                }
+                if (this.context.side === 'def') {
                     this.get_back_time();
                 }
 
                 this.get_export_code();
+                this.get_rebuild_time();
                 this.get_belief();
+                this.get_troops_type();
+                
+                await this.check_report();
 
                 this.get_current_notes().then(old_notes => {
                     try {
                         let new_note = this.parse_notebook(old_notes);
                         if (new_note.error) {
-                            UI.InfoMessage('Zatrzymano: ' + new_note.error);
-                            return;
+                            UI.ErrorMessage(new_note.error);
+                            this.go_next_report();
+                            return; 
                         }
                         this.add_note(new_note);
                     } catch (e) {
@@ -165,19 +209,144 @@
                     }
                 });
             } catch (e) {
-                Helper.handle_error(e);
+                if (typeof e === 'string') {
+                    UI.ErrorMessage(e);
+                } else {
+                    Helper.handle_error(e);
+                }
             }
         },
 
         go_next_report: function() {
-            let next_report = $('#report-next')[0] || $('a:contains(">>")')[0] || $('.report-nav-next')[0];
+            let next_report = $('#report-next')[0];
             if (next_report) {
                 location.href = next_report.href;
             }
         },
 
+        inject_css: function() {
+            if (!document.getElementById('gray-notes-css')) {
+                const style = document.createElement('style');
+                style.id = 'gray-notes-css';
+                style.innerHTML = `
+                    :root {
+                        --bg-main: #36393f;
+                        --bg-row-alt: #32353b;
+                        --bg-header: #202225;
+                        --border-color: #3e4147;
+                        --text-color: white;
+                        --title-color: #ffffdf;
+                        --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
+                        --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+                    }
+                    #gray-notes-overlay {
+                        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                        background: rgba(0,0,0,0.6); z-index: 999999;
+                        display: flex; justify-content: center; align-items: center;
+                    }
+                    .gn-box {
+                        background: var(--bg-main); border: 2px solid var(--border-color);
+                        border-radius: 8px; padding: 20px; text-align: center; color: var(--text-color);
+                        font-family: Arial, sans-serif; min-width: 250px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                    }
+                    .gn-title { font-size: 16px; font-weight: bold; color: var(--title-color); margin-bottom: 20px; }
+                    .gn-btn-row { display: flex; justify-content: space-around; gap: 10px; }
+                    .gn-btn {
+                        background: var(--btn-bg); color: var(--text-color); border: 1px solid var(--border-color); 
+                        padding: 10px 20px; border-radius: 4px; font-weight: bold; text-transform: uppercase; cursor: pointer;
+                        flex-grow: 1;
+                    }
+                    .gn-btn:active { background: var(--btn-hover); }
+                `;
+                document.head.appendChild(style);
+            }
+        },
+
+        prompt_side: function() {
+            return new Promise((resolve) => {
+                this.inject_css();
+                const overlay = document.createElement('div');
+                overlay.id = 'gray-notes-overlay';
+                overlay.innerHTML = `
+                    <div class="gn-box">
+                        <div class="gn-title">Dodać notatkę do:</div>
+                        <div class="gn-btn-row">
+                            <button class="gn-btn" id="gn-btn-agresor">Agresor</button>
+                            <button class="gn-btn" id="gn-btn-obronca">Obrońca</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const handleSelection = (side) => {
+                    if (document.body.contains(overlay)) {
+                        document.body.removeChild(overlay);
+                        resolve(side);
+                    }
+                };
+
+                document.getElementById('gn-btn-agresor').addEventListener('touchstart', (e) => { e.preventDefault(); handleSelection('att'); }, { passive: false });
+                document.getElementById('gn-btn-obronca').addEventListener('touchstart', (e) => { e.preventDefault(); handleSelection('def'); }, { passive: false });
+                document.getElementById('gn-btn-agresor').addEventListener('click', () => handleSelection('att'));
+                document.getElementById('gn-btn-obronca').addEventListener('click', () => handleSelection('def'));
+            });
+        },
+
+        prompt_skip: function() {
+            return new Promise((resolve) => {
+                this.inject_css();
+                const overlay = document.createElement('div');
+                overlay.id = 'gray-notes-overlay';
+                overlay.innerHTML = `
+                    <div class="gn-box">
+                        <div class="gn-title">Ten raport wydaje się nic nie wnosić.<br>Co zrobić?</div>
+                        <div class="gn-btn-row">
+                            <button class="gn-btn" id="gn-btn-pomin">Pomiń</button>
+                            <button class="gn-btn" id="gn-btn-dodaj">Dodaj</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+
+                const handleSelection = (decision) => {
+                    if (document.body.contains(overlay)) {
+                        document.body.removeChild(overlay);
+                        resolve(decision);
+                    }
+                };
+
+                document.getElementById('gn-btn-pomin').addEventListener('touchstart', (e) => { e.preventDefault(); handleSelection(false); }, { passive: false });
+                document.getElementById('gn-btn-dodaj').addEventListener('touchstart', (e) => { e.preventDefault(); handleSelection(true); }, { passive: false });
+                document.getElementById('gn-btn-pomin').addEventListener('click', () => handleSelection(false));
+                document.getElementById('gn-btn-dodaj').addEventListener('click', () => handleSelection(true));
+            });
+        },
+
+        check_report: async function () {
+            if (Object.keys(this.village_info).length === 1 && Object.keys(this.attack_info).length === 3) {
+                let force_add = await this.prompt_skip();
+                if (!force_add) {
+                    this.go_next_report();
+                    throw 'Pominięto pusty raport.';
+                }
+            }
+            if (this.village_info.troops_type) this.save_coords(this.village_info.troops_type);
+            if (typeof this.village_info.belief === 'boolean' && !this.village_info.belief) {
+                this.save_coords('without_belief');
+            }
+        },
+
+        save_coords: function (key) {
+            const full_key = ['GrayNotes', key].join('_');
+            let item = localStorage.getItem(full_key);
+            const arr = item === null ? [] : JSON.parse(item);
+            arr.push(this.context.village_coords);
+            localStorage.setItem(full_key, JSON.stringify([...new Set(arr)]));
+        },
+
         check_screen: function () {
             if ($('.report_ReportAttack').length !== 1) {
+                if ($('[class*=report_Report]').length !== 0) throw 'Tego typu raporty nie są obsługiwane.';
                 throw 'Czy aby na pewno jesteś w przeglądzie raportu?';
             }
         },
@@ -187,30 +356,59 @@
                 .rows[1].cells[1].innerText.match(/\d+\|\d+/g).pop();
         },
 
-        get_context: function () {
+        get_context: async function () {
             let att = $('#attack_info_att');
             let def = $('#attack_info_def');
 
+            const get_player_name = (element) => element[0].rows[0].cells[1].innerText.trim();
             const get_player_id = (element) => {
                 const nodes = element[0].rows[0].cells[1].children;
                 return nodes.length ? nodes[0].href.match(/id=(\d+)/)[1] : '0';
             };
 
+            let att_player_name = get_player_name(att);
+            let def_player_name = get_player_name(def);
             let att_player_id = get_player_id(att);
+            let def_player_id = get_player_id(def);
             let att_village_id = att.find('.contexted').attr('data-id');
             let def_village_id = def.find('.contexted').attr('data-id');
+
+            let get_forwarder = function () {
+                let tables = $('.content-border').find('table.vis');
+                for (let j = 0; j < tables.length; j++) {
+                    let rows = tables[j].rows;
+                    for (let i = 0; i < rows.length; i++) {
+                        if (rows[i].cells[0] && rows[i].cells[0].innerText === 'Przesłane od:') {
+                            return rows[i].cells[1].innerText.trim();
+                        }
+                    }
+                }
+                return null;
+            };
+
+            let forwarder = get_forwarder();
             let currentPlayerId = game_data.player.id.toString();
 
-            if (currentPlayerId === att_player_id) {
+            let is_side_att = currentPlayerId === att_player_id || forwarder === att_player_name;
+            let is_side_def = currentPlayerId === def_player_id || forwarder === def_player_name;
+
+            if (is_side_att && !is_side_def) {
                 this.context.side = 'att';
-                this.context.opponent_side = 'def';
-                this.context.village_id = def_village_id;
-            } else {
+            } else if (is_side_def && !is_side_att) {
                 this.context.side = 'def';
-                this.context.opponent_side = 'att';
-                this.context.village_id = att_village_id;
+            } else {
+                this.context.side = await this.prompt_side();
             }
-            this.attack_info.type = this.context.side;
+
+            this.context.opponent_side = this.context.side === 'att' ? 'def' : 'att';
+            this.village_info.player_id = this.context.side === 'att' ? def_player_id : att_player_id;
+            this.context.village_id = this.context.side === 'att' ? def_village_id : att_village_id;
+
+            let village_player_id = (this.context.side === 'att' ? def : att)[0].rows[1].cells[1].children[0].getAttribute('data-player');
+            if (this.village_info.player_id !== village_player_id) {
+                this.add_note('');
+                throw 'Docelowa wioska zmieniła właściciela!';
+            }
         },
 
         get_export_code: function () {
@@ -229,6 +427,46 @@
             }
         },
 
+        get_troops_type: function () {
+            let verdict = function (summary, threshold) {
+                if (summary.off_population > threshold) return 'OFF';
+                if (summary.deff_population > threshold) return 'DEFF';
+                if (summary.off_population && summary.deff_population === 0) return 'OFF';
+                if (summary.deff_population && summary.off_population === 0) return 'DEFF';
+                return undefined;
+            };
+
+            if (this.attack_info.units_away) {
+                let troops_type = verdict(this.attack_info.units_away, 1000);
+                if (troops_type) {
+                    this.village_info.troops_type = troops_type;
+                    return;
+                }
+            }
+
+            let attack_info_units = $(`#attack_info_${this.context.opponent_side}_units`)[0];
+            if (attack_info_units) {
+                let troops = Helper.get_troops_by_row(attack_info_units.rows[1], 1);
+                if (troops) {
+                    let troops_type = verdict(Helper.get_troops_summary(troops), 3000);
+                    if (troops_type) this.village_info.troops_type = troops_type;
+                }
+            }
+        },
+
+        get_rebuild_time: function () {
+            let attack_info_units = $(`#attack_info_${this.context.opponent_side}_units`)[0];
+            if (attack_info_units) {
+                let loses = Helper.get_troops_by_row(attack_info_units.rows[2], 1);
+                if (loses) {
+                    let rebuild_time = Helper.calculate_rebuild_time(loses);
+                    if (rebuild_time > Settings.rebuild_time_threshold) {
+                        this.attack_info.rebuild_time = new Date(this.attack_info.battle_time.getTime() + rebuild_time);
+                    }
+                }
+            }
+        },
+
         get_back_time: function () {
             let match_coordinates = text => {
                 let matches = text.match(/\d{1,3}\|\d{1,3}/g);
@@ -242,10 +480,8 @@
             let survivors = this.get_survivors('att');
             if (Object.values(survivors).some(x => x > 0)) {
                 let march_time = Helper.get_march_time(units, origin, destination);
-                if (march_time > 0) {
-                    let back_time_timestamp = this.attack_info.battle_time.getTime() + march_time;
-                    this.attack_info.back_time = new Date(back_time_timestamp - (back_time_timestamp % 1000));
-                }
+                let back_time_timestamp = this.attack_info.battle_time.getTime() + march_time;
+                this.attack_info.back_time = new Date(back_time_timestamp - (back_time_timestamp % 1000));
             }
         },
 
@@ -260,7 +496,7 @@
                     }
                 }
             }
-            throw 'Nie udało się zlokalizować czasu bitwy.';
+            throw 'Nie udało się zlokalizować czasu bitwy w raporcie.';
         },
 
         get_attack_results: function () {
@@ -294,6 +530,7 @@
             if (def_units.length === 1) {
                 let troops = def_units[0].rows[1];
                 let loses = def_units[0].rows[2];
+                let is_empty = true;
                 let is_clean = true;
                 for (let i = 1; i < troops.cells.length; i++) {
                     if (loses.cells[i].innerText !== troops.cells[i].innerText) {
@@ -302,7 +539,6 @@
                     }
                 }
                 if (is_clean) {
-                    let is_empty = true;
                     for (let i = 1; i < troops.cells.length; i++) {
                         if (loses.cells[i].innerText !== '0') is_empty = false;
                     }
@@ -339,27 +575,27 @@
                 let summary = Helper.get_troops_summary(survivors);
                 if (summary.deff_population !== 0 || summary.off_population !== 0 || summary.misc_population !== 0) {
                     this.village_info.sim = summary;
-                    this.attack_info.sim_link = Helper.generate_link_to_simulator(survivors);
                 }
             }
         },
 
         generate_attack_info: function (attack_info) {
             let properties = [Helper.date_to_datetime_string(attack_info.battle_time)];
-            
-            if (attack_info.sim_link) properties.push(`[url=${attack_info.sim_link}]Symulator[/url]`);
             if (attack_info.is_empty) properties.push(attack_info.is_empty);
             if (attack_info.attack_results) {
                 if (attack_info.attack_results.ram_result) {
-                    properties.push(`Mur: ${attack_info.attack_results.ram_result[0]} -> ${attack_info.attack_results.ram_result[1]}`);
+                    properties.push(`Mur uszkodzony z poziomu ${attack_info.attack_results.ram_result[0]} do poziomu ${attack_info.attack_results.ram_result[1]}`);
                 }
                 if (attack_info.attack_results.catapult_result) {
                     let cat = attack_info.attack_results.catapult_result;
-                    properties.push(`${cat.target}: ${cat.damage[0]} -> ${cat.damage[1]}`);
+                    properties.push(`${cat.target} uszkodzono z poziomu ${cat.damage[0]} do poziomu ${cat.damage[1]}`);
                 }
             }
-            if (attack_info.back_time) {
-                properties.push(`Powrót: ${Helper.date_to_datetime_string(attack_info.back_time)}`);
+            if (attack_info.back_time && attack_info.back_time.getTime() + Settings.back_time_delta > Date.now()) {
+                properties.push(`Czas powrotu: ${Helper.date_to_datetime_string(attack_info.back_time)}`);
+            }
+            if (attack_info.rebuild_time && attack_info.rebuild_time.getTime() + Settings.rebuild_time_delta > Date.now()) {
+                properties.push(`Odbudowa dnia: ${Helper.date_to_datetime_string(attack_info.rebuild_time)}`);
             }
             if (attack_info.units_away) {
                 let away = [];
@@ -367,8 +603,33 @@
                 if (attack_info.units_away.off_population) away.push(`off: ${Helper.beautify_number(attack_info.units_away.off_population)}`);
                 if (away.length > 0) properties.push(`Poza: (${away.join(', ')})`);
             }
+            if (attack_info.catapult_attack_result_plaintext) properties.push(attack_info.catapult_attack_result_plaintext);
+            if (attack_info.ram_attack_result_plaintext) properties.push(attack_info.ram_attack_result_plaintext);
 
             return `[spoiler=${properties.join(' | ')}]${attack_info.export_code}[color=#EFE6C9]#${attack_info.report_id.toString(36)}[/color][/spoiler]`;
+        },
+
+        generate_village_info() {
+            let properties = [];
+            if (this.village_info.troops_type) {
+                if (this.village_info.troops_type === 'OFF') {
+                    properties.push('[/color][color=#ff0000]Wioska OFF[/color][color=#0000ff]');
+                } else if (this.village_info.troops_type === 'DEFF') {
+                    properties.push('Wioska DEFF');
+                } else {
+                    properties.push(this.village_info.troops_type);
+                }
+            }
+            if (typeof this.village_info.church === 'string') properties.push(this.village_info.church);
+            if (typeof this.village_info.belief === 'boolean' && !this.village_info.belief) properties.push('Bez wiary');
+            if (this.village_info.sim) {
+                let url = Helper.generate_link_to_simulator(this.village_info.sim.troops);
+                let deff_count = Helper.beautify_number(this.village_info.sim.deff_population);
+                properties.push(`[url=${url}]Symulacja ${deff_count}[/url]`);
+            }
+            if (this.village_info.sim_plaintext) properties.push(this.village_info.sim_plaintext);
+            if (this.village_info.player_id) properties.push(`[color=#F5EDDA]${this.village_info.player_id}[/color]`);
+            return properties.join(' | ');
         },
 
         add_note: function (new_note) {
@@ -377,8 +638,10 @@
 
         on_note_updated: function (response) {
             if (response.note_parsed) {
-                UI.SuccessMessage(`Notatka zapisana. Przechodzenie...`);
+                UI.SuccessMessage(`Notatka dodana do wioski ${this.context.side === 'def' ? 'atakującego' : 'broniącego'}`);
                 this.go_next_report();
+            } else {
+                location.href = TribalWars.buildURL('GET', 'report', { action: 'del_one', mode: 'attack', id: this.attack_info.report_id, h: game_data.csrf });
             }
         },
 
@@ -392,56 +655,48 @@
                 });
         },
 
+        merge_village_info: function (old_village_info) {
+            if (typeof this.village_info.belief === 'undefined') this.village_info.belief = old_village_info.belief;
+            if (typeof this.village_info.church === 'undefined') this.village_info.church = old_village_info.church;
+            if (typeof this.village_info.troops_type === 'undefined') this.village_info.troops_type = old_village_info.troops_type;
+            if (typeof this.village_info.sim === 'undefined') this.village_info.sim_plaintext = old_village_info.sim_plaintext;
+        },
+
+        get_user_notes: function (old_notes) {
+            let start = old_notes.indexOf('___');
+            return start === -1 ? old_notes : old_notes.substr(start + 3);
+        },
+
         parse_notebook: function (old_notes) {
-            let reports = this.get_attack_infos_from_text(old_notes);
+            let old_village_info = this.get_old_village_info(old_notes);
+            let attack_infos = this.get_attack_infos(old_notes);
+            let user_notes = this.get_user_notes(old_notes);
 
-            let is_duplicate = reports.some(old => old.report_id === this.attack_info.report_id);
-            if (is_duplicate) {
-                return { error: 'Ten raport jest już zapisany w notatce.' };
+            if (old_village_info.player_id !== this.village_info.player_id) {
+                attack_infos = [];
+            } else {
+                this.merge_village_info(old_village_info);
             }
 
-            reports.push(this.attack_info);
-            reports.sort((a, b) => b.battle_time.getTime() - a.battle_time.getTime());
-
-            if (reports.length > 6) {
-                reports = reports.slice(0, 6);
+            if (attack_infos.some(old_info => old_info.report_id === this.attack_info.report_id)) {
+                return { error: 'Wioska ma już zapisany ten raport.' };
             }
 
-            let reports_text = reports.map(x => this.generate_attack_info(x)).join('\n');
+            attack_infos.push(this.attack_info);
+            attack_infos.sort((lhs, rhs) => rhs.battle_time.getTime() - lhs.battle_time.getTime());
+            attack_infos = attack_infos.filter(x => x.battle_time.getTime() + Settings.attack_info_lifetime > Date.now());
 
-            let user_notes = '';
-            let start_user = old_notes.indexOf('___');
-            if (start_user !== -1) {
-                user_notes = '\n\n' + old_notes.substr(start_user);
-            }
-
-            return `${reports_text}${user_notes}`;
+            let attack_infos_text = attack_infos.map(x => this.generate_attack_info(x)).join('\n');
+            return `[size=15][b][color=#0000ff]${this.generate_village_info()}[/color][/b][/size] \n\n${attack_infos_text}\n___${user_notes}`;
         },
 
-        parse_old_attack_info_properties: function (properties_text) {
-            let properties_texts = properties_text.split(' | ');
-            let properties = {};
-            
-            let battle_time_match = properties_texts[0];
-            if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match);
-            
-            let wall_match = properties_texts.find(x => x.startsWith('Mur:'));
-            if (wall_match) {
-                let matches = wall_match.match(/(\d+)\s*->\s*(\d+)/);
-                if (matches) properties.attack_results = { ram_result: [Number(matches[1]), Number(matches[2])] };
-            }
-            
-            let back_time_match = properties_texts.find(x => x.startsWith('Powrót:'));
-            if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
-            
-            let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' || x === 'PUSTA');
-            if (empty_match) properties.is_empty = empty_match;
-            
-            return properties;
-        },
+        get_attack_infos: function (old_notes) {
+            let start = old_notes.indexOf('\n\n');
+            let end = old_notes.indexOf('___');
+            if (end === -1 || start === -1) return [];
 
-        get_attack_infos_from_text: function (text) {
-            let attack_infos_text = text.match(/\[spoiler=.*\[\/spoiler]/g) || [];
+            let attack_infos_region = old_notes.substr(start + 2, end - start - 2);
+            let attack_infos_text = attack_infos_region.match(/\[spoiler=.*\[\/spoiler]/g) || [];
             let attack_infos = [];
 
             for (let i = 0; i < attack_infos_text.length; i++) {
@@ -449,12 +704,62 @@
                 let properties_text = attack_info_text.match(/\[spoiler=(.*)\]\[report_export/)[1];
                 let properties = this.parse_old_attack_info_properties(properties_text);
                 properties.export_code = attack_info_text.match(/\[report_export].*\[\/report_export\]/)[0];
-                properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#([a-z0-9]+)/)[1], 36);
-                
+                properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#(.*)\[\/color\]/)[1], 36);
                 attack_infos.push(properties);
             }
-            
             return attack_infos;
+        },
+
+        parse_old_attack_info_properties: function (properties_text) {
+            let properties_texts = properties_text.split(' | ');
+            let properties = {};
+
+            let battle_time_match = properties_texts.find(x => x.match(/^\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}$/));
+            if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match);
+
+            let rebuild_time_match = properties_texts.find(x => x.startsWith('Odbudowa dnia:'));
+            if (rebuild_time_match) properties.rebuild_time = Helper.parse_datetime_string(rebuild_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
+
+            let back_time_match = properties_texts.find(x => x.startsWith('Czas powrotu:'));
+            if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
+
+            let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' || x === 'PUSTA');
+            if (empty_match) properties.is_empty = empty_match;
+
+            let away_match = properties_texts.find(x => x.startsWith('Poza:'));
+            if (away_match) properties.units_away_plaintext = away_match;
+
+            let cat_match = properties_texts.find(x => x.startsWith('K:'));
+            if (cat_match) properties.catapult_attack_result_plaintext = cat_match;
+
+            let ram_match = properties_texts.find(x => x.startsWith('T:'));
+            if (ram_match) properties.ram_attack_result_plaintext = ram_match;
+
+            return properties;
+        },
+
+        get_old_village_info: function (old_notes) {
+            let village_info_text = old_notes.split('\n\n')[0];
+            let props_text = village_info_text.split(' | ');
+            let old_village_info = {};
+
+            if (props_text.some(x => x.includes('OFF'))) old_village_info.troops_type = 'OFF';
+            if (props_text.some(x => x.includes('DEFF'))) old_village_info.troops_type = 'DEFF';
+            if (props_text.some(x => x.includes('Bez wiary') || x.includes('BEZ WIARY'))) old_village_info.belief = false;
+
+            let church_match = props_text.find(x => x.toLowerCase().indexOf('kościół') !== -1);
+            if (church_match) old_village_info.church = church_match;
+
+            let sim_match = props_text.find(x => x.startsWith('Symulacja') || x.includes('Symulacja'));
+            if (sim_match) {
+                old_village_info.sim = true;
+                old_village_info.sim_plaintext = sim_match;
+            }
+
+            let player_id_match = props_text.find(x => x.match(/#F5EDDA\](\d+)/));
+            if (player_id_match) old_village_info.player_id = player_id_match.match(/\](\d+)/)[1];
+
+            return old_village_info;
         },
 
         main: async function () {
