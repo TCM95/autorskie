@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Notatki
+// @name         Notatki z Raportu
 // @namespace    https://viayoo.com/
-// @version      1.2
-// @description  Automatyczne notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i auto-next
+// @version      1.4
+// @description  Zaawansowane notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i generowaniem z raportu
 // @author       TCM
 // ==/UserScript==
 
@@ -28,9 +28,9 @@
         rebuild_time_threshold: 48 * 3600 * 1000,
         attack_info_lifetime: 30 * 24 * 3600 * 1000,
         
-        deff_units: game_data.units.filter(x => -1 !== ['spear', 'sword', 'archer', 'heavy'].indexOf(x)),
-        off_units: game_data.units.filter(x => -1 !== ['axe', 'light', 'marcher'].indexOf(x)),
-        misc_units: game_data.units.filter(x => -1 !== ['spy', 'ram', 'catapult', 'snob'].indexOf(x)),
+        deff_units: game_data.units.filter(x => ['spear', 'sword', 'archer', 'heavy'].includes(x)),
+        off_units: game_data.units.filter(x => ['axe', 'light', 'marcher'].includes(x)),
+        misc_units: game_data.units.filter(x => ['spy', 'ram', 'catapult', 'snob'].includes(x)),
         population: {},
         speed: {},
         build_time: {},
@@ -72,7 +72,7 @@
                 return (
                     units
                         .filter(unit => troops[unit] > 0)
-                        .reduce((time, unit) => Settings.build_time[unit] * troops[unit] + time, 0) * 1000
+                        .reduce((acc, unit) => Settings.build_time[unit] * troops[unit] + acc, 0) * 1000
                 );
             };
             return Math.max(
@@ -84,7 +84,7 @@
 
         get_troops_summary: function (troops) {
             function count_population(units) {
-                return units.reduce((time, unit) => Settings.population[unit] * troops[unit] + time, 0);
+                return units.reduce((acc, unit) => Settings.population[unit] * (troops[unit] || 0) + acc, 0);
             }
             return {
                 troops: troops,
@@ -157,7 +157,7 @@
             }
             const gui = `<h2>Błąd Przetwarzania Raportu</h2>
                 <p><strong>Komunikat: </strong><br/>
-                <textarea rows='5' style='width:100%;'>${error}\n\n${error.stack}</textarea></p>`;
+                <textarea rows='5' style='width:100%; background:var(--bg-main); color:var(--text-color);'>${error}\n\n${error.stack}</textarea></p>`;
             Dialog.show(SCRIPT_NAME, gui);
         },
     };
@@ -191,6 +191,7 @@
                 this.get_rebuild_time();
                 this.get_belief();
                 this.get_troops_type();
+                this.get_defender_population();
                 
                 await this.check_report();
 
@@ -238,6 +239,12 @@
                         --title-color: #ffffdf;
                         --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
                         --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
+                        --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
+                        --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
+                        --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
+                        --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
+                        --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
+                        --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
                     }
                     #gray-notes-overlay {
                         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -252,11 +259,11 @@
                     .gn-title { font-size: 16px; font-weight: bold; color: var(--title-color); margin-bottom: 20px; }
                     .gn-btn-row { display: flex; justify-content: space-around; gap: 10px; }
                     .gn-btn {
-                        background: var(--btn-bg); color: var(--text-color); border: 1px solid var(--border-color); 
+                        background: var(--btn-blue-bg); color: var(--text-color); border: 1px solid var(--border-color); 
                         padding: 10px 20px; border-radius: 4px; font-weight: bold; text-transform: uppercase; cursor: pointer;
-                        flex-grow: 1;
+                        flex-grow: 1; transition: background 0.2s ease;
                     }
-                    .gn-btn:active { background: var(--btn-hover); }
+                    .gn-btn:active, .gn-btn:hover { background: var(--btn-blue-hover); }
                 `;
                 document.head.appendChild(style);
             }
@@ -301,8 +308,8 @@
                     <div class="gn-box">
                         <div class="gn-title">Ten raport wydaje się nic nie wnosić.<br>Co zrobić?</div>
                         <div class="gn-btn-row">
-                            <button class="gn-btn" id="gn-btn-pomin">Pomiń</button>
-                            <button class="gn-btn" id="gn-btn-dodaj">Dodaj</button>
+                            <button class="gn-btn" style="background:var(--btn-red-bg);" id="gn-btn-pomin">Pomiń</button>
+                            <button class="gn-btn" style="background:var(--btn-green-bg);" id="gn-btn-dodaj">Dodaj</button>
                         </div>
                     </div>
                 `;
@@ -454,6 +461,22 @@
             }
         },
 
+        get_defender_population: function () {
+            let attack_info_units = $(`#attack_info_${this.context.opponent_side}_units`)[0];
+            if (attack_info_units) {
+                let troops = Helper.get_troops_by_row(attack_info_units.rows[1], 1);
+                if (troops) {
+                    let summary = Helper.get_troops_summary(troops);
+                    if (summary.deff_population > 0 || summary.off_population > 0) {
+                        this.attack_info.defender_population = {
+                            deff: summary.deff_population,
+                            off: summary.off_population,
+                        };
+                    }
+                }
+            }
+        },
+
         get_rebuild_time: function () {
             let attack_info_units = $(`#attack_info_${this.context.opponent_side}_units`)[0];
             if (attack_info_units) {
@@ -582,6 +605,15 @@
         generate_attack_info: function (attack_info) {
             let properties = [Helper.date_to_datetime_string(attack_info.battle_time)];
             if (attack_info.is_empty) properties.push(attack_info.is_empty);
+            
+            // Poprawiony format populacji według życzeń
+            if (attack_info.defender_population) {
+                let pop = attack_info.defender_population;
+                properties.push(`Deff: ${Helper.beautify_number(pop.deff)}, Off: ${Helper.beautify_number(pop.off)}`);
+            } else if (attack_info.defender_population_plaintext) {
+                properties.push(attack_info.defender_population_plaintext);
+            }
+            
             if (attack_info.attack_results) {
                 if (attack_info.attack_results.ram_result) {
                     properties.push(`Mur uszkodzony z poziomu ${attack_info.attack_results.ram_result[0]} do poziomu ${attack_info.attack_results.ram_result[1]}`);
@@ -599,8 +631,8 @@
             }
             if (attack_info.units_away) {
                 let away = [];
-                if (attack_info.units_away.deff_population) away.push(`deff: ${Helper.beautify_number(attack_info.units_away.deff_population)}`);
-                if (attack_info.units_away.off_population) away.push(`off: ${Helper.beautify_number(attack_info.units_away.off_population)}`);
+                if (attack_info.units_away.deff_population) away.push(`Deff: ${Helper.beautify_number(attack_info.units_away.deff_population)}`);
+                if (attack_info.units_away.off_population) away.push(`Off: ${Helper.beautify_number(attack_info.units_away.off_population)}`);
                 if (away.length > 0) properties.push(`Poza: (${away.join(', ')})`);
             }
             if (attack_info.catapult_attack_result_plaintext) properties.push(attack_info.catapult_attack_result_plaintext);
@@ -611,15 +643,6 @@
 
         generate_village_info() {
             let properties = [];
-            if (this.village_info.troops_type) {
-                if (this.village_info.troops_type === 'OFF') {
-                    properties.push('[/color][color=#ff0000]Wioska OFF[/color][color=#0000ff]');
-                } else if (this.village_info.troops_type === 'DEFF') {
-                    properties.push('Wioska DEFF');
-                } else {
-                    properties.push(this.village_info.troops_type);
-                }
-            }
             if (typeof this.village_info.church === 'string') properties.push(this.village_info.church);
             if (typeof this.village_info.belief === 'boolean' && !this.village_info.belief) properties.push('Bez wiary');
             if (this.village_info.sim) {
@@ -701,63 +724,7 @@
 
             for (let i = 0; i < attack_infos_text.length; i++) {
                 let attack_info_text = attack_infos_text[i];
-                let properties_text = attack_info_text.match(/\[spoiler=(.*)\]\[report_export/)[1];
-                let properties = this.parse_old_attack_info_properties(properties_text);
-                properties.export_code = attack_info_text.match(/\[report_export].*\[\/report_export\]/)[0];
-                properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#(.*)\[\/color\]/)[1], 36);
-                attack_infos.push(properties);
-            }
-            return attack_infos;
-        },
-
-        parse_old_attack_info_properties: function (properties_text) {
-            let properties_texts = properties_text.split(' | ');
-            let properties = {};
-
-            let battle_time_match = properties_texts.find(x => x.match(/^\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}$/));
-            if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match);
-
-            let rebuild_time_match = properties_texts.find(x => x.startsWith('Odbudowa dnia:'));
-            if (rebuild_time_match) properties.rebuild_time = Helper.parse_datetime_string(rebuild_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
-
-            let back_time_match = properties_texts.find(x => x.startsWith('Czas powrotu:'));
-            if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);
-
-            let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' || x === 'PUSTA');
-            if (empty_match) properties.is_empty = empty_match;
-
-            let away_match = properties_texts.find(x => x.startsWith('Poza:'));
-            if (away_match) properties.units_away_plaintext = away_match;
-
-            let cat_match = properties_texts.find(x => x.startsWith('K:'));
-            if (cat_match) properties.catapult_attack_result_plaintext = cat_match;
-
-            let ram_match = properties_texts.find(x => x.startsWith('T:'));
-            if (ram_match) properties.ram_attack_result_plaintext = ram_match;
-
-            return properties;
-        },
-
-        get_old_village_info: function (old_notes) {
-            let village_info_text = old_notes.split('\n\n')[0];
-            let props_text = village_info_text.split(' | ');
-            let old_village_info = {};
-
-            if (props_text.some(x => x.includes('OFF'))) old_village_info.troops_type = 'OFF';
-            if (props_text.some(x => x.includes('DEFF'))) old_village_info.troops_type = 'DEFF';
-            if (props_text.some(x => x.includes('Bez wiary') || x.includes('BEZ WIARY'))) old_village_info.belief = false;
-
-            let church_match = props_text.find(x => x.toLowerCase().indexOf('kościół') !== -1);
-            if (church_match) old_village_info.church = church_match;
-
-            let sim_match = props_text.find(x => x.startsWith('Symulacja') || x.includes('Symulacja'));
-            if (sim_match) {
-                old_village_info.sim = true;
-                old_village_info.sim_plaintext = sim_match;
-            }
-
-            let player_id_match = props_text.find(x => x.match(/#F5EDDA\](\d+)/));
-            if (player_id_match) old_village_info.player_id = player_id_match.match(/\](\d+)/)[1];
+                let properties_text = attack_info_text.match(/\[spoiler=(.*)\]\[report_export/)[1];                 let properties = this.parse_old_attack_info_properties(properties_text);                 properties.export_code = attack_info_text.match(/\[report_export].*\[\/report_export\]/)[0];                 properties.report_id = parseInt(attack_info_text.match(/\[color=#EFE6C9\]#(.*)\[\/color\]/)[1], 36);                 attack_infos.push(properties);             }             return attack_infos;         },          parse_old_attack_info_properties: function (properties_text) {             let properties_texts = properties_text.split(' \vert{} ');             let properties = {};              let battle_time_match = properties_texts.find(x => x.match(/^\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}$/));             if (battle_time_match) properties.battle_time = Helper.parse_datetime_string(battle_time_match);              let rebuild_time_match = properties_texts.find(x => x.startsWith('Odbudowa dnia:'));             if (rebuild_time_match) properties.rebuild_time = Helper.parse_datetime_string(rebuild_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);              let back_time_match = properties_texts.find(x => x.startsWith('Czas powrotu:'));             if (back_time_match) properties.back_time = Helper.parse_datetime_string(back_time_match.match(/\d{2}.\d{2}.\d{2} \d{2}:\d{2}:\d{2}/)[0]);              let empty_match = properties_texts.find(x => x === 'WYCZYSZCZONA' \vert{}\vert{} x === 'PUSTA');             if (empty_match) properties.is_empty = empty_match;              let away_match = properties_texts.find(x => x.startsWith('Poza:'));             if (away_match) properties.units_away_plaintext = away_match;              // Obsługa zarówno starego jak i nowego formatu!             let defender_population_match = properties_texts.find(x => x.startsWith('Garnizon:') \vert{}\vert{} (x.includes('Deff:') && x.includes('Off:')));             if (defender_population_match) properties.defender_population_plaintext = defender_population_match;              let cat_match = properties_texts.find(x => x.startsWith('K:'));             if (cat_match) properties.catapult_attack_result_plaintext = cat_match;              let ram_match = properties_texts.find(x => x.startsWith('T:'));             if (ram_match) properties.ram_attack_result_plaintext = ram_match;              return properties;         },          get_old_village_info: function (old_notes) {             let village_info_text = old_notes.split('\n\n')[0];             let props_text = village_info_text.split(' \vert{} ');             let old_village_info = {};              if (props_text.some(x => x.includes('OFF'))) old_village_info.troops_type = 'OFF';             if (props_text.some(x => x.includes('DEFF'))) old_village_info.troops_type = 'DEFF';             if (props_text.some(x => x.includes('Bez wiary') \vert{}\vert{} x.includes('BEZ WIARY'))) old_village_info.belief = false;              let church_match = props_text.find(x => x.toLowerCase().indexOf('kościół') !== -1);             if (church_match) old_village_info.church = church_match;              let sim_match = props_text.find(x => x.startsWith('Symulacja') \vert{}\vert{} x.includes('Symulacja'));             if (sim_match) {                 old_village_info.sim = true;                 old_village_info.sim_plaintext = sim_match;             }              let player_id_match = props_text.find(x => x.match(/#F5EDDA\](\d+)/));             if (player_id_match) old_village_info.player_id = player_id_match.match(/\](\d+)/)[1];
 
             return old_village_info;
         },
