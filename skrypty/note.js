@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Notatki z Raportu
 // @namespace    https://viayoo.com/
-// @version      1.5
-// @description  Zaawansowane notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i generowaniem z raportu
+// @version      1.6
+// @description  Zaawansowane notatki z mobilnym UI (Pomiń/Dodaj), wsparciem kolorów i poprawionym przechodzeniem do kolejnego raportu
 // @author       TCM
 // @match        *.plemiona.pl/game.php*screen=report*
 // ==/UserScript==
@@ -221,8 +221,10 @@
 
         go_next_report: function() {
             let next_report = $('#report-next')[0];
-            if (next_report) {
+            if (next_report && next_report.href) {
                 location.href = next_report.href;
+            } else {
+                UI.InfoMessage('Brak kolejnych raportów.');
             }
         },
 
@@ -660,12 +662,10 @@
         },
 
         on_note_updated: function (response) {
-            if (response.note_parsed) {
-                UI.SuccessMessage(`Notatka dodana do wioski ${this.context.side === 'def' ? 'atakującego' : 'broniącego'}`);
+            UI.SuccessMessage(`Notatka dodana do wioski ${this.context.side === 'def' ? 'atakującego' : 'broniącego'}`);
+            setTimeout(() => {
                 this.go_next_report();
-            } else {
-                location.href = TribalWars.buildURL('GET', 'report', { action: 'del_one', mode: 'attack', id: this.attack_info.report_id, h: game_data.csrf });
-            }
+            }, 200);
         },
 
         get_current_notes: function () {
