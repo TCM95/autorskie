@@ -4,6 +4,7 @@
 // @description  Kafelki na stronie gry + Pływający Kalkulator/Kreator z poprawionym liczeniem czasu
 // @author       TCM
 // @match        *://*.plemiona.pl/game.php*screen=train*
+// @match        *://*.plemiona.pl/game.php?*screen=train*mode=mass*
 // @match        *://*.plemiona.pl/game.php*screen=am_troops*
 // @match        *://*.plemiona.pl/game.php*screen=train&mode=mass_decommission*
 // @grant        none
