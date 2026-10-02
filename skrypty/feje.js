@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         FEJKOMAT PRO
 // @namespace    https://viayoo.com/
-// @version      1.6
-// @description  Wysyłanie fejków z wymuszeniem wojska + ikona zwiadu (Naprawiona pętla i czas)
+// @version      1.7
+// @description  Wysyłanie fejków z wymuszeniem wojska + ikona zwiadu (Naprawiona pętla, zoptymalizowany czas)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place*
 // @grant        none
@@ -355,7 +355,6 @@
 
         let currentC = getMyCoords();
         
-        // Zmiana nr 1: Niezależnie od limitu licznika ucinamy pętlę i wprowadzamy stan czuwania, jeśli wróciliśmy na start.
         if (currentC === startCoords && getS('has_moved', 'false') === 'true') {
             setS('loop_wait', 'true');
             setS('has_moved', 'false');
@@ -450,8 +449,8 @@
             let dateFromStr = `${selDayFrom}.${selMonthFrom}.${defaultYear}`;
             let dateToStr = `${selDayTo}.${selMonthTo}.${defaultYear}`;
             
-            // Zmiana nr 2: Precyzyjne formatowanie czasu w widełkach pod wymogi Hermita (z sekundami).
-            let rangeTime = `${dateFromStr} ${timeFrom}:00 - ${dateToStr} ${timeTo}:59`;
+            // Przywrócono pierwotny format daty (bez dopisywania sekund) z wersji 1.2
+            let rangeTime = `${dateFromStr} ${timeFrom} - ${dateToStr} ${timeTo}`;
 
             window.HermitowskieFejki = {
                 troops_templates: [tpl], 
