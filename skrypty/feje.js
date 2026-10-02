@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         FEJKOMAT PRO
 // @namespace    https://viayoo.com/
-// @version      1.5
-// @description  Wysyłanie fejków z priorytetem zwiadu oraz automatycznym resetem limitów
+// @version      1.6
+// @description  Wysyłanie fejków z wymuszeniem wojska + ikona zwiadu (Naprawiona pętla i czas)
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=place*
 // @grant        none
@@ -23,10 +23,6 @@
             --title-color: #ffffdf;
             --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
             --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
-            --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
-            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
-            --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
-            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
         }
         .tcn-panel {
             background-color: var(--bg-main);
@@ -68,18 +64,6 @@
         .tcn-btn:hover {
             background: var(--btn-hover);
             color: #ffffff;
-        }
-        .tcn-btn-red {
-            background: var(--btn-red-bg) !important;
-        }
-        .tcn-btn-red:hover {
-            background: var(--btn-red-hover) !important;
-        }
-        .tcn-btn-green {
-            background: var(--btn-green-bg) !important;
-        }
-        .tcn-btn-green:hover {
-            background: var(--btn-green-hover) !important;
         }
         .tcn-input {
             background: var(--bg-header);
@@ -152,15 +136,6 @@
     let allKordy = kordyRaw.match(/\d{3}\|\d{3}/g) || [];
     let filtrKordy = allKordy.filter(c => !sentCoords[c]).join(' ');
 
-    // --- FUNKCJA CZYSZCZENIA LIMITÓW ---
-    const resetLimitsAndHistory = () => {
-        Object.keys(localStorage).forEach(k => { 
-            if(k.startsWith('kf_v_cnt_')) localStorage.removeItem(k); 
-        });
-        setS('sent_list', '{}');
-        sentCoords = {};
-    };
-
     // --- UI ---
     const ui = document.createElement('div');
     ui.id = "fejk_ui_main";
@@ -176,7 +151,7 @@
     unitsList.forEach(unit => {
         unitsHtml += `
             <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
-                <img src="https://dspl.innogamescdn.com/asset/45436e33/graphic/unit/unit_${unit}.png" style="width:18px; height:18px; margin-bottom:4px;" alt="${unit}">
+                <img src="/graphic/unit/unit_${unit}.png" style="width:18px; height:18px; margin-bottom:4px;" alt="${unit}">
                 <input id="u_${unit}" class="tcn-input" value="${u[unit] || ''}" style="width:100%; max-width:30px; text-align:center; padding:3px 1px;">
             </div>`;
     });
@@ -195,13 +170,19 @@
         monthsOptionsTo += `<option value="${valM}" ${valM === selMonthTo ? 'selected' : ''}>${valM}</option>`;
     }
 
+    let hoursOptionsFrom = '', hoursOptionsTo = '';
+    for(let h=0; h<24; h++) {
+        let valH = String(h).padStart(2, '0') + ':00';
+        hoursOptionsFrom += `<option value="${valH}" ${valH === timeFrom ? 'selected' : ''}>${valH}</option>`;
+        hoursOptionsTo += `<option value="${valH}" ${valH === timeTo ? 'selected' : ''}>${valH}</option>`;
+    }
+
     ui.innerHTML = `
         <div id="drag_h" class="tcn-header" style="cursor:${isPinned ? 'default' : 'move'};">
             <span>FEJKOMAT PRO</span>
             <div>
-                <span id="reset_fejk" style="cursor:pointer; padding:0 3px;" title="🗑️ Wyczyszczenie limitów">🗑️</span>
-                <span id="pin_fejk" style="cursor:pointer; padding:0 3px;" title="📌 Przypnij do tła">${isPinned ? '📌' : '📌'}</span>
-                <span id="close_fejk" style="cursor:pointer; color:#ff4d4d; font-size:14px; padding:0 3px;" title="❌ Zamknij">❌</span>
+                <span id="pin_fejk" style="cursor:pointer; padding:0 5px;" title="Przypnij do tła">${isPinned ? '🔴' : '📌'}</span>
+                <span id="close_fejk" style="cursor:pointer; color:#ff4d4d; font-size:14px; padding:0 5px;" title="Zamknij">✖</span>
             </div>
         </div>
         
@@ -214,7 +195,7 @@
 
         <div id="kordy_container" style="display:${tryb === 'kordy' ? 'block' : 'none'};">
             <div style="font-size:10px; margin-bottom:8px; color:var(--title-color); text-align:center;">
-                Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano z wioski: <b style="color:#fbc02d;">${count}</b>
+                Dostępne kordy: <b style="color:#5cb85c;">${filtrKordy.split(' ').filter(x=>x).length}</b> | Wysłano: <b style="color:#fbc02d;">${count}</b>
             </div>
             <textarea id="f_k" class="tcn-input" placeholder="Wklej kordy tutaj..." style="width:100%; height:45px; margin-bottom:6px; resize:vertical;">${kordyRaw}</textarea>
             
@@ -228,14 +209,14 @@
         <div style="display:flex; gap:4px; margin-bottom:6px; align-items:center; font-size:10px;">
             <select id="sel_day_from_in" class="tcn-input" style="flex:1;">${daysOptionsFrom}</select>
             <select id="sel_month_from_in" class="tcn-input" style="flex:1;">${monthsOptionsFrom}</select>
-            <input type="text" id="time_from_in" class="tcn-input" value="${timeFrom}" placeholder="08:00" style="flex:1; text-align:center;">
+            <select id="time_from_in" class="tcn-input" style="flex:1;">${hoursOptionsFrom}</select>
         </div>
 
         <div style="font-size:10px; color:var(--title-color); margin-bottom:2px; font-weight:bold;">Data Do:</div>
         <div style="display:flex; gap:4px; margin-bottom:10px; align-items:center; font-size:10px;">
             <select id="sel_day_to_in" class="tcn-input" style="flex:1;">${daysOptionsTo}</select>
             <select id="sel_month_to_in" class="tcn-input" style="flex:1;">${monthsOptionsTo}</select>
-            <input type="text" id="time_to_in" class="tcn-input" value="${timeTo}" placeholder="23:00" style="flex:1; text-align:center;">
+            <select id="time_to_in" class="tcn-input" style="flex:1;">${hoursOptionsTo}</select>
         </div>
         
         ${unitsHtml}
@@ -253,26 +234,18 @@
         
         <div style="display:flex; gap:5px; width:100%;">
             <button id="sav_btn" class="tcn-btn" style="flex:1;">💾 ZAPISZ</button>
-            <button id="tog_btn" class="tcn-btn ${isRun ? 'tcn-btn-red' : 'tcn-btn-green'}" style="flex:1;">${isRun ? '❎ STOP' : '✅ START'}</button>
+            <button id="tog_btn" class="tcn-btn" style="flex:1; background:${isRun ? '#d9534f' : '#5cb85c'} !important;">${isRun ? '❎ STOP' : '✅ START'}</button>
         </div>
         <div id="status_info" style="text-align:center; font-size:11px; color:#ff4d4d; font-weight:bold; margin-top:8px;"></div>
     `;
     document.body.appendChild(ui);
 
-    // --- EVENTY UI ---
-    if (!$('#f_trigger').length) $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="font-size:18px; text-decoration:none; padding: 0 5px;">⚙️</a></td>`);
+    if (!$('#f_trigger').length) {
+        $('#menu_row2').append(`<td><a href="#" id="f_trigger" style="text-decoration:none; padding: 0 5px;" title="Otwórz FEJKOMAT PRO"><img src="/graphic/unit/unit_spy.png" style="width:18px; height:18px; vertical-align:middle;"></a></td>`);
+    }
+    
     $('#f_trigger').click((e) => { e.preventDefault(); ui.style.display = 'block'; setS('ui_visible', 'true'); });
     $('#close_fejk').click(() => { ui.style.display = 'none'; setS('ui_visible', 'false'); });
-
-    $('#reset_fejk').click(() => {
-        resetLimitsAndHistory();
-        let info = document.getElementById('status_info');
-        if(info) {
-            info.innerText = "🗑️ Wyczyszczono limity i historię!";
-            info.style.color = "#5cb85c";
-            setTimeout(() => { location.reload(); }, 1000);
-        }
-    });
 
     $('#f_tryb').change(function() {
         if ($(this).val() === 'skrypt') {$('#f_custom_script').show();
@@ -286,6 +259,7 @@
     $('#pin_fejk').click(() => {
         isPinned = !isPinned;
         setS('pinned', isPinned);
+        $('#pin_fejk').text(isPinned ? '🔴' : '📌');
         $('#drag_h').css('cursor', isPinned ? 'default' : 'move');
 
         if (isPinned) {
@@ -312,8 +286,8 @@
         setS('sel_day_to', $('#sel_day_to_in').val());
         setS('sel_month_to', $('#sel_month_to_in').val());
 
-        setS('time_from', $('#time_from_in').val().trim());
-        setS('time_to', $('#time_to_in').val().trim());
+        setS('time_from', $('#time_from_in').val());
+        setS('time_to', $('#time_to_in').val());
         setS('petla', $('#f_p').val()); 
         setS('limit', $('#f_l').val());
 
@@ -328,15 +302,8 @@
     });
 
     $('#tog_btn').click(() => {
-        if (!isRun) { 
-            setS('stan', 'START'); 
-            setS('start_coords', getMyCoords()); 
-            setS('has_moved', 'false'); 
-            setS('loop_wait', 'false'); 
-        } else { 
-            setS('stan', 'STOP'); 
-            setS('loop_wait', 'false'); 
-        }
+        if (!isRun) { setS('stan', 'START'); setS('start_coords', getMyCoords()); setS('has_moved', 'false'); setS('loop_wait', 'false'); }
+        else { setS('stan', 'STOP'); setS('loop_wait', 'false'); }
         location.reload();
     });
 
@@ -376,6 +343,7 @@
                 if (diff <= 0) { 
                     clearInterval(waitInterval);
                     setS('loop_wait', 'false'); 
+                    Object.keys(localStorage).forEach(k => { if(k.startsWith('kf_v_cnt_')) localStorage.removeItem(k); });
                     location.reload(); 
                 } else {
                     let info = document.getElementById('status_info');
@@ -387,12 +355,12 @@
 
         let currentC = getMyCoords();
         
-        // ZAKOŃCZENIE PĘTLI I RESET LIMITÓW
+        // Zmiana nr 1: Niezależnie od limitu licznika ucinamy pętlę i wprowadzamy stan czuwania, jeśli wróciliśmy na start.
         if (currentC === startCoords && getS('has_moved', 'false') === 'true') {
             setS('loop_wait', 'true');
             setS('has_moved', 'false');
             setS('next_run', Date.now() + (petla * 60000));
-            resetLimitsAndHistory(); // Resetuje limity wysyłek oraz historię zakazanych kordów
+            Object.keys(localStorage).forEach(k => { if(k.startsWith('kf_v_cnt_')) localStorage.removeItem(k); });
             location.reload();
             return;
         }
@@ -402,7 +370,13 @@
             return; 
         }
 
-        // ====== TRYB: WŁASNY SKRYPT ======
+        if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
+            if (!hasEnoughTroops()) {
+                delayedNextV("Brak wojska!");
+                return;
+            }
+        }
+
         if (tryb === 'skrypt' && customScript.trim().length > 10) {
             if (location.href.includes('confirm')) {
                 let b = document.querySelector('#troop_confirm_submit');
@@ -423,6 +397,18 @@
                     let inp = document.querySelector('.target-input-field');
                     if (inp && inp.value.length >= 5) {
                         clearInterval(c);
+                        
+                        unitsList.forEach(unit => {
+                            let val = u[unit] ? u[unit].trim() : '';
+                            if (val) {
+                                let num = parseInt(val);
+                                if (num > 0) {
+                                    let unitInp = document.getElementById('unit_input_' + unit);
+                                    if (unitInp) unitInp.value = num;
+                                }
+                            }
+                        });
+
                         setTimeout(() => { 
                             let atkBtn = document.getElementById('target_attack');
                             if(atkBtn) atkBtn.click();
@@ -437,15 +423,7 @@
             return;
         }
 
-        // ====== TRYB: HERMIT Z KORDÓW ======
         if (tryb === 'kordy') {
-            if (location.href.includes('screen=place') && !location.href.includes('try=confirm')) {
-                if (!hasEnoughTroops()) {
-                    delayedNextV("Brak wojska!");
-                    return;
-                }
-            }
-
             let tpl = {};
             let fillers = [];
             
@@ -460,23 +438,20 @@
                 }
             });
 
-            // PRIORYTET DOPEŁNIANIA: Zwiad (spy) na pierwszym miejscu!
             const priority = { spy: 1, axe: 2, light: 3, heavy: 4, sword: 5, spear: 6 };
             
             let customFill = fillers
-                .filter(unit => unit !== 'ram' && unit !== 'catapult')
+                .filter(unit => unit !== 'ram' && unit !== 'catapult') 
                 .sort((a, b) => (priority[a] || 99) - (priority[b] || 99))
                 .join(',');
             
             if(!customFill) customFill = 'spy,axe,light,heavy,sword,spear';
 
-            // DOKŁADNE FORMATOWANIE DATY DLA HERMITOWSKICH FEJKÓW
-            let formattedTimeFrom = timeFrom.includes(':') ? (timeFrom.split(':').length === 2 ? timeFrom + ':00' : timeFrom) : '08:00:00';
-            let formattedTimeTo = timeTo.includes(':') ? (timeTo.split(':').length === 2 ? timeTo + ':00' : timeTo) : '23:00:00';
-
             let dateFromStr = `${selDayFrom}.${selMonthFrom}.${defaultYear}`;
             let dateToStr = `${selDayTo}.${selMonthTo}.${defaultYear}`;
-            let rangeTime = `${dateFromStr} ${formattedTimeFrom} - ${dateToStr} ${formattedTimeTo}`;
+            
+            // Zmiana nr 2: Precyzyjne formatowanie czasu w widełkach pod wymogi Hermita (z sekundami).
+            let rangeTime = `${dateFromStr} ${timeFrom}:00 - ${dateToStr} ${timeTo}:59`;
 
             window.HermitowskieFejki = {
                 troops_templates: [tpl], 
@@ -516,12 +491,11 @@
         }
     }
 
-    // --- Drag&Drop Logic ---
     const dragH = document.getElementById('drag_h');
     let isDragging = false, sX, sY, iX, iY;
     
     const startDrag = (e) => {
-        if(isPinned || e.target.id === 'close_fejk' || e.target.id === 'pin_fejk' || e.target.id === 'reset_fejk') return;
+        if(isPinned || e.target.id === 'close_fejk' || e.target.id === 'pin_fejk') return;
         isDragging = true;
         let event = e.type.includes('mouse') ? e : e.touches[0];
         sX = event.clientX; sY = event.clientY;
