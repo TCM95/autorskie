@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      4.0
+// @version      4.2
 // @description  Zintegrowany system budowy, szablony BB, notatki w kolejce, podgląd końcowy, auto-usuwanie zbudowanych
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -46,6 +46,12 @@
         .drag-handle:active { cursor: grabbing; }
         .drag-over { border-top: 2px dashed var(--neon-green) !important; background-color: #171717 !important; }
         .q-note-text { color: #8fd3ff; font-style: italic; }
+        #tcm-queue { width: 100%; border-collapse: collapse; }
+        .q-unit { width: 16px; height: 16px; vertical-align: middle; margin: 0 1px; }
+        .q-bico { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
+        .q-extra { overflow-wrap: anywhere; word-break: normal; font-size: 10px; color: #b8c4d0; margin-top: 3px; padding-left: 4px; border-left: 2px solid #8fd3ff; word-break: break-word; }
+        .q-info { background: none !important; border: none !important; box-shadow: none !important; padding: 0 3px !important; margin: 0 !important; font-size: 13px !important; }
+        .q-more td { text-align: center; padding: 6px; color: #aaa; font-size: 11px; font-style: italic; }
         #tcm-preview { margin-top: 8px; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px; background: var(--bg-row-alt); }
         #tcm-preview .pv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
         #tcm-preview .pv-cell { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border-color); border-radius: 3px; font-size: 10px; line-height: 1.2; opacity: .45; }
@@ -60,6 +66,7 @@
     let expectedBuild = null;
     let isQueueMinimized = JSON.parse(localStorage.getItem('queueMinimized') || "false");
     let isPreviewOpen = JSON.parse(localStorage.getItem('previewOpen') || "false");
+    let isGuideOpen = JSON.parse(localStorage.getItem('guideOpen') || "false");
 
     const LINKS = {
         eko1: "https://raw.githubusercontent.com/Kipi955/sprawdzian/5a0309cbf24521ba89655119d9543c2d9942b88e/EKO1",
@@ -163,24 +170,29 @@
         buildingObject.instructions = [];
     }
 
+    // Usuwa pozycję oraz wytyczne (notatki), które były przed nią (już miniętym krokom)
+    function removeAt(i) {
+        buildingObject.buildingQueue = buildingObject.buildingQueue.filter((it, k) => k !== i && !(it.t === 'note' && k < i));
+    }
+
     // Usuwa z kolejki skryptu pozycje, które są już zbudowane / w budowie (np. kliknięte ręcznie)
     function cleanupQueue() {
         const inQ = getInQueueCounts();
-        let removed = 0;
-        buildingObject.buildingQueue = buildingObject.buildingQueue.filter(it => {
-            if (it.t !== 'b') return true;
-            let done = it.l <= gameEffLevel(it.b, inQ);
+        const done = new Set();
+        let lastDone = -1;
+        buildingObject.buildingQueue.forEach((it, i) => {
+            if (it.t !== 'b') return;
+            let d = it.l <= gameEffLevel(it.b, inQ);
             const nxt = parseInt($(`.btn-build[data-building="${it.b}"]`).first().attr('data-level-next'), 10);
-            if (!isNaN(nxt) && nxt > it.l) done = true;
-            if (done) removed++;
-            return !done;
+            if (!isNaN(nxt) && nxt > it.l) d = true;
+            if (d) { done.add(i); lastDone = i; }
         });
-        if (removed) {
-            updateLocalStorage();
-            reloadQueueDisplay();
-            UI.InfoMessage(`Usunięto z kolejki (już zbudowane): ${removed}`, 2000);
-        }
-        return removed;
+        if (!done.size) return 0;
+        buildingObject.buildingQueue = buildingObject.buildingQueue.filter((it, i) => !done.has(i) && !(it.t === 'note' && i < lastDone));
+        updateLocalStorage();
+        reloadQueueDisplay();
+        UI.InfoMessage(`Usunięto z kolejki (już zbudowane): ${done.size}`, 2000);
+        return done.size;
     }
 
     // ---------- UI: lista, wybór, podgląd ----------
@@ -202,6 +214,11 @@
         if (s) return s;
         return (typeof image_base !== 'undefined' ? image_base : '/graphic/') + 'buildings/' + b + '.png';
     }
+
+    const gfx = () => (typeof image_base !== 'undefined' ? image_base : '/graphic/');
+    const unitIcon = u => gfx() + 'unit/unit_' + u + '.png';
+    // tekst z tokenami {{u:spear}} -> ikony jednostek z gry
+    const rich = t => esc(t).replace(/\{\{u:(\w+)\}\}/g, (m, u) => `<img class="q-unit" src="${unitIcon(u)}" alt="${u}">`);
 
     function renderPreview() {
         const $p = $('#tcm-preview');
@@ -228,46 +245,188 @@
     }
 
     function reloadQueueDisplay() {
-        const table = $('#kalkulatorBudowyTabela');
+        const table = $('#tcm-queue');
         if (!table.length) return;
-        table.find('.q-row').remove();
+        table.find('.q-row, .q-sub').remove();
+        const q = buildingObject.buildingQueue;
         const firstIdx = firstActionIdx();
 
-        buildingObject.buildingQueue.forEach((it, i) => {
-            const isBonus = it.t === 'bonus';
-            const isNote = it.t === 'note';
-            let label, labelStyle = 'color: var(--text-color);', extraBtns = '';
+        // Zwinięta lista: pokazuje tyle pierwszych budynków, ile wynosi "Max"
+        let limitIdx = q.length - 1;
+        if (isQueueMinimized) {
+            let cnt = 0; limitIdx = -1;
+            for (let i = 0; i < q.length; i++) {
+                limitIdx = i;
+                if (q[i].t === 'b' && ++cnt >= buildingObject.buildingQueueLength) break;
+            }
+        }
 
-            if (isNote) {
-                label = `🔹 ${esc(it.text)}`;
+        q.forEach((it, i) => {
+            if (i > limitIdx) return;
+            let labelHtml, labelStyle = 'color: var(--text-color);', extraBtns = '', subHtml = '';
+
+            if (it.t === 'note') {
+                labelHtml = `🔹 ${rich(it.text)}`;
                 labelStyle = '';
-            } else if (isBonus) {
-                label = esc(it.text);
+                subHtml = rich(it.text);
+            } else if (it.t === 'bonus') {
+                labelHtml = esc(it.text);
                 labelStyle = 'color: #ff9800; font-weight: bold;';
                 extraBtns = `
                     <button class="tcm-btn q-action-wait" data-idx="${i}" title="Czekaj" style="background: var(--btn-blue-bg) !important;">⌛</button>
                     <button class="tcm-btn q-action-skip" data-idx="${i}" title="Pomiń" style="background: var(--btn-green-bg) !important;">▶</button>
                     <button class="tcm-btn q-action-modul" data-idx="${i}" title="Moduł" style="border-color:#00bcd4 !important;">M</button>`;
             } else {
-                label = `${PL_NAMES[it.b] || it.b} (${it.l})`;
+                labelHtml = `<img class="q-bico" src="${iconSrc(it.b)}" alt="">${PL_NAMES[it.b] || it.b} (${it.l})`;
+                if (it.c || it.u) subHtml = (it.u ? '⚔️ ' + rich(it.u) + '<br>' : '') + rich(it.c || '');
             }
 
-            const cls = `q-row ${i % 2 === 0 ? 'q-row-a' : 'q-row-b'} ${i === firstIdx ? 'q-current' : ''}`;
-            table.append(`<tr class="${cls}" data-idx="${i}" style="${isQueueMinimized ? 'display:none;' : ''}">
-                <td class="drag-handle">☰</td>
-                <td class="${isNote ? 'q-note-text' : ''}" style="padding: 4px; ${labelStyle} word-break: break-word;">${label}</td>
-                <td style="text-align:right; padding: 4px; white-space: nowrap;">
+            const stripe = i % 2 === 0 ? 'q-row-a' : 'q-row-b';
+            const hasSub = !!subHtml;
+            const showSub = isGuideOpen || i === firstIdx;
+            table.append(`<tr class="q-row ${stripe} ${i === firstIdx ? 'q-current' : ''}" data-idx="${i}">
+                <td class="drag-handle" style="width:1%;">☰</td>
+                <td class="q-label ${it.t === 'note' ? 'q-note-text' : ''}" style="padding: 4px; width: 100%; max-width: 0; ${labelStyle}">
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${labelHtml}</div>
+                </td>
+                <td style="text-align:right; padding: 4px; white-space: nowrap; width:1%;">
+                    ${hasSub ? '<button class="tcm-btn q-info" title="Wytyczne">💬</button>' : ''}
                     ${extraBtns}
                     <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">❌</button>
                 </td>
             </tr>`);
+            if (hasSub) {
+                table.append(`<tr class="q-sub ${stripe}" style="${showSub ? '' : 'display:none;'}"><td colspan="3" style="padding: 0 6px 4px 6px;"><div class="q-extra">${subHtml}</div></td></tr>`);
+            }
         });
+
+        if (limitIdx < q.length - 1) {
+            const restB = q.slice(limitIdx + 1).filter(x => x.t === 'b').length;
+            table.append(`<tr class="q-row q-more"><td colspan="3">… jeszcze ${restB} budynków w kolejce (rozwiń 🔽)</td></tr>`);
+        }
         updateSelectOptions();
         renderPreview();
     }
 
     // ---------- Parser szablonu (BB code / zwykły tekst) ----------
+    const unitText = s => (s || '').replace(/\[unit\]\s*(\w+)\s*\[\/unit\]/gi, (m, u) => `{{u:${u.toLowerCase()}}}`);
+    const stripBB = s => (s || '').replace(/\[\/?[a-z*][^\]]*\]/gi, '').replace(/\s+/g, ' ').trim();
+    const bonusLabel = p => /30\s*%/.test(p) ? 'Aktywuj Surowce 30%' : (/10\s*%/.test(p) ? 'Aktywuj Budowa 10%' : p);
+    const splitRows = t => String(t).replace(/\r/g, '')
+        .replace(/\[\*\*\]/g, '\n[**]').replace(/\[\*\]/g, '\n')
+        .replace(/\[\/\*\*?\]/g, '\n').replace(/\[\/?table\]/gi, '\n').split('\n');
+
     function processTemplate(text) {
+        return /\[building\]/i.test(text) ? processStructured(text) : processGeneric(text);
+    }
+
+    // Czy tekst to "sama nazwa budynku" (opcjonalnie z poziomem): zwraca {code, level|null}
+    function plainBuilding(text) {
+        const n = norm(stripBB(text));
+        if (!n || n.length > 40) return null;
+        for (const code in NAME_RX) {
+            const m = n.match(NAME_RX[code]);
+            if (!m) continue;
+            let end = m.index + m[0].length;
+            while (end < n.length && /[a-z]/.test(n[end])) end++; // dokończ słowo (końcówki odmiany)
+            const rest = (n.slice(0, m.index) + ' ' + n.slice(end))
+                .replace(/poziom|pzm\.?|lvl\.?|lv\.?|[()\-:.,]/g, ' ').replace(/\s+/g, ' ').trim();
+            const tokens = rest.split(' ').filter(Boolean);
+            const digits = tokens.filter(t => /^\d{1,2}$/.test(t));
+            const others = tokens.filter(t => !/^\d{1,2}$/.test(t) && !['obronny', 'nicza'].includes(t));
+            if (others.length || digits.length > 1) return null;
+            return { code, level: digits.length ? parseInt(digits[0], 10) : null };
+        }
+        return null;
+    }
+
+    // Szablony z tagami [building]kod[/building]: LP | Budynek | czasy | Jednostki | Komentarz
+    function processStructured(text) {
+        const src = String(text).replace(/\r/g, '');
+        const inQ = getInQueueCounts();
+        let virtual = {};
+        for (let b in PL_NAMES) virtual[b] = projectedLevel(b, inQ);
+        const out = [], army = [];
+        let nB = 0, nBonus = 0, nN = 0;
+
+        const addUpgrade = (code, level, extra) => {
+            level = Math.min(level, maxLevel(code));
+            const before = virtual[code];
+            for (let l = before + 1; l <= level; l++) {
+                const it = { t: 'b', b: code, l };
+                if (l === level && extra) { if (extra.c) it.c = extra.c; if (extra.u) it.u = extra.u; }
+                out.push(it); nB++;
+            }
+            if (level > before) { virtual[code] = level; return true; }
+            return false;
+        };
+
+        const sp = src.match(/\[spoiler=([^\]]+)\]/i);
+        if (sp) { out.push({ t: 'note', text: `📜 Szablon: ${sp[1].trim()}` }); nN++; }
+
+        splitRows(src).forEach(raw => {
+            const row = raw.trim();
+            if (!row || row.startsWith('[**]')) return;
+            const cells = row.split(/\[\|{1,2}\]/);
+            const tag = row.match(/\[building\]\s*(\w+)\s*\[\/building\]/i);
+
+            if (!tag) {
+                if (cells.length >= 4) { // tabela "Wojsko łącznie"
+                    const last = stripBB(cells[cells.length - 1]);
+                    const um = cells[0].match(/\[unit\]\s*(\w+)\s*\[\/unit\]/i);
+                    const name = stripBB(cells[0].replace(/\[unit\]\s*\w+\s*\[\/unit\]/gi, ''));
+                    if (/^\d+$/.test(last) && last !== '0') army.push(um ? `{{u:${um[1].toLowerCase()}}}${last}` : `${name} ${last}`);
+                } else { // sama nazwa budynku w osobnej linii
+                    const pb = plainBuilding(cells.join(' '));
+                    if (pb) addUpgrade(pb.code, pb.level !== null ? pb.level : virtual[pb.code] + 1);
+                }
+                return;
+            }
+
+            const code = tag[1].toLowerCase();
+            const bi = Math.max(0, cells.findIndex(c => /\[building\]/i.test(c)));
+            const title = stripBB(cells[bi].replace(/\[building\][^\[]*\[\/building\]/gi, ''));
+            const units = stripBB(unitText(cells[bi + 4] || ''));
+            const comment = stripBB(cells.slice(bi + 5).join('; '));
+            const parts = comment.split(';').map(x => x.trim()).filter(Boolean);
+            const bonusParts = parts.filter(p => norm(p).includes('aktywuj'));
+            const rest = parts.filter(p => !norm(p).includes('aktywuj')).join('; ');
+
+            let level = null;
+            if (PL_NAMES[code]) {
+                const lv = title.match(/\(poziom\s*(\d+)\)/i);
+                if (lv) level = parseInt(lv[1], 10);
+                else {
+                    const pb = plainBuilding(title); // np. samo "Koszary" => kolejny poziom
+                    if (pb && pb.code === code) level = pb.level !== null ? pb.level : virtual[code] + 1;
+                }
+            }
+
+            if (level !== null) {
+                if (addUpgrade(code, level, { c: rest, u: units })) {
+                    bonusParts.forEach(p => { out.push({ t: 'bonus', text: bonusLabel(p) }); nBonus++; });
+                }
+            } else { // krok bez poziomu: rekrutacja, odbiór nagród itp. -> wytyczna
+                let txt = title;
+                if (units) txt += `: ${units}`;
+                if (comment) txt += ` — ${comment}`;
+                out.push({ t: 'note', text: txt }); nN++;
+            }
+        });
+
+        if (army.length) { out.push({ t: 'note', text: `Wojsko łącznie: ${army.join(' ')}` }); nN++; }
+
+        if (out.length) {
+            buildingObject.buildingQueue.push(...out);
+            updateLocalStorage();
+            reloadQueueDisplay();
+            UI.SuccessMessage(`Dodano: budynki ${nB}, bonusy ${nBonus}, wytyczne ${nN}.`);
+        } else {
+            UI.ErrorMessage("Nie dodano nic - spełniasz już wymagania lub błędny kod.");
+        }
+    }
+
+    function processGeneric(text) {
         const inQ = getInQueueCounts();
         let virtual = {};
         for (let b in PL_NAMES) virtual[b] = projectedLevel(b, inQ);
@@ -291,7 +450,8 @@
             const nCells = cells.map(norm);
             const nFlat = norm(flat);
 
-            if (nFlat.includes('aktywuj')) {
+            const hasBuilding = Object.values(NAME_RX).some(rx => rx.test(nFlat));
+            if (nFlat.includes('aktywuj') && !hasBuilding) {
                 buildingObject.buildingQueue.push({ t: 'bonus', text: flat });
                 addedBonus++;
                 return;
@@ -348,6 +508,11 @@
                     addedB++;
                 }
             });
+
+            if (nFlat.includes('aktywuj')) {
+                buildingObject.buildingQueue.push({ t: 'bonus', text: flat });
+                addedBonus++;
+            }
 
             // wytyczne w tym samym wierszu (np. "Koszary 1 - rekrutujemy ...")
             if (nFlat.includes('rekrut')) {
@@ -423,11 +588,15 @@
                         <th colspan="3" style="padding: 4px; text-align: left;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span>Szablon / kolejka</span>
-                                <button id="toggleQueueBtn" class="tcm-btn" style="padding: 2px 8px; font-size:14px;">${isQueueMinimized ? '🔽' : '🔼'}</button>
+                                <span>
+                                    <button id="toggleGuideBtn" class="tcm-btn ${isGuideOpen ? 'tcm-btn-active' : ''}" title="Pokaż/ukryj wszystkie wytyczne" style="padding: 2px 8px; font-size:14px;">💬</button>
+                                    <button id="toggleQueueBtn" class="tcm-btn" style="padding: 2px 8px; font-size:14px;">${isQueueMinimized ? '🔽' : '🔼'}</button>
+                                </span>
                             </div>
                         </th>
                     </tr>
                 </table>
+                <table id="tcm-queue"></table>
 
                 <div id="tcm-preview" style="display:none;"></div>
 
@@ -485,7 +654,12 @@
 
         $('#toggleQueueBtn').click(function() {
             isQueueMinimized = !isQueueMinimized; localStorage.setItem('queueMinimized', JSON.stringify(isQueueMinimized));
-            $(this).text(isQueueMinimized ? '🔽' : '🔼'); $('.q-row').toggle(!isQueueMinimized);
+            $(this).text(isQueueMinimized ? '🔽' : '🔼'); reloadQueueDisplay();
+        });
+
+        $('#toggleGuideBtn').click(function() {
+            isGuideOpen = !isGuideOpen; localStorage.setItem('guideOpen', JSON.stringify(isGuideOpen));
+            $(this).toggleClass('tcm-btn-active', isGuideOpen); reloadQueueDisplay();
         });
 
         $('#farmLimitInput').on('change', function() {
@@ -493,28 +667,36 @@
             updateLocalStorage();
         });
 
-        $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); });
+        $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); reloadQueueDisplay(); });
 
-        $('#kalkulatorBudowyTabela').on('click', '.q-action-wait', function() {
+        $('#tcm-queue').on('click', '.q-info', function() {
+            $(this).closest('tr').next('.q-sub').toggle();
+        });
+
+        $('#tcm-queue').on('click', '.q-label', function() {
+            $(this).closest('tr').next('.q-sub').toggle();
+        });
+
+        $('#tcm-queue').on('click', '.q-action-wait', function() {
             buildingObject.status = false;
             $('#startBtn').text("✅️ Start").removeClass('tcm-btn-active');
             updateLocalStorage();
             UI.InfoMessage("Kolejka wstrzymana na bonusie.");
         });
 
-        $('#kalkulatorBudowyTabela').on('click', '.q-action-skip', function() {
+        $('#tcm-queue').on('click', '.q-action-skip', function() {
             buildingObject.buildingQueue.splice($(this).data('idx'), 1);
             updateLocalStorage();
             reloadQueueDisplay();
             if (buildingObject.status) uruchomBudowe();
         });
 
-        $('#kalkulatorBudowyTabela').on('click', '.q-action-modul', function() {
+        $('#tcm-queue').on('click', '.q-action-modul', function() {
             const it = buildingObject.buildingQueue[$(this).data('idx')];
             uruchomModulBonusow("TUTAJ_ZMIENISZ_LINK", it ? it.text : '');
         });
 
-        $('#kalkulatorBudowyTabela').on('click', '.q-action', function() {
+        $('#tcm-queue').on('click', '.q-action', function() {
             if ($(this).data('type') === 'del') {
                 buildingObject.buildingQueue.splice($(this).data('idx'), 1);
                 updateLocalStorage(); reloadQueueDisplay();
@@ -522,7 +704,7 @@
         });
 
         let dragIdx = -1, dragEl = null;
-        $('#kalkulatorBudowyTabela').on('touchstart', '.drag-handle', function(e) {
+        $('#tcm-queue').on('touchstart', '.drag-handle', function(e) {
             dragEl = $(this).closest('.q-row');
             dragIdx = dragEl.data('idx');
             dragEl.css({opacity: '0.4', background: 'var(--bg-row-alt)'});
@@ -572,7 +754,7 @@
         if (settings.url && settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
             if (data && data.response && data.response.success) {
                 const i = buildingObject.buildingQueue.findIndex(x => x === expectedBuild || (x.t === 'b' && x.b === expectedBuild.b && x.l === expectedBuild.l));
-                if (i > -1) buildingObject.buildingQueue.splice(i, 1);
+                if (i > -1) removeAt(i);
                 updateLocalStorage();
                 reloadQueueDisplay();
                 expectedBuild = null;
