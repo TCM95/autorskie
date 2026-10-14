@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      3.3
-// @description  Zintegrowany system budowy, szablony, notatki, przygotowany interfejs bonusów
+// @version      4.0
+// @description  Zintegrowany system budowy, szablony BB, notatki w kolejce, podgląd końcowy, auto-usuwanie zbudowanych
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
 // @grant        none
@@ -28,33 +28,30 @@
             --bg-main: #36393f; --bg-row-alt: #32353b; --bg-header: #202225; --border-color: #3e4147;
             --text-color: white; --title-color: #ffffdf;
             --btn-bg: linear-gradient(#6e7178 0%, #36393f 30%, #202225 80%, black 100%);
-            --btn-hover: linear-gradient(#7b7e85 0%, #40444a 30%, #393c40 80%, #171717 100%);
             --btn-green-bg: linear-gradient(#5cad5c 0%, #2e7a2e 30%, #1f5c1f 80%, #0f2e0f 100%);
-            --btn-green-hover: linear-gradient(#6bbf6b 0%, #388c38 30%, #267326 80%, #143d14 100%);
             --btn-red-bg: linear-gradient(#ad5c5c 0%, #7a2e2e 30%, #5c1f1f 80%, #2e0f0f 100%);
-            --btn-red-hover: linear-gradient(#bf6b6b 0%, #8c3838 30%, #732626 80%, #3d1414 100%);
             --btn-blue-bg: linear-gradient(#5c8cad 0%, #2e5c7a 30%, #1f425c 80%, #0f222e 100%);
-            --btn-blue-hover: linear-gradient(#6ba3bf 0%, #38738c 30%, #265473 80%, #142e3d 100%);
             --neon-green: #74ff00; --neon-glow: 0 0 8px rgba(116,255,0,.6), 0 0 15px rgba(116,255,0,.4);
         }
         #kalkulatorBudowyMain * { box-sizing: border-box !important; outline: none !important; -webkit-tap-highlight-color: transparent !important; }
-        #kalkulatorBudowyMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 320px; font-size: 12px; }
+        #kalkulatorBudowyMain { background-color: var(--bg-main) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; border-radius: 4px; padding: 8px; margin: 10px 0; max-width: 340px; font-size: 12px; }
         #kalkulatorBudowyMain h4 { color: var(--title-color); margin: 0 0 8px 0; font-size: 13px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
         #kalkulatorBudowyMain th { background: var(--bg-header) !important; background-image: none !important; color: var(--title-color) !important; border-bottom: 1px solid var(--border-color); }
         #kalkulatorBudowyMain select { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 4px; border-radius: 3px; font-size: 11px; }
         .tcm-btn { background: var(--btn-bg) !important; color: var(--text-color) !important; border: 1px solid var(--border-color) !important; padding: 5px 8px; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: bold; margin: 2px 1px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.8); transition: all 0.2s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); }
         .tcm-btn-active { border-color: var(--neon-green) !important; color: var(--neon-green) !important; text-shadow: var(--neon-glow); box-shadow: inset 0 0 5px rgba(116,255,0,.3); }
         .q-row-a { background-color: var(--bg-main); } .q-row-b { background-color: var(--bg-row-alt); }
+        .q-current td { border-top: 1px solid var(--neon-green); border-bottom: 1px solid var(--neon-green); }
         .drag-handle { cursor: grab; font-size: 16px; color: #aaa; padding: 0 6px !important; user-select: none; }
         .drag-handle:active { cursor: grabbing; }
         .drag-over { border-top: 2px dashed var(--neon-green) !important; background-color: #171717 !important; }
-        .tcm-modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:10000; justify-content:center; align-items:center; }
-        .tcm-modal-content { background: var(--bg-main); width: 95%; max-width: 400px; border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; color: var(--text-color); }
-        .tcm-modal-header { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:5px; margin-bottom:5px; }
-        .tcm-modal-header h3 { margin:0; font-size:14px; color:var(--title-color); }
-        .tcm-modal-body { max-height: 60vh; overflow-y: auto; padding-right: 5px; }
-        .tcm-instrukcja-line { padding: 6px 4px; border-bottom: 1px dashed var(--border-color); font-size: 11px; color: #ccc; }
-        #instrukcjeBtn { display:none; background:none; border:none; cursor:pointer; font-size:16px; padding:0; color:#00bcd4; margin:0; box-shadow:none; }
+        .q-note-text { color: #8fd3ff; font-style: italic; }
+        #tcm-preview { margin-top: 8px; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px; background: var(--bg-row-alt); }
+        #tcm-preview .pv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+        #tcm-preview .pv-cell { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border-color); border-radius: 3px; font-size: 10px; line-height: 1.2; opacity: .45; }
+        #tcm-preview .pv-cell img { width: 24px; height: 24px; object-fit: contain; flex: none; }
+        #tcm-preview .pv-up { opacity: 1; border-color: var(--neon-green); }
+        #tcm-preview .pv-up .pv-lvl { color: var(--neon-green); font-weight: bold; }
     `;
     document.head.appendChild(style);
 
@@ -62,6 +59,7 @@
     let isBuilding = false;
     let expectedBuild = null;
     let isQueueMinimized = JSON.parse(localStorage.getItem('queueMinimized') || "false");
+    let isPreviewOpen = JSON.parse(localStorage.getItem('previewOpen') || "false");
 
     const LINKS = {
         eko1: "https://raw.githubusercontent.com/Kipi955/sprawdzian/5a0309cbf24521ba89655119d9543c2d9942b88e/EKO1",
@@ -80,13 +78,21 @@
         "market": 25, "wood": 30, "stone": 30, "iron": 30, "farm": 30, "storage": 30, "hide": 10, "wall": 20, "snob": 3
     };
 
-    const REVERSE_MAP = {
-        "ratusz": "main", "koszary": "barracks", "stajnia": "stable", "warsztat": "garage",
-        "wieża strażnicza": "watchtower", "kuźnia": "smith", "rynek": "market", "tartak": "wood",
-        "cegielnia": "stone", "huta żelaza": "iron", "zagroda": "farm", "spichlerz": "storage",
-        "schowek": "hide", "mur": "wall", "pałac": "snob"
+    // Wzorce nazw (po usunięciu polskich znaków i zmniejszeniu liter) - obsługują odmiany
+    const NAME_RX = {
+        main: /ratusz/, barracks: /koszar/, stable: /stajn/, garage: /warsztat/,
+        watchtower: /wiez\w*\s*straz|straznic/, smith: /kuzni/, market: /rynek|rynku/,
+        wood: /tartak/, stone: /cegieln/, iron: /hut\w*\s*zelaz|\bhuta\b|\bhuty\b/,
+        farm: /zagrod/, storage: /spichlerz/, hide: /schowek|schowk/, wall: /\bmur\b|\bmuru\b|\bmurze\b/, snob: /palac/
     };
-    const BUILDING_NAMES = Object.keys(REVERSE_MAP);
+
+    const norm = s => (s || '').replace(/ł/g, 'l').replace(/Ł/g, 'L').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const esc = s => $('<div>').text(s).html();
+
+    function maxLevel(b) {
+        return (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings[b] && BuildingMain.buildings[b].max_level)
+            ? parseInt(BuildingMain.buildings[b].max_level, 10) : (MAX_LEVELS[b] || 30);
+    }
 
     function updateLocalStorage() {
         let storage = JSON.parse(localStorage.getItem('buildingObject') || "{}");
@@ -94,11 +100,11 @@
         localStorage.setItem('buildingObject', JSON.stringify(storage));
     }
 
+    // ---------- Poziomy ----------
     function getInQueueCounts() {
         let inQueue = {};
         $('#buildqueue tr[class*="buildorder_"]').each(function() {
-            const classList = $(this).attr('class').split(/\s+/);
-            classList.forEach(c => {
+            ($(this).attr('class') || '').split(/\s+/).forEach(c => {
                 if (c.startsWith('buildorder_')) {
                     const bCode = c.replace('buildorder_', '');
                     inQueue[bCode] = (inQueue[bCode] || 0) + 1;
@@ -108,40 +114,112 @@
         return inQueue;
     }
 
-    function getEffectiveLevels() {
-        const inQueueCounts = getInQueueCounts();
-        let scriptQueueCounts = {};
-        buildingObject.buildingQueue.forEach(item => {
-            if (typeof item === 'string' && !item.includes('Aktywuj')) {
-                scriptQueueCounts[item] = (scriptQueueCounts[item] || 0) + 1;
-            }
-        });
-        let effLevels = {};
-        for (let bCode in PL_NAMES) {
-            let currentLevel = 0;
-            if (game_data.village.buildings && game_data.village.buildings[bCode]) {
-                currentLevel = parseInt(game_data.village.buildings[bCode], 10);
-            }
-            effLevels[bCode] = currentLevel + (inQueueCounts[bCode] || 0) + (scriptQueueCounts[bCode] || 0);
+    // Poziom faktycznie zbudowany (max z kilku źródeł, bo game_data bywa nieaktualne po odświeżeniu AJAX)
+    function builtLevel(b) {
+        let lv = 0;
+        const gb = game_data.village.buildings;
+        if (gb && gb[b] !== undefined) lv = Math.max(lv, parseInt(gb[b], 10) || 0);
+        if (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings[b] && BuildingMain.buildings[b].level !== undefined) {
+            lv = Math.max(lv, parseInt(BuildingMain.buildings[b].level, 10) || 0);
         }
-        return effLevels;
+        return lv;
     }
 
+    // Poziom wraz z kolejką w grze
+    function gameEffLevel(b, inQ) {
+        inQ = inQ || getInQueueCounts();
+        return builtLevel(b) + (inQ[b] || 0);
+    }
+
+    // Poziom po wykonaniu całej kolejki skryptu
+    function projectedLevel(b, inQ) {
+        let lv = gameEffLevel(b, inQ);
+        buildingObject.buildingQueue.forEach(it => { if (it.t === 'b' && it.b === b && it.l > lv) lv = it.l; });
+        return lv;
+    }
+
+    function firstActionIdx() {
+        return buildingObject.buildingQueue.findIndex(it => it.t !== 'note');
+    }
+
+    // ---------- Migracja starego formatu kolejki ----------
+    function normalizeQueue() {
+        const inQ = getInQueueCounts();
+        let sim = {};
+        for (let b in PL_NAMES) sim[b] = gameEffLevel(b, inQ);
+        buildingObject.buildingQueue = (buildingObject.buildingQueue || []).map(it => {
+            if (it && typeof it === 'object') return it;
+            if (typeof it === 'string') {
+                if (it.includes('Aktywuj')) return { t: 'bonus', text: it };
+                if (PL_NAMES[it]) { sim[it]++; return { t: 'b', b: it, l: sim[it] }; }
+                return { t: 'note', text: it };
+            }
+            return null;
+        }).filter(Boolean);
+        if (buildingObject.instructions && buildingObject.instructions.length) {
+            const notes = buildingObject.instructions.map(t => ({ t: 'note', text: t }));
+            buildingObject.buildingQueue = notes.concat(buildingObject.buildingQueue);
+        }
+        buildingObject.instructions = [];
+    }
+
+    // Usuwa z kolejki skryptu pozycje, które są już zbudowane / w budowie (np. kliknięte ręcznie)
+    function cleanupQueue() {
+        const inQ = getInQueueCounts();
+        let removed = 0;
+        buildingObject.buildingQueue = buildingObject.buildingQueue.filter(it => {
+            if (it.t !== 'b') return true;
+            let done = it.l <= gameEffLevel(it.b, inQ);
+            const nxt = parseInt($(`.btn-build[data-building="${it.b}"]`).first().attr('data-level-next'), 10);
+            if (!isNaN(nxt) && nxt > it.l) done = true;
+            if (done) removed++;
+            return !done;
+        });
+        if (removed) {
+            updateLocalStorage();
+            reloadQueueDisplay();
+            UI.InfoMessage(`Usunięto z kolejki (już zbudowane): ${removed}`, 2000);
+        }
+        return removed;
+    }
+
+    // ---------- UI: lista, wybór, podgląd ----------
     function updateSelectOptions() {
         const $select = $('#bSelect');
         if (!$select.length) return;
-
-        const obecnyWybór = $select.val();
-        let optionsHtml = '';
-
-        for (let bCode in PL_NAMES) {
-            optionsHtml += `<option value="${bCode}">${PL_NAMES[bCode]}</option>`;
+        const cur = $select.val();
+        const inQ = getInQueueCounts();
+        let html = '';
+        for (let b in PL_NAMES) {
+            html += `<option value="${b}">${PL_NAMES[b]} (${projectedLevel(b, inQ)}/${maxLevel(b)})</option>`;
         }
-        $select.html(optionsHtml);
+        $select.html(html);
+        if (cur && $select.find(`option[value="${cur}"]`).length) $select.val(cur);
+    }
 
-        if (obecnyWybór && $select.find(`option[value="${obecnyWybór}"]`).length) {
-            $select.val(obecnyWybór);
+    function iconSrc(b) {
+        const s = $(`#main_buildrow_${b} img`).first().attr('src');
+        if (s) return s;
+        return (typeof image_base !== 'undefined' ? image_base : '/graphic/') + 'buildings/' + b + '.png';
+    }
+
+    function renderPreview() {
+        const $p = $('#tcm-preview');
+        if (!$p.length) return;
+        if (!isPreviewOpen) { $p.hide(); return; }
+        const inQ = getInQueueCounts();
+        let steps = buildingObject.buildingQueue.filter(i => i.t === 'b').length;
+        let cells = '';
+        for (let b in PL_NAMES) {
+            const cur = gameEffLevel(b, inQ);
+            const fin = projectedLevel(b, inQ);
+            const up = fin > cur;
+            cells += `<div class="pv-cell ${up ? 'pv-up' : ''}">
+                <img src="${iconSrc(b)}" alt="">
+                <div><div>${PL_NAMES[b]}</div><div class="pv-lvl">${up ? cur + ' ➜ ' + fin : cur}</div></div>
+            </div>`;
         }
+        $p.html(`<div style="text-align:center; margin-bottom:4px; color:var(--title-color);">Stan końcowy po kolejce (${steps} rozbudów)</div><div class="pv-grid">${cells}</div>`).show();
     }
 
     function uruchomModulBonusow(url, bonusTekst) {
@@ -153,124 +231,138 @@
         const table = $('#kalkulatorBudowyTabela');
         if (!table.length) return;
         table.find('.q-row').remove();
+        const firstIdx = firstActionIdx();
 
-        const inQueueCounts = getInQueueCounts();
-        let simulatedLevels = {};
-        for (let b in PL_NAMES) {
-            simulatedLevels[b] = (parseInt((game_data.village.buildings || {})[b], 10) || 0) + (inQueueCounts[b] || 0);
-        }
+        buildingObject.buildingQueue.forEach((it, i) => {
+            const isBonus = it.t === 'bonus';
+            const isNote = it.t === 'note';
+            let label, labelStyle = 'color: var(--text-color);', extraBtns = '';
 
-        buildingObject.buildingQueue.forEach((b, i) => {
-            const isBonus = typeof b === 'string' && b.includes('Aktywuj');
-            let label = PL_NAMES[b] || b;
-
-            if (!isBonus && simulatedLevels[b] !== undefined) {
-                simulatedLevels[b]++;
-                label += ` (${simulatedLevels[b]})`;
-            }
-
-            let extraBtns = '';
-            if (isBonus) {
+            if (isNote) {
+                label = `🔹 ${esc(it.text)}`;
+                labelStyle = '';
+            } else if (isBonus) {
+                label = esc(it.text);
+                labelStyle = 'color: #ff9800; font-weight: bold;';
                 extraBtns = `
                     <button class="tcm-btn q-action-wait" data-idx="${i}" title="Czekaj" style="background: var(--btn-blue-bg) !important;">⌛</button>
                     <button class="tcm-btn q-action-skip" data-idx="${i}" title="Pomiń" style="background: var(--btn-green-bg) !important;">▶</button>
-                    <button class="tcm-btn q-action-modul" data-idx="${i}" title="Moduł" style="border-color:#00bcd4 !important;">M</button>
-                `;
+                    <button class="tcm-btn q-action-modul" data-idx="${i}" title="Moduł" style="border-color:#00bcd4 !important;">M</button>`;
+            } else {
+                label = `${PL_NAMES[it.b] || it.b} (${it.l})`;
             }
 
-            let row = `<tr class="q-row ${i % 2 === 0 ? 'q-row-a' : 'q-row-b'}" data-idx="${i}" style="${isQueueMinimized ? 'display:none;' : ''}">
+            const cls = `q-row ${i % 2 === 0 ? 'q-row-a' : 'q-row-b'} ${i === firstIdx ? 'q-current' : ''}`;
+            table.append(`<tr class="${cls}" data-idx="${i}" style="${isQueueMinimized ? 'display:none;' : ''}">
                 <td class="drag-handle">☰</td>
-                <td style="padding: 4px; ${isBonus ? 'color: #ff9800; font-weight: bold;' : 'color: var(--text-color);'} word-break: break-word;">${label}</td>
+                <td class="${isNote ? 'q-note-text' : ''}" style="padding: 4px; ${labelStyle} word-break: break-word;">${label}</td>
                 <td style="text-align:right; padding: 4px; white-space: nowrap;">
                     ${extraBtns}
                     <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">❌</button>
                 </td>
-            </tr>`;
-            table.append(row);
+            </tr>`);
         });
         updateSelectOptions();
+        renderPreview();
     }
 
+    // ---------- Parser szablonu (BB code / zwykły tekst) ----------
     function processTemplate(text) {
-        let effLevels = getEffectiveLevels();
-        let virtualSim = { ...effLevels };
-        let addedCount = 0;
-        let localInstructions = [];
+        const inQ = getInQueueCounts();
+        let virtual = {};
+        for (let b in PL_NAMES) virtual[b] = projectedLevel(b, inQ);
+        let addedB = 0, addedN = 0, addedBonus = 0;
 
-        const lines = text.replace(/\r\n/g, '\n').split('\n');
-        lines.forEach(line => {
-            const trimmed = line.trim();
-            if(!trimmed) return;
-            if (trimmed.match(/^\[\/?table\]$/i) || trimmed.match(/^\[\*\*?\].*\[\/\*\*?\]$/i)) return;
-            if (trimmed.startsWith('[|]')) return;
+        const rows = String(text).replace(/\r/g, '')
+            .replace(/\[\*\*\]/g, '\n[**]')
+            .replace(/\[\*\]/g, '\n')
+            .replace(/\[\/\*\*?\]/g, '\n')
+            .replace(/\[\/?table\]/gi, '\n')
+            .split('\n');
 
-            const tLower = trimmed.toLowerCase();
-            const cleanText = trimmed.replace(/\[.*?\]/g, '').trim();
-            const bKey = BUILDING_NAMES.find(name => tLower.includes(name));
+        rows.forEach(raw => {
+            const row = raw.trim();
+            if (!row || row.startsWith('[**]')) return; // nagłówek tabeli
 
-            if (bKey) {
-                if(tLower.includes('szablon budowy') || tLower.includes('rekrutujemy')) {
-                    if (cleanText.length > 3) localInstructions.push(cleanText);
-                    return;
+            const cells = row.split(/\[\|{1,2}\]/).map(c => c.replace(/\[\/?[a-z*][^\]]*\]/gi, '').trim());
+            const flat = cells.filter(Boolean).join(' ').trim();
+            if (!flat || /^[-|\/\\\s]+$/.test(flat) || /^\d+$/.test(flat)) return;
+
+            const nCells = cells.map(norm);
+            const nFlat = norm(flat);
+
+            if (nFlat.includes('aktywuj')) {
+                buildingObject.buildingQueue.push({ t: 'bonus', text: flat });
+                addedBonus++;
+                return;
+            }
+
+            // znajdź wszystkie wzmianki o budynkach w wierszu (także kilka w jednym)
+            let mentions = [];
+            nCells.forEach((c, ci) => {
+                for (const code in NAME_RX) {
+                    const rx = new RegExp(NAME_RX[code].source, 'g');
+                    let m;
+                    while ((m = rx.exec(c))) mentions.push({ code, ci, start: m.index, end: m.index + m[0].length });
                 }
-                const gameCode = REVERSE_MAP[bKey];
-                let targetLvl = null;
-                const lvlMatch = cleanText.match(/(?:poziom|pzm\.?|lvl\.?)\s*(\d+)/i);
-                if (lvlMatch) {
-                    targetLvl = parseInt(lvlMatch[1], 10);
-                } else {
-                    const nums = cleanText.match(/\b([1-9]|[1-2][0-9]|30)\b/);
-                    if (nums) targetLvl = parseInt(nums[1], 10);
-                }
+            });
+            mentions.sort((a, b) => a.ci - b.ci || a.start - b.start);
 
-                let shouldAdd = false;
-                if (targetLvl !== null) {
-                    if (targetLvl > virtualSim[gameCode]) {
-                        shouldAdd = true;
-                        virtualSim[gameCode] = targetLvl;
+            if (!mentions.length || nFlat.includes('szablon budowy')) {
+                if (!mentions.length && /^(lp|nr|budynek|poziom|lvl)(\s|$)/.test(nFlat)) return;
+                if (flat.length > 3) {
+                    buildingObject.buildingQueue.push({ t: 'note', text: flat });
+                    addedN++;
+                }
+                return;
+            }
+
+            mentions.forEach(m => {
+                const maxL = maxLevel(m.code);
+                const nextSame = mentions.find(x => x.ci === m.ci && x.start > m.start);
+                const seg = nCells[m.ci].slice(m.end, nextSame ? nextSame.start : undefined);
+                let target = null;
+                let lm = seg.match(/^[^\d]{0,12}?(\d{1,2})\b/);
+                if (lm) target = parseInt(lm[1], 10);
+
+                if (target === null && !nextSame) {
+                    for (let cj = m.ci + 1; cj < nCells.length; cj++) {
+                        if (mentions.some(x => x.ci === cj)) break;
+                        if (nCells[cj].length <= 20) {
+                            const cm = nCells[cj].match(/^[^\d]{0,12}?(\d{1,2})\b/);
+                            if (cm) { target = parseInt(cm[1], 10); break; }
+                        }
                     }
-                } else {
-                    const maxLvl = (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings[gameCode]) ? BuildingMain.buildings[gameCode].max_level : (MAX_LEVELS[gameCode] || 30);
-                    if (virtualSim[gameCode] < maxLvl) {
-                        shouldAdd = true;
-                        virtualSim[gameCode]++;
+                }
+
+                if (target !== null) {
+                    target = Math.min(target, maxL);
+                    for (let l = virtual[m.code] + 1; l <= target; l++) {
+                        buildingObject.buildingQueue.push({ t: 'b', b: m.code, l });
+                        addedB++;
                     }
+                    if (target > virtual[m.code]) virtual[m.code] = target;
+                } else if (virtual[m.code] < maxL) {
+                    virtual[m.code]++;
+                    buildingObject.buildingQueue.push({ t: 'b', b: m.code, l: virtual[m.code] });
+                    addedB++;
                 }
-                if (shouldAdd) {
-                    buildingObject.buildingQueue.push(gameCode);
-                    addedCount++;
-                }
-            } else if (tLower.includes('aktywuj')) {
-                if (cleanText) {
-                    buildingObject.buildingQueue.push(cleanText);
-                    addedCount++;
-                }
-            } else {
-                if (cleanText.length > 3 && !cleanText.match(/^[-\|\/\\]+$/)) {
-                    localInstructions.push(cleanText);
-                }
+            });
+
+            // wytyczne w tym samym wierszu (np. "Koszary 1 - rekrutujemy ...")
+            if (nFlat.includes('rekrut')) {
+                buildingObject.buildingQueue.push({ t: 'note', text: flat });
+                addedN++;
             }
         });
 
-        if (localInstructions.length > 0) {
-            buildingObject.instructions = [...buildingObject.instructions, ...localInstructions];
-        }
-        if (addedCount > 0) {
+        if (addedB + addedN + addedBonus > 0) {
             updateLocalStorage();
             reloadQueueDisplay();
-            UI.SuccessMessage(`Dodano ${addedCount} pozycji z szablonu.`);
+            UI.SuccessMessage(`Dodano: budynki ${addedB}, bonusy ${addedBonus}, notatki ${addedN}.`);
         } else {
             UI.ErrorMessage("Nie dodano nic - spełniasz już wymagania lub błędny kod.");
         }
-        if (buildingObject.instructions.length > 0) {
-            $('#instrukcjeBtn').show();
-            UI.InfoMessage("Wczytano notatki!");
-        }
-    }
-
-    function showInstructions() {
-        const content = buildingObject.instructions.map(i => `<div class="tcm-instrukcja-line">🔹 ${i}</div>`).join('');
-        $('#tcm-modal-inst').css('display', 'flex').find('#inst-content').html(content || '<div style="padding:10px; text-align:center;">Brak notatek.</div>');
     }
 
     function fetchTemplate(url) {
@@ -284,13 +376,14 @@
         let storage = JSON.parse(localStorage.getItem('buildingObject') || "{}");
         if (storage[game_data.village.id]) {
             buildingObject = { ...buildingObject, ...storage[game_data.village.id] };
-            if (!buildingObject.instructions) buildingObject.instructions = [];
             if (buildingObject.autoFarmLimit === undefined) buildingObject.autoFarmLimit = 0;
         }
+        normalizeQueue();
+        updateLocalStorage();
 
         let menuHtml = `
             <div id="kalkulatorBudowyMain">
-                <h4>🛠️ BOB 🛠️<button id="instrukcjeBtn" title="Pokaż notatki szablonu">ℹ️</button></h4>
+                <h4>🛠️ BOB 🛠️<button id="previewBtn" class="tcm-btn" title="Podgląd stanu końcowego" style="margin:0; padding:2px 6px;">📊</button></h4>
                 <table id="kalkulatorBudowyTabela" style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td colspan="3" style="padding-bottom: 6px; text-align:center;">
@@ -329,12 +422,14 @@
                     <tr>
                         <th colspan="3" style="padding: 4px; text-align: left;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>Kolejka</span>
+                                <span>Szablon / kolejka</span>
                                 <button id="toggleQueueBtn" class="tcm-btn" style="padding: 2px 8px; font-size:14px;">${isQueueMinimized ? '🔽' : '🔼'}</button>
                             </div>
                         </th>
                     </tr>
                 </table>
+
+                <div id="tcm-preview" style="display:none;"></div>
 
                 <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin-top: 10px;">
                     <button id="btn-eko1" class="tcm-btn" style="flex: 1 1 30%;">EKO</button>
@@ -343,52 +438,42 @@
                 </div>
 
                 <div id="manual-tpl-container" style="display:none; margin-top: 6px; flex-direction:column; gap:4px;">
-                    <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:100%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj szablon"></textarea>
+                    <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:100%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj szablon (BB code)"></textarea>
                     <button id="btn-analyze-manual" class="tcm-btn" style="border-color:#00bcd4 !important;">Importuj</button>
-                </div>
-            </div>
-
-            <div id="tcm-modal-inst" class="tcm-modal">
-                <div class="tcm-modal-content">
-                    <div class="tcm-modal-header">
-                        <h3>📜 Instrukcje Szablonu</h3>
-                        <button class="tcm-btn" onclick="$('#tcm-modal-inst').hide();" style="margin:0; background: var(--btn-red-bg) !important; border-color: #ff003c !important;">❌</button>
-                    </div>
-                    <div class="tcm-modal-body" id="inst-content"></div>
                 </div>
             </div>`;
 
-        $('#kalkulatorBudowyMain, #tcm-modal-inst').remove();
+        $('#kalkulatorBudowyMain').remove();
         $('#content_value').prepend(menuHtml);
 
         $('#clearQueueBtn').click(() => {
-            if(confirm("Wyczyścić kolejkę oraz notatki?")) {
+            if (confirm("Wyczyścić kolejkę oraz notatki?")) {
                 buildingObject.buildingQueue = [];
-                buildingObject.instructions = [];
                 updateLocalStorage();
                 reloadQueueDisplay();
-                $('#instrukcjeBtn').hide();
             }
         });
 
-        $('#addWWBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Surowce 30%"); updateLocalStorage(); reloadQueueDisplay(); });
-        $('#addWBBtn').click(() => { buildingObject.buildingQueue.push("Aktywuj Budowa 10%"); updateLocalStorage(); reloadQueueDisplay(); });
+        $('#previewBtn').click(() => {
+            isPreviewOpen = !isPreviewOpen;
+            localStorage.setItem('previewOpen', JSON.stringify(isPreviewOpen));
+            renderPreview();
+        });
+
+        $('#addWWBtn').click(() => { buildingObject.buildingQueue.push({ t: 'bonus', text: "Aktywuj Surowce 30%" }); updateLocalStorage(); reloadQueueDisplay(); });
+        $('#addWBBtn').click(() => { buildingObject.buildingQueue.push({ t: 'bonus', text: "Aktywuj Budowa 10%" }); updateLocalStorage(); reloadQueueDisplay(); });
 
         $('#addBBtn').click(() => {
             const v = $('#bSelect').val();
-            if(v) {
-                const effLevels = getEffectiveLevels();
-                const maxLvl = (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings[v]) ? BuildingMain.buildings[v].max_level : (MAX_LEVELS[v] || 30);
-
-                if(effLevels[v] >= maxLvl) {
-                    UI.ErrorMessage(`Osiągnięto maksymalny poziom dla: ${PL_NAMES[v]}`);
-                    return;
-                }
-
-                buildingObject.buildingQueue.push(v);
-                updateLocalStorage();
-                reloadQueueDisplay();
+            if (!v) return;
+            const next = projectedLevel(v) + 1;
+            if (next > maxLevel(v)) {
+                UI.ErrorMessage(`Osiągnięto maksymalny poziom dla: ${PL_NAMES[v]}`);
+                return;
             }
+            buildingObject.buildingQueue.push({ t: 'b', b: v, l: next });
+            updateLocalStorage();
+            reloadQueueDisplay();
         });
 
         $('#startBtn').click(function() {
@@ -421,12 +506,12 @@
             buildingObject.buildingQueue.splice($(this).data('idx'), 1);
             updateLocalStorage();
             reloadQueueDisplay();
-            if(buildingObject.status) uruchomBudowe();
+            if (buildingObject.status) uruchomBudowe();
         });
 
         $('#kalkulatorBudowyTabela').on('click', '.q-action-modul', function() {
-            const nazwaBonusu = buildingObject.buildingQueue[$(this).data('idx')];
-            uruchomModulBonusow("TUTAJ_ZMIENISZ_LINK", nazwaBonusu);
+            const it = buildingObject.buildingQueue[$(this).data('idx')];
+            uruchomModulBonusow("TUTAJ_ZMIENISZ_LINK", it ? it.text : '');
         });
 
         $('#kalkulatorBudowyTabela').on('click', '.q-action', function() {
@@ -447,18 +532,16 @@
             let target = document.elementFromPoint(touch.clientX, touch.clientY);
             $('.q-row').removeClass('drag-over');
             let targetTr = $(target).closest('.q-row');
-            if(targetTr.length && targetTr.data('idx') !== dragIdx) {
-                targetTr.addClass('drag-over');
-            }
+            if (targetTr.length && targetTr.data('idx') !== dragIdx) targetTr.addClass('drag-over');
         }).on('touchend', '.drag-handle', function(e) {
-            if(dragEl) dragEl.css({opacity: '1', background: ''});
+            if (dragEl) dragEl.css({opacity: '1', background: ''});
             $('.q-row').removeClass('drag-over');
             let touch = e.originalEvent.changedTouches[0];
             let target = document.elementFromPoint(touch.clientX, touch.clientY);
             let targetTr = $(target).closest('.q-row');
-            if(targetTr.length) {
+            if (targetTr.length) {
                 let targetIdx = targetTr.data('idx');
-                if(dragIdx !== targetIdx && targetIdx !== undefined) {
+                if (dragIdx !== targetIdx && targetIdx !== undefined) {
                     let item = buildingObject.buildingQueue.splice(dragIdx, 1)[0];
                     buildingObject.buildingQueue.splice(targetIdx, 0, item);
                     updateLocalStorage(); reloadQueueDisplay();
@@ -469,7 +552,6 @@
 
         $('#btn-eko1').click(() => fetchTemplate(LINKS.eko1));
         $('#btn-eko2').click(() => fetchTemplate(LINKS.eko2));
-        $('#instrukcjeBtn').click(showInstructions);
 
         $('#btn-manual').click(() => $('#manual-tpl-container').toggle());
         $('#btn-analyze-manual').click(() => {
@@ -480,16 +562,17 @@
             $('#manual-tpl-container').hide();
         });
 
+        cleanupQueue();
         reloadQueueDisplay();
         if (buildingObject.status) uruchomBudowe();
-        if (buildingObject.instructions.length > 0) $('#instrukcjeBtn').show();
     }
 
-    // Nasłuchiwacz globalny odpowiedzi serwera na akcje wbudowane w grę
+    // Nasłuchiwacz odpowiedzi serwera na akcje wbudowane w grę
     $(document).ajaxSuccess(function(event, xhr, settings, data) {
-        if (settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
+        if (settings.url && settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
             if (data && data.response && data.response.success) {
-                buildingObject.buildingQueue.shift();
+                const i = buildingObject.buildingQueue.findIndex(x => x === expectedBuild || (x.t === 'b' && x.b === expectedBuild.b && x.l === expectedBuild.l));
+                if (i > -1) buildingObject.buildingQueue.splice(i, 1);
                 updateLocalStorage();
                 reloadQueueDisplay();
                 expectedBuild = null;
@@ -502,8 +585,8 @@
         }
     });
 
-    $(document).ajaxError(function(event, xhr, settings, thrownError) {
-        if (settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
+    $(document).ajaxError(function(event, xhr, settings) {
+        if (settings.url && settings.url.includes('ajaxaction=upgrade_building') && expectedBuild) {
             isBuilding = false;
             expectedBuild = null;
         }
@@ -519,22 +602,23 @@
             return;
         }
 
-        // Automatyczna obsługa zagrody na podstawie dostępnej populacji (zabezpieczenie przed przepełnieniem)
+        // Usuń to, co już zbudowane (np. kliknięte ręcznie)
+        cleanupQueue();
+
+        // Auto-zagroda
         if (buildingObject.autoFarmLimit > 0) {
             let currentPop = parseInt($('#pop_current_label').text(), 10);
             let maxPop = parseInt($('#pop_max_label').text(), 10);
-
             if (!isNaN(currentPop) && !isNaN(maxPop) && maxPop > 0) {
                 let freePopPercent = ((maxPop - currentPop) / maxPop) * 100;
                 if (freePopPercent <= buildingObject.autoFarmLimit) {
-                    let inGameQueue = getInQueueCounts()['farm'] || 0;
-
-                    if (inGameQueue === 0 && buildingObject.buildingQueue[0] !== 'farm') {
-                        const maxFarmLvl = (typeof BuildingMain !== 'undefined' && BuildingMain.buildings && BuildingMain.buildings['farm']) ? BuildingMain.buildings['farm'].max_level : 30;
-                        let currentFarmLvl = getEffectiveLevels()['farm'] || 0;
-
-                        if (currentFarmLvl < maxFarmLvl) {
-                            buildingObject.buildingQueue.unshift('farm');
+                    const inQ = getInQueueCounts();
+                    const fi = firstActionIdx();
+                    const head = fi > -1 ? buildingObject.buildingQueue[fi] : null;
+                    if ((inQ['farm'] || 0) === 0 && !(head && head.t === 'b' && head.b === 'farm')) {
+                        const nextFarm = gameEffLevel('farm', inQ) + 1;
+                        if (nextFarm <= maxLevel('farm')) {
+                            buildingObject.buildingQueue.splice(Math.max(fi, 0), 0, { t: 'b', b: 'farm', l: nextFarm });
                             updateLocalStorage();
                             reloadQueueDisplay();
                             UI.SuccessMessage("Dodano zagrodę na początek kolejki (brak wolnego miejsca).");
@@ -544,34 +628,34 @@
             }
         }
 
-        if (buildingObject.buildingQueue.length > 0) {
-            let nextItem = buildingObject.buildingQueue[0];
-            if (typeof nextItem === 'string' && nextItem.includes('Aktywuj')) {
+        const idx = firstActionIdx();
+        if (idx > -1) {
+            const next = buildingObject.buildingQueue[idx];
+            if (next.t === 'bonus') {
                 buildingObject.status = false;
                 $('#startBtn').text("✅️ Start").removeClass('tcm-btn-active');
                 updateLocalStorage();
                 UI.InfoMessage("Wymagana akcja ręczna na bonusie", 2000);
                 return;
-            } else {
-                let currentQueue = $('#buildqueue tr[class*="buildorder_"]').length;
-                if (currentQueue < buildingObject.buildingQueueLength) {
-                    const $buildBtn = $(`.btn-build[data-building="${nextItem}"]`);
-                    if ($buildBtn.length && $buildBtn.css('display') !== 'none') {
-                        isBuilding = true;
-                        buildAjax(nextItem);
-                        return;
-                    }
+            }
+            let currentQueue = $('#buildqueue tr[class*="buildorder_"]').length;
+            if (currentQueue < buildingObject.buildingQueueLength) {
+                const $buildBtn = $(`.btn-build[data-building="${next.b}"]`);
+                if ($buildBtn.length && $buildBtn.css('display') !== 'none') {
+                    isBuilding = true;
+                    buildAjax(next);
+                    return;
                 }
             }
         }
         setTimeout(uruchomBudowe, Math.floor(Math.random() * 1500) + 3500);
     }
 
-    function buildAjax(bId) {
-        expectedBuild = bId;
-        const $btn = $(`.btn-build[data-building="${bId}"]`);
+    function buildAjax(item) {
+        expectedBuild = item;
+        const $btn = $(`.btn-build[data-building="${item.b}"]`);
         if ($btn.length) {
-            // Symulujemy kliknięcie natywnego przycisku gry. Plemiona zajmą się AJAX-em i aktualizacją UI.
+            // Kliknięcie natywnego przycisku gry - gra sama zrobi AJAX i odświeży UI
             $btn[0].click();
         } else {
             isBuilding = false;
