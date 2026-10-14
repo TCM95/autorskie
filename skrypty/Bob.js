@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      4.3
+// @version      4.4
 // @description  Zintegrowany system budowy, szablony BB, notatki w kolejce, podgląd końcowy, auto-usuwanie zbudowanych
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -56,10 +56,12 @@
         #tcm-wrap #kalkulatorBudowyMain { margin: 0; flex: 0 0 min(100%, 340px); }
         #tcm-preview { flex: 0 0 230px; margin: 0; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px; background: var(--bg-row-alt); }
         #tcm-preview .pv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; }
-        #tcm-preview .pv-cell { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border-color); border-radius: 3px; font-size: 10px; line-height: 1.2; opacity: .45; }
+        #tcm-preview .pv-cell { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border-color); border-radius: 3px; font-size: 10px; line-height: 1.2; opacity: .6; }
         #tcm-preview .pv-cell img { width: 24px; height: 24px; object-fit: contain; flex: none; }
         #tcm-preview .pv-up { opacity: 1; border-color: var(--neon-green); }
-        #tcm-preview .pv-up .pv-lvl { color: var(--neon-green); font-weight: bold; }
+        #tcm-preview .pv-name { color: var(--neon-green) !important; text-shadow: var(--neon-glow); font-weight: bold; }
+        #tcm-preview .pv-lvl { color: #fff !important; }
+        #tcm-preview .pv-up .pv-lvl { color: var(--title-color) !important; font-weight: bold; }
     `;
     document.head.appendChild(style);
 
@@ -235,7 +237,7 @@
             const up = fin > cur;
             cells += `<div class="pv-cell ${up ? 'pv-up' : ''}">
                 <img src="${iconSrc(b)}" alt="">
-                <div><div>${PL_NAMES[b]}</div><div class="pv-lvl">${up ? cur + ' ➜ ' + fin : cur}</div></div>
+                <div><div class="pv-name">${PL_NAMES[b]}</div><div class="pv-lvl">${up ? cur + ' ➜ ' + fin : cur}</div></div>
             </div>`;
         }
         $p.html(`<div style="text-align:center; margin-bottom:4px; color:var(--title-color);">Stan końcowy po kolejce (${steps} rozbudów)</div><div class="pv-grid">${cells}</div>`).show();
