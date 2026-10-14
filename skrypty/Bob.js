@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      4.2
+// @version      4.3
 // @description  Zintegrowany system budowy, szablony BB, notatki w kolejce, podgląd końcowy, auto-usuwanie zbudowanych
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -50,10 +50,12 @@
         .q-unit { width: 16px; height: 16px; vertical-align: middle; margin: 0 1px; }
         .q-bico { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
         .q-extra { overflow-wrap: anywhere; word-break: normal; font-size: 10px; color: #b8c4d0; margin-top: 3px; padding-left: 4px; border-left: 2px solid #8fd3ff; word-break: break-word; }
-        .q-info { background: none !important; border: none !important; box-shadow: none !important; padding: 0 3px !important; margin: 0 !important; font-size: 13px !important; }
+        .q-info { font-size: 17px !important; line-height: 1 !important; padding: 5px 11px !important; margin: 0 0 0 6px !important; vertical-align: middle; }
         .q-more td { text-align: center; padding: 6px; color: #aaa; font-size: 11px; font-style: italic; }
-        #tcm-preview { margin-top: 8px; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px; background: var(--bg-row-alt); }
-        #tcm-preview .pv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+        #tcm-wrap { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 6px; overflow-x: auto; margin: 10px 0; }
+        #tcm-wrap #kalkulatorBudowyMain { margin: 0; flex: 0 0 min(100%, 340px); }
+        #tcm-preview { flex: 0 0 230px; margin: 0; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 3px; padding: 4px; background: var(--bg-row-alt); }
+        #tcm-preview .pv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px; }
         #tcm-preview .pv-cell { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--border-color); border-radius: 3px; font-size: 10px; line-height: 1.2; opacity: .45; }
         #tcm-preview .pv-cell img { width: 24px; height: 24px; object-fit: contain; flex: none; }
         #tcm-preview .pv-up { opacity: 1; border-color: var(--neon-green); }
@@ -266,7 +268,7 @@
             let labelHtml, labelStyle = 'color: var(--text-color);', extraBtns = '', subHtml = '';
 
             if (it.t === 'note') {
-                labelHtml = `🔹 ${rich(it.text)}`;
+                labelHtml = `<button class="tcm-btn q-info" title="Wytyczne" style="margin:0 6px 0 0 !important;">💬</button>${rich(it.text)}`;
                 labelStyle = '';
                 subHtml = rich(it.text);
             } else if (it.t === 'bonus') {
@@ -278,6 +280,7 @@
                     <button class="tcm-btn q-action-modul" data-idx="${i}" title="Moduł" style="border-color:#00bcd4 !important;">M</button>`;
             } else {
                 labelHtml = `<img class="q-bico" src="${iconSrc(it.b)}" alt="">${PL_NAMES[it.b] || it.b} (${it.l})`;
+                if (it.c || it.u) labelHtml += '<button class="tcm-btn q-info" title="Wytyczne">💬</button>';
                 if (it.c || it.u) subHtml = (it.u ? '⚔️ ' + rich(it.u) + '<br>' : '') + rich(it.c || '');
             }
 
@@ -290,7 +293,6 @@
                     <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${labelHtml}</div>
                 </td>
                 <td style="text-align:right; padding: 4px; white-space: nowrap; width:1%;">
-                    ${hasSub ? '<button class="tcm-btn q-info" title="Wytyczne">💬</button>' : ''}
                     ${extraBtns}
                     <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">❌</button>
                 </td>
@@ -547,6 +549,7 @@
         updateLocalStorage();
 
         let menuHtml = `
+            <div id="tcm-wrap">
             <div id="kalkulatorBudowyMain">
                 <h4>🛠️ BOB 🛠️<button id="previewBtn" class="tcm-btn" title="Podgląd stanu końcowego" style="margin:0; padding:2px 6px;">📊</button></h4>
                 <table id="kalkulatorBudowyTabela" style="width: 100%; border-collapse: collapse;">
@@ -598,7 +601,6 @@
                 </table>
                 <table id="tcm-queue"></table>
 
-                <div id="tcm-preview" style="display:none;"></div>
 
                 <div style="display:flex; gap:4px; flex-wrap:wrap; justify-content:center; margin-top: 10px;">
                     <button id="btn-eko1" class="tcm-btn" style="flex: 1 1 30%;">EKO</button>
@@ -610,9 +612,11 @@
                     <textarea id="manual-tpl-input" style="background:var(--bg-row-alt); color:var(--text-color); border:1px solid var(--border-color); width:100%; height:80px; font-size:11px; padding:4px;" placeholder="Wklej tutaj szablon (BB code)"></textarea>
                     <button id="btn-analyze-manual" class="tcm-btn" style="border-color:#00bcd4 !important;">Importuj</button>
                 </div>
+            </div>
+            <div id="tcm-preview" style="display:none;"></div>
             </div>`;
 
-        $('#kalkulatorBudowyMain').remove();
+        $('#tcm-wrap, #kalkulatorBudowyMain').remove();
         $('#content_value').prepend(menuHtml);
 
         $('#clearQueueBtn').click(() => {
@@ -669,7 +673,8 @@
 
         $('#qLenInput').on('change', function() { buildingObject.buildingQueueLength = parseInt($(this).val(), 10) || 5; updateLocalStorage(); reloadQueueDisplay(); });
 
-        $('#tcm-queue').on('click', '.q-info', function() {
+        $('#tcm-queue').on('click', '.q-info', function(e) {
+            e.stopPropagation();
             $(this).closest('tr').next('.q-sub').toggle();
         });
 
