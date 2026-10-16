@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      4.4
+// @version      4.5
 // @description  Zintegrowany system budowy, szablony BB, notatki w kolejce, podgląd końcowy, auto-usuwanie zbudowanych
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -282,7 +282,7 @@
                     <button class="tcm-btn q-action-modul" data-idx="${i}" title="Moduł" style="border-color:#00bcd4 !important;">M</button>`;
             } else {
                 labelHtml = `<img class="q-bico" src="${iconSrc(it.b)}" alt="">${PL_NAMES[it.b] || it.b} (${it.l})`;
-                if (it.c || it.u) labelHtml += '<button class="tcm-btn q-info" title="Wytyczne">💬</button>';
+                if (it.c || it.u) labelHtml = '<button class="tcm-btn q-info" title="Wytyczne" style="margin:0 8px 0 0 !important;">💬</button>' + labelHtml;
                 if (it.c || it.u) subHtml = (it.u ? '⚔️ ' + rich(it.u) + '<br>' : '') + rich(it.c || '');
             }
 
@@ -294,9 +294,9 @@
                 <td class="q-label ${it.t === 'note' ? 'q-note-text' : ''}" style="padding: 4px; width: 100%; max-width: 0; ${labelStyle}">
                     <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${labelHtml}</div>
                 </td>
-                <td style="text-align:right; padding: 4px; white-space: nowrap; width:1%;">
+                <td style="text-align:right; padding: 4px 4px 4px 22px; white-space: nowrap; width:1%;">
                     ${extraBtns}
-                    <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important;">❌</button>
+                    <button class="tcm-btn q-action" data-type="del" data-idx="${i}" style="background: var(--btn-red-bg) !important; border-color: #ff003c !important; margin-left: 10px !important;">❌</button>
                 </td>
             </tr>`);
             if (hasSub) {
@@ -407,9 +407,9 @@
             }
 
             if (level !== null) {
-                if (addUpgrade(code, level, { c: rest, u: units })) {
-                    bonusParts.forEach(p => { out.push({ t: 'bonus', text: bonusLabel(p) }); nBonus++; });
-                }
+                addUpgrade(code, level, { c: rest, u: units });
+                // bonus dodawany zawsze - także gdy budynek z tego kroku jest już zbudowany
+                bonusParts.forEach(p => { out.push({ t: 'bonus', text: bonusLabel(p) }); nBonus++; });
             } else { // krok bez poziomu: rekrutacja, odbiór nagród itp. -> wytyczna
                 let txt = title;
                 if (units) txt += `: ${units}`;
