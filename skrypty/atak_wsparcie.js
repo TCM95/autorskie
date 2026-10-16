@@ -57,7 +57,8 @@
     // 5 szybkich próbek na start, potem co 3 s
     (async () => { for (let i = 0; i < 5; i++) { await measurePing(); } })();
     setInterval(measurePing, 3000);
-    const oneWay = () => pingRtt / 2;
+    let usePing = localStorage.twUsePing === "1"; // domyślnie wyłączone
+    const oneWay = () => (usePing ? pingRtt / 2 : 0);
 
     // ---------- STYL ----------
     const style = document.createElement('style');
@@ -77,13 +78,16 @@
             <div id="tw-pro-tools">
                 <div class="tw-row">
                     <span style="font-weight:bold;">Ping</span>
-                    <span>[<span id="live-ping-val" style="color:#00ff00;">...</span> ms] auto</span>
+                    <span>[<span id="live-ping-val" style="color:#00ff00;">...</span> ms]
+                        <label title="Odejmuj ping/2 od czasu wysyłki" style="cursor:pointer;"><input type="checkbox" id="usePingChk" ${usePing ? "checked" : ""}> -ping/2</label>
+                    </span>
                     <span title="Ręczna korekta w ms (+ później, - wcześniej)">
                         <input id="delayInput" class="shinko-input" value="${offsetMs}" style="width:42px;">
                     </span>
                 </div>
                 <div class="tw-row">
                     <input id="timeInput" class="shinko-input" placeholder="HH:MM:SS:mmm" style="flex:1;">
+                    <a id="refreshBtn" class="shinko-btn" style="width:30px;" title="Wstaw aktualny czas wejścia">↻</a>
                 </div>
                 <div class="tw-row tw-row-nb">
                     <a id="sendTime" class="shinko-btn" style="flex:1;">Wysyłka</a>
@@ -167,6 +171,19 @@
     }
 
     // ---------- PRZYCISKI ----------
+    function fillArrival() {
+        try {
+            $("timeInput").value = document.querySelector(".relative_time").textContent.slice(-8) + ":000";
+        } catch (e) {}
+    }
+    fillArrival();
+    $("refreshBtn").onclick = fillArrival;
+
+    $("usePingChk").onchange = function () {
+        usePing = this.checked;
+        localStorage.twUsePing = usePing ? "1" : "0";
+    };
+
     $("delayInput").onchange = function () {
         offsetMs = parseInt(this.value) || 0;
         localStorage.delayTime = JSON.stringify(offsetMs);
