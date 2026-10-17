@@ -52,11 +52,11 @@
             "screens": ["main"]
         },
         {
-            "id": "rek",
-            "name": "Rekruter",
-            "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
-            "description": "Rekrutacja wojsk.",
-            "screens": ["train", "barracks"]
+    "id": "rek",
+    "name": "Rekruter",
+    "url": "https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js",
+    "description": "Rekrutacja wojsk.",
+    "screens": ["train", "barracks", "main", "overview"]
         }
     ],
     "Farma/zbieractwo": [
