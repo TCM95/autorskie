@@ -1075,5 +1075,18 @@
             }
         } catch (e) {}
 
+
+        // Panel wraca otwarty po odświeżeniu, jeśli był otwarty (zamykasz go sam).
+        // Gdy jest zamknięty - skrypt nie robi nic i nic nie pobiera.
+        if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
+            $(ui).show();
+            fillData();
+            calculateTrade();   // od razu z zapisanych danych
+            Promise.all([syncMarketDataInBackground(), loadExternalBootyData()]).then(() => {
+                fillData();
+                calculateTrade();
+                startAutoSync();
+            });
+        }
     })();
 })();
