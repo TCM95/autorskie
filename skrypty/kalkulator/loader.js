@@ -67,34 +67,6 @@
         .kalk-btn-green { background: var(--btn-green-bg); }
         .kalk-btn-green:hover { background: var(--btn-green-hover); }
         .kalk-input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; font-size: 11px; }
-        
-        .kalk-shortcut-container {
-            width: 100% !important;
-            clear: both !important;
-            display: block !important;
-            margin-top: 5px !important;
-            padding: 0 !important;
-            list-style: none !important;
-        }
-        .kalk-shortcut-btn {
-            background: var(--btn-bg) !important;
-            color: var(--text-color) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 3px !important;
-            width: 30px !important;
-            height: 30px !important;
-            display: inline-flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            cursor: pointer !important;
-            font-size: 16px !important;
-            margin: 2px !important;
-            vertical-align: middle !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .kalk-shortcut-btn:hover {
-            background: var(--btn-hover) !important;
-        }
     `;
     document.head.appendChild(style);
 
@@ -736,22 +708,35 @@
     </div>`;
     document.body.appendChild(ui);
 
-    function addShortcutButton() {
-        if ($('#calc_shortcut_btn').length) return;
+    // Wspólny wiersz ikon dla skryptów TCM - ta sama funkcja we wszystkich skryptach.
+    // Mniejszy "order" = bardziej na lewo.
+    function tcmAddIcon(id, emoji, title, onClick, order = 100) {
+        if (document.getElementById(id)) return;
 
-        const btnContainerHTML = `<ul class="kalk-shortcut-container"><li><button id="calc_shortcut_btn" class="kalk-shortcut-btn" title="Kalkulator Handlowy Kuźnia">🧮</button></li></ul>`;
-        
-        let parentEl = $('#quickbar_contents');
-        if (!parentEl.length) parentEl = $('#quickbar_outer');
-        if (!parentEl.length) parentEl = $('#menu_row');
-
-        if (parentEl.length) {
-            parentEl.append(btnContainerHTML);
-        } else {
-            $('body').append(btnContainerHTML);
+        let row = document.getElementById('tcm-icon-row');
+        if (!row) {
+            row = document.createElement('div');
+            row.id = 'tcm-icon-row';
+            row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;width:100%;clear:both;margin-top:5px;';
+            const parent = document.querySelector('#quickbar_contents')
+                || document.querySelector('#quickbar_outer')
+                || document.querySelector('#menu_row')
+                || document.body;
+            parent.appendChild(row);
         }
 
-        $('#calc_shortcut_btn').on('click', async (e) => {
+        const btn = document.createElement('button');
+        btn.id = id;
+        btn.title = title;
+        btn.textContent = emoji;
+        btn.style.cssText = 'order:' + order + ';width:30px;height:30px;cursor:pointer;font-size:16px;'
+            + 'color:#fff;border:1px solid #3e4147;border-radius:3px;'
+            + 'background:linear-gradient(#6e7178 0%,#36393f 30%,#202225 80%,#000 100%);';
+        btn.addEventListener('click', onClick);
+        row.appendChild(btn);
+    }
+
+    tcmAddIcon('calc_shortcut_btn', '🧮', 'Kalkulator Handlowy', async (e) => {
             e.preventDefault();
             let s = $(ui).is(':hidden'); 
             $(ui).toggle();
@@ -768,9 +753,7 @@
             } else {
                 stopAutoSync();
             }
-        });
-    }
-    addShortcutButton();
+    }, 10);
 
     let drag = false, sx, sy, il, it;
     const headerEl = ui.querySelector('#calc_header');
