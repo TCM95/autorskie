@@ -18,10 +18,10 @@
     //  Pełny adres = MODULES_BASE + file (albo wpisz własny 'url' w pozycji, wtedy ma pierwszeństwo).
     //  Pusty file/url = moduł wyłączony (opcje w UI zostają, ale nic nie robią).
     // =====================================================================
-    const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/moduly/'; // <- PODMIEŃ
+        const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/moduly/'; // <- folder na pozostałe moduły
     const MODULES = [
-        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: 'rekru-modul.js', url: '' },
-        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech-modul.js',  url: '' },
+        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: '', url: 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js' },
+        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech-modul.js', url: '' },
         { id: 'bonus',   name: 'Auto-bonusy',     file: '', url: '' },   // <- wpisz plik, gdy będzie gotowy
         { id: 'nagrody', name: 'Dzienne nagrody', file: '', url: '' }    // <- wpisz plik, gdy będzie gotowy
     ];
