@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      7.1
+// @version      7.2
 // @description  Rdzeń: kolejka budowy, szablony BB, wytyczne, wstawianie, akcje (UI). Moduły wykonawcze (rekrutacja, technologie, bonusy, nagrody) ładowane z linków GitHub.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -18,10 +18,10 @@
     //  Pełny adres = MODULES_BASE + file (albo wpisz własny 'url' w pozycji, wtedy ma pierwszeństwo).
     //  Pusty file/url = moduł wyłączony (opcje w UI zostają, ale nic nie robią).
     // =====================================================================
-        const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/modul/'; // <- folder na pozostałe moduły
+    const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/moduly/'; // <- PODMIEŃ
     const MODULES = [
-        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: '', url: 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js' },
-        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech-modul.js', url: '' },
+        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: '', url: 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/skrypty/rekru.js', adapter: 'rek-legacy' },
+        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech-modul.js',  url: '' },
         { id: 'bonus',   name: 'Auto-bonusy',     file: '', url: '' },   // <- wpisz plik, gdy będzie gotowy
         { id: 'nagrody', name: 'Dzienne nagrody', file: '', url: '' }    // <- wpisz plik, gdy będzie gotowy
     ];
@@ -334,7 +334,7 @@
     //  API DLA MODUŁÓW (window.TCM_BOB)
     // =====================================================================
     const BOB = window.TCM_BOB = window.TCM_BOB || {};
-    BOB.version = '7.1';
+    BOB.version = '7.2';
     BOB.modules = BOB.modules || {};
     BOB.add = item => insertItem(item);
     BOB.helpers = { gfx, unitIcon, esc, rich, uid, norm, REK_ALL, screenUrl: screen => `${location.origin}/game.php?village=${game_data.village.id}&screen=${screen}` };
@@ -348,10 +348,13 @@
         return $m.find('.tcm-modal-box');
     };
     BOB.closeModal = () => $('#tcm-modal').hide();
+    BOB.ready = false;
+    BOB.pending = [];
     BOB.registerModule = registerModule;
 
     function registerModule(def) {
         if (!def || !def.id) return;
+        if (!BOB.ready) { BOB.pending.push(def); return; } // UI jeszcze nie gotowe - zarejestrujemy po zbudowaniu
         const rec = { def: def, api: null };
         BOB.modules[def.id] = rec;
         if (def.panel !== false) {
@@ -378,27 +381,95 @@
         updateModuleStatus();
     }
 
+    // ---------- Adaptery: wczytanie zwykłego (niezmienionego) skryptu jako modułu ----------
+    // 'rek-legacy': samodzielny "Kalkulator Rekrutacji" (rekru.js). Jego panel zostaje przeniesiony do zakładki,
+    // a akcje z listy wykonujemy przez jego własne pola (Limit / Zapisz / Start) - bez zmian w tamtym pliku.
+    const ADAPTERS = {
+        'rek-legacy': function(m) {
+            if (BOB.modules[m.id]) return;
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+            registerModule({
+                id: m.id, name: m.name, icon: m.icon, panelWidth: 520,
+                init: function(ctx) {
+                    const dock = () => {
+                        const el = document.getElementById('tcm-rekrutacja-ui');
+                        if (!el) return false;
+                        if (el.parentNode !== ctx.panel[0]) { ctx.panel.empty(); ctx.panel[0].appendChild(el); }
+                        const set = (p, v) => el.style.setProperty(p, v, 'important');
+                        el.classList.remove('tcm-hidden');
+                        ['position:static', 'top:auto', 'left:auto', 'width:100%', 'max-width:none', 'min-width:0', 'box-shadow:none', 'border:none', 'padding:0', 'margin:0', 'z-index:auto', 'display:block']
+                            .forEach(x => { const [k, v] = x.split(':'); set(k, v); });
+                        const hd = document.getElementById('tcm-rekrutacja-header'); if (hd) { hd.style.cursor = 'default'; hd.style.touchAction = 'auto'; }
+                        const cl = document.getElementById('tcm-close'); if (cl) cl.style.display = 'none';
+                        const ic = document.getElementById('tcm_rekrutacja_btn'); if (ic) ic.style.display = 'none';
+                        return true;
+                    };
+                    let tries = 0;
+                    const iv = setInterval(() => { if (dock() || ++tries > 60) clearInterval(iv); }, 300);
+
+                    const isActive = () => /Stop/.test($('#tcm-toggle-btn').text());
+                    setInterval(() => ctx.setRunning(isActive()), 3000);
+
+                    return {
+                        isActive: isActive,
+                        run: async function(item) {
+                            if (!item || item.kind !== 'recruit') return false;
+                            if (!$('#tcm-rekrutacja-ui').length) return false;
+                            if (!isActive()) { $('#tcm-toggle-btn').click(); await sleep(1800); } // start + świeże dane
+                            const target = item.mode === 'target';
+                            if (!target && /Brak danych/.test($('#tcm-queue-box').text())) return false; // brak danych o stanie - spróbuje ponownie
+                            let n = 0;
+                            Object.keys(item.units || {}).forEach(u => {
+                                const $in = $(`#tcm-rekrutacja-ui .limit-in[data-unit="${u}"]`);
+                                if (!$in.length) return;
+                                const add = parseInt(item.units[u], 10) || 0;
+                                if (add <= 0) return;
+                                const stock = parseInt($(`#tcm-curr-${u}`).text()) || 0;
+                                const lim = parseInt($in.val()) || 0;
+                                $in.val(target ? add : Math.max(lim, stock) + add).trigger('change').trigger('input');
+                                n++;
+                            });
+                            $('#tcm-save-btn').click();
+                            ctx.setRunning(isActive());
+                            return { ok: true, msg: n ? `Rekrutacja: ustawiono limity (${n} jedn.), rekrutacja włączona.` : 'Rekrutacja: żadna z jednostek nie jest dostępna na tym świecie.' };
+                        }
+                    };
+                }
+            });
+        }
+    };
+
     // Ładowanie modułu z linku: pobranie tekstu i wykonanie (raw.githubusercontent nie pozwala na <script src>)
     async function loadModule(m) {
         const url = moduleUrl(m);
         if (!url || BOB.modules[m.id]) { updateModuleStatus(); return; }
+        // skrypt rekrutacji mógł już zostać wczytany przez inny panel - wtedy tylko go przejmujemy
+        if (m.adapter === 'rek-legacy' && document.getElementById('tcm-rekrutacja-ui')) { ADAPTERS[m.adapter](m); updateModuleStatus(); return; }
+        let reason = '';
         try {
             const sep = url.includes('?') ? '&' : '?';
             const r = await fetch(url + sep + '_=' + Date.now(), { cache: 'no-store' });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
+            if (!r.ok) throw new Error('HTTP ' + r.status + ' (sprawdź link)');
             const code = await r.text() + '\n//# sourceURL=' + url;
-            try {
+            // najpierw eval (błąd EvalError = zablokowany przez CSP strony), potem wstrzyknięcie <script>
+            let ran = false;
+            try { (0, eval)(code); ran = true; }
+            catch (e1) {
+                if (e1 instanceof EvalError || /unsafe-eval|Content Security Policy/i.test(String(e1 && e1.message))) ran = false;
+                else throw e1;
+            }
+            if (!ran) {
                 const sc = document.createElement('script');
                 sc.textContent = code;
                 document.head.appendChild(sc);
                 sc.remove();
-            } catch (e1) { /* spróbujemy niżej */ }
-            if (!BOB.modules[m.id]) (0, eval)(code);
-            if (!BOB.modules[m.id]) throw new Error('moduł się nie zarejestrował');
+            }
+            if (!BOB.modules[m.id] && m.adapter && ADAPTERS[m.adapter]) ADAPTERS[m.adapter](m); // zwykły skrypt -> adapter
+            if (!BOB.modules[m.id]) throw new Error('plik nie zarejestrował modułu (to nie jest moduł BOB)');
         } catch (e) {
-            // cicho: moduł jeszcze nie istnieje / zły link - opcje w UI po prostu nie działają
+            reason = (e && e.message) ? e.message : String(e);
             console.warn('TCM_BOB: moduł "' + m.id + '" niepodłączony (' + url + ')', e);
-            $(`#tcm-panel-${m.id} .mod-ph`).text(`Moduł „${m.name}” niepodłączony - sprawdź link w kodzie (MODULES).`);
+            $(`#tcm-panel-${m.id} .mod-ph`).text(`Moduł „${m.name}” niepodłączony: ${reason}`);
         }
         updateModuleStatus();
     }
@@ -547,7 +618,8 @@
                 const meta = ACT_META[it.kind] || { icon: '▶', mod: it.mod };
                 const mod = BOB.modules[it.mod || meta.mod];
                 const toks = Object.keys(it.units || {}).map(u => it.kind === 'tech' ? `{{u:${u}}}` : `{{u:${u}}}${it.units[u]}`).join(' ');
-                labelHtml = `${meta.icon} ${it.title ? esc(it.title) + ': ' : ''}${rich(toks)}` +
+                clamp = true;
+                labelHtml = `${meta.icon} ${rich(toks)} ${esc(it.title || '')}` +
                     ((it.kind === 'recruit' && it.mode === 'target') ? ' <span style="color:#aaa; font-weight:normal;">(do stanu)</span>' : '') +
                     ((mod && mod.api) ? '' : ' <span style="color:#888; font-weight:normal;">(czeka na moduł)</span>');
                 labelStyle = 'color: #ffb347; font-weight: bold;';
@@ -1075,6 +1147,8 @@
         updateActionSelect();
         applyTab();
         updateRewardsState();
+        BOB.ready = true;
+        BOB.pending.splice(0).forEach(registerModule);
 
         // --- sterowanie ---
         $('#clearQueueBtn').click(() => {
