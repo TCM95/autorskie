@@ -67,6 +67,41 @@
         .kalk-btn-green { background: var(--btn-green-bg); }
         .kalk-btn-green:hover { background: var(--btn-green-hover); }
         .kalk-input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; font-size: 11px; }
+        
+        .kalk-shortcut-container {
+            width: 100% !important;
+            clear: both !important;
+            display: block !important;
+            margin-top: 5px !important;
+            padding: 0 !important;
+            list-style: none !important;
+        }
+        .kalk-shortcut-btn {
+            background: var(--btn-bg) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 3px !important;
+            width: 30px !important;
+            height: 30px !important;
+            display: inline-flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            margin: 2px !important;
+            vertical-align: middle !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        .kalk-shortcut-btn:hover {
+            background: var(--btn-hover) !important;
+        }
+        .kalk-float-btn {
+            position: fixed !important;
+            z-index: 9999998 !important;
+            width: 36px !important;
+            height: 36px !important;
+            margin: 0 !important;
+        }
     `;
     document.head.appendChild(style);
 
@@ -708,35 +743,39 @@
     </div>`;
     document.body.appendChild(ui);
 
-    // Wspólny wiersz ikon dla skryptów TCM - ta sama funkcja we wszystkich skryptach.
-    // Mniejszy "order" = bardziej na lewo.
-    function tcmAddIcon(id, emoji, title, onClick, order = 100) {
-        if (document.getElementById(id)) return;
+    function addShortcutButton() {
+        if ($('#calc_shortcut_btn').length) return;
 
-        let row = document.getElementById('tcm-icon-row');
-        if (!row) {
-            row = document.createElement('div');
-            row.id = 'tcm-icon-row';
-            row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;width:100%;clear:both;margin-top:5px;';
-            const parent = document.querySelector('#quickbar_contents')
-                || document.querySelector('#quickbar_outer')
-                || document.querySelector('#menu_row')
-                || document.body;
-            parent.appendChild(row);
+        if (document.getElementById('questlog_new')) {
+            // przycisk pod ikoną zadań
+            $('body').append(`<button id="calc_shortcut_btn" class="kalk-shortcut-btn kalk-float-btn" title="Kalkulator">🧮</button>`);
+            const placeCalcBtn = () => {
+                const q = document.getElementById('questlog_new');
+                const b = document.getElementById('calc_shortcut_btn');
+                if (!q || !b) return;
+                const r = q.getBoundingClientRect();
+                if (r.width === 0 && r.height === 0) { b.style.top = '150px'; b.style.left = '4px'; return; }
+                b.style.top = (r.bottom + 6) + 'px';
+                b.style.left = Math.max(0, r.left) + 'px';
+            };
+            placeCalcBtn();
+            window.addEventListener('load', placeCalcBtn);
+            window.addEventListener('resize', placeCalcBtn);
+        } else {
+        const btnContainerHTML = `<ul class="kalk-shortcut-container"><li><button id="calc_shortcut_btn" class="kalk-shortcut-btn" title="Kalkulator Handlowy Kuźnia">🧮</button></li></ul>`;
+        
+        let parentEl = $('#quickbar_contents');
+        if (!parentEl.length) parentEl = $('#quickbar_outer');
+        if (!parentEl.length) parentEl = $('#menu_row');
+
+        if (parentEl.length) {
+            parentEl.append(btnContainerHTML);
+        } else {
+            $('body').append(btnContainerHTML);
+        }
         }
 
-        const btn = document.createElement('button');
-        btn.id = id;
-        btn.title = title;
-        btn.textContent = emoji;
-        btn.style.cssText = 'order:' + order + ';width:30px;height:30px;cursor:pointer;font-size:16px;'
-            + 'color:#fff;border:1px solid #3e4147;border-radius:3px;'
-            + 'background:linear-gradient(#6e7178 0%,#36393f 30%,#202225 80%,#000 100%);';
-        btn.addEventListener('click', onClick);
-        row.appendChild(btn);
-    }
-
-    tcmAddIcon('calc_shortcut_btn', '🧮', 'Kalkulator Handlowy', async (e) => {
+        $('#calc_shortcut_btn').on('click', async (e) => {
             e.preventDefault();
             let s = $(ui).is(':hidden'); 
             $(ui).toggle();
@@ -753,7 +792,9 @@
             } else {
                 stopAutoSync();
             }
-    }, 10);
+        });
+    }
+    addShortcutButton();
 
     let drag = false, sx, sy, il, it;
     const headerEl = ui.querySelector('#calc_header');
@@ -1058,18 +1099,5 @@
             }
         } catch (e) {}
 
-
-        // Panel wraca otwarty po odświeżeniu, jeśli był otwarty (zamykasz go sam).
-        // Gdy jest zamknięty - skrypt nie robi nic i nic nie pobiera.
-        if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
-            $(ui).show();
-            fillData();
-            calculateTrade();   // od razu z zapisanych danych
-            Promise.all([syncMarketDataInBackground(), loadExternalBootyData()]).then(() => {
-                fillData();
-                calculateTrade();
-                startAutoSync();
-            });
-        }
     })();
 })();
