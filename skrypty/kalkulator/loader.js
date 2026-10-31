@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator Handlowy
 // @namespace    https://viayoo.com/
-// @version      1.9
+// @version      2.1
 // @description  Zintegrowany kalkulator surowców z szarym przyciskiem na dole paska skrótów.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*
@@ -67,41 +67,6 @@
         .kalk-btn-green { background: var(--btn-green-bg); }
         .kalk-btn-green:hover { background: var(--btn-green-hover); }
         .kalk-input { background: var(--bg-row-alt); color: var(--text-color); border: 1px solid var(--border-color); padding: 3px; border-radius: 3px; font-size: 11px; }
-        
-        .kalk-shortcut-container {
-            width: 100% !important;
-            clear: both !important;
-            display: block !important;
-            margin-top: 5px !important;
-            padding: 0 !important;
-            list-style: none !important;
-        }
-        .kalk-shortcut-btn {
-            background: var(--btn-bg) !important;
-            color: var(--text-color) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: 3px !important;
-            width: 30px !important;
-            height: 30px !important;
-            display: inline-flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            cursor: pointer !important;
-            font-size: 16px !important;
-            margin: 2px !important;
-            vertical-align: middle !important;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
-        }
-        .kalk-shortcut-btn:hover {
-            background: var(--btn-hover) !important;
-        }
-        .kalk-float-btn {
-            position: fixed !important;
-            z-index: 9999998 !important;
-            width: 36px !important;
-            height: 36px !important;
-            margin: 0 !important;
-        }
     `;
     document.head.appendChild(style);
 
@@ -544,55 +509,38 @@
         let tradesOut = '';
         if ((virtB.w + virtB.g + virtB.i) > 0 && tVirt > 0) {
             let tradesHtml = '';
-            let virtM_sim = { w: virtM.w, g: virtM.g, i: virtM.i };
-            let realM_sim = { w: realM.w, g: realM.g, i: realM.i };
             const resMap = { 'w': 'wood', 'g': 'stone', 'i': 'iron' };
+            const keys3 = ['w', 'g', 'i'];
 
-            let tradesPlanned = [];
-
-            for (let step = 0; step < 4; step++) {
-                let b = { w: Math.max(0, target.w - virtM_sim.w), g: Math.max(0, target.g - virtM_sim.g), i: Math.max(0, target.i - virtM_sim.i) };
-                if (b.w === 0 && b.g === 0 && b.i === 0) break;
-
-                let t = { w: b.w/p.w, g: b.g/p.g, i: b.i/p.i };
-                let maxT_key = Object.keys(t).reduce((a,k) => t[a] > t[k] ? a : k);
-                let minT_key = Object.keys(t).reduce((a,k) => t[a] < t[k] ? a : k);
-
-                if (t[maxT_key] - t[minT_key] < 0.1) break;
-
-                let tEq = (b.w + b.g + b.i) / (p.w + p.g + p.i);
-                if (isNaN(tEq) || tEq <= 0) break;
-
-                let surplus = virtM_sim[minT_key] - (target[minT_key] - tEq * p[minT_key]);
-                let deficit = (target[maxT_key] - tEq * p[maxT_key]) - virtM_sim[maxT_key];
-
-                let amount = Math.floor(Math.min(surplus, deficit, realM_sim[minT_key]));
-                amount = Math.floor(amount / TRADE_STEP) * TRADE_STEP;
-
-                if (amount >= TRADE_MIN) {
-                    tradesPlanned.push({ sell: minT_key, buy: maxT_key, amt: amount });
-                    virtM_sim[minT_key] -= amount;
-                    virtM_sim[maxT_key] += amount;
-                    realM_sim[minT_key] -= amount;
-                } else {
-                    break;
-                }
-            }
-
-            // Wyliczamy bilans każdego surowca i z niego wymiany -
-            // dzięki temu nie ma sytuacji "600 drewna na żelazo" + "100 żelaza na drewno"
-            const net = { w: 0, g: 0, i: 0 };
-            tradesPlanned.forEach(tr => { net[tr.sell] -= tr.amt; net[tr.buy] += tr.amt; });
-            const sellers = Object.keys(net).filter(k => net[k] < 0).map(k => ({ k: k, a: -net[k] })).sort((a, b) => b.a - a.a);
-            const buyers = Object.keys(net).filter(k => net[k] > 0).map(k => ({ k: k, a: net[k] })).sort((a, b) => b.a - a.a);
+            // Jedno przejście: liczymy, ile każdego surowca powinno być TERAZ,
+            // żeby wszystkie były gotowe w tym samym momencie (tEq).
+            // Różnica wobec stanu obecnego = ile kupić (+) albo sprzedać (-).
             let aggregatedTrades = {};
-            let si = 0, bi = 0;
-            while (si < sellers.length && bi < buyers.length) {
-                const m = Math.min(sellers[si].a, buyers[bi].a);
-                if (m >= TRADE_MIN) aggregatedTrades[`${sellers[si].k}_${buyers[bi].k}`] = m;
-                sellers[si].a -= m; buyers[bi].a -= m;
-                if (sellers[si].a <= 0) si++;
-                if (buyers[bi].a <= 0) bi++;
+            const tB = { w: virtB.w / p.w, g: virtB.g / p.g, i: virtB.i / p.i };
+            const spread = Math.max(tB.w, tB.g, tB.i) - Math.min(tB.w, tB.g, tB.i);
+            const tEq = (virtB.w + virtB.g + virtB.i) / (p.w + p.g + p.i);
+            if (spread >= 0.1 && tEq > 0) {
+                const sellers = [], buyers = [];
+                keys3.forEach(r => {
+                    const want = (target[r] - tEq * p[r]) - virtM[r];
+                    if (want < 0) {
+                        const a = Math.floor(Math.min(-want, realM[r]) / TRADE_STEP) * TRADE_STEP;
+                        if (a > 0) sellers.push({ k: r, a: a });
+                    } else if (want > 0) {
+                        const a = Math.floor(want / TRADE_STEP) * TRADE_STEP;
+                        if (a > 0) buyers.push({ k: r, a: a });
+                    }
+                });
+                sellers.sort((x, y) => y.a - x.a);
+                buyers.sort((x, y) => y.a - x.a);
+                let si = 0, bi = 0;
+                while (si < sellers.length && bi < buyers.length) {
+                    const m = Math.min(sellers[si].a, buyers[bi].a);
+                    if (m >= TRADE_MIN) aggregatedTrades[`${sellers[si].k}_${buyers[bi].k}`] = m;
+                    sellers[si].a -= m; buyers[bi].a -= m;
+                    if (sellers[si].a <= 0) si++;
+                    if (buyers[bi].a <= 0) bi++;
+                }
             }
 
             let stepCount = 1;
@@ -743,39 +691,35 @@
     </div>`;
     document.body.appendChild(ui);
 
-    function addShortcutButton() {
-        if ($('#calc_shortcut_btn').length) return;
+    // Wspólny wiersz ikon dla skryptów TCM - ta sama funkcja we wszystkich skryptach.
+    // Mniejszy "order" = bardziej na lewo.
+    function tcmAddIcon(id, emoji, title, onClick, order = 100) {
+        if (document.getElementById(id)) return;
 
-        if (document.getElementById('questlog_new')) {
-            // przycisk pod ikoną zadań
-            $('body').append(`<button id="calc_shortcut_btn" class="kalk-shortcut-btn kalk-float-btn" title="Kalkulator">🧮</button>`);
-            const placeCalcBtn = () => {
-                const q = document.getElementById('questlog_new');
-                const b = document.getElementById('calc_shortcut_btn');
-                if (!q || !b) return;
-                const r = q.getBoundingClientRect();
-                if (r.width === 0 && r.height === 0) { b.style.top = '150px'; b.style.left = '4px'; return; }
-                b.style.top = (r.bottom + 6) + 'px';
-                b.style.left = Math.max(0, r.left) + 'px';
-            };
-            placeCalcBtn();
-            window.addEventListener('load', placeCalcBtn);
-            window.addEventListener('resize', placeCalcBtn);
-        } else {
-        const btnContainerHTML = `<ul class="kalk-shortcut-container"><li><button id="calc_shortcut_btn" class="kalk-shortcut-btn" title="Kalkulator Handlowy Kuźnia">🧮</button></li></ul>`;
-        
-        let parentEl = $('#quickbar_contents');
-        if (!parentEl.length) parentEl = $('#quickbar_outer');
-        if (!parentEl.length) parentEl = $('#menu_row');
-
-        if (parentEl.length) {
-            parentEl.append(btnContainerHTML);
-        } else {
-            $('body').append(btnContainerHTML);
-        }
+        let row = document.getElementById('tcm-icon-row');
+        if (!row) {
+            row = document.createElement('div');
+            row.id = 'tcm-icon-row';
+            row.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;width:100%;clear:both;margin-top:5px;';
+            const parent = document.querySelector('#quickbar_contents')
+                || document.querySelector('#quickbar_outer')
+                || document.querySelector('#menu_row')
+                || document.body;
+            parent.appendChild(row);
         }
 
-        $('#calc_shortcut_btn').on('click', async (e) => {
+        const btn = document.createElement('button');
+        btn.id = id;
+        btn.title = title;
+        btn.textContent = emoji;
+        btn.style.cssText = 'order:' + order + ';width:30px;height:30px;cursor:pointer;font-size:16px;'
+            + 'color:#fff;border:1px solid #3e4147;border-radius:3px;'
+            + 'background:linear-gradient(#6e7178 0%,#36393f 30%,#202225 80%,#000 100%);';
+        btn.addEventListener('click', onClick);
+        row.appendChild(btn);
+    }
+
+    tcmAddIcon('calc_shortcut_btn', '🧮', 'Kalkulator Handlowy', async (e) => {
             e.preventDefault();
             let s = $(ui).is(':hidden'); 
             $(ui).toggle();
@@ -792,9 +736,7 @@
             } else {
                 stopAutoSync();
             }
-        });
-    }
-    addShortcutButton();
+    }, 10);
 
     let drag = false, sx, sy, il, it;
     const headerEl = ui.querySelector('#calc_header');
@@ -1099,5 +1041,18 @@
             }
         } catch (e) {}
 
+
+        // Panel wraca otwarty po odświeżeniu, jeśli był otwarty (zamykasz go sam).
+        // Gdy jest zamknięty - skrypt nie robi nic i nic nie pobiera.
+        if (localStorage.getItem(STORAGE_KEY_STATE) === 'open') {
+            $(ui).show();
+            fillData();
+            calculateTrade();   // od razu z zapisanych danych
+            Promise.all([syncMarketDataInBackground(), loadExternalBootyData()]).then(() => {
+                fillData();
+                calculateTrade();
+                startAutoSync();
+            });
+        }
     })();
 })();
