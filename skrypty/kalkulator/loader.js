@@ -952,6 +952,7 @@
 
     if (['main', 'snob', 'smith'].includes(game_data.screen)) {
         $('#buildings tr, #main_buildrow tr, .train_units tr, table.vis tr').each(function() {
+            if (game_data.screen === 'smith') return;   // kuźnia ma własną obsługę poniżej
             const r = $(this);
             
             let w = cleanNum(r.find('.cost_wood').text());
@@ -986,6 +987,48 @@
             }
         });
 
+
+        // ===== KUŹNIA: siatka badań (#tech_list), każda technologia to osobna mała tabela =====
+        function parseTechCosts(scope) {
+            const c = { w: 0, g: 0, i: 0 };
+            // koszty badań w kuźni: <span id="heavy_cost_wood">ikona 3.000</span>
+            c.w = cleanNum(scope.find('[id$="_cost_wood"]').first().text()) || cleanNum(scope.find('.cost_wood').text());
+            c.g = cleanNum(scope.find('[id$="_cost_stone"]').first().text()) || cleanNum(scope.find('.cost_stone').text());
+            c.i = cleanNum(scope.find('[id$="_cost_iron"]').first().text()) || cleanNum(scope.find('.cost_iron').text());
+            if (c.w || c.g || c.i) return c;
+
+            scope.find('.icon, img').each(function() {
+                const el = $(this);
+                const cls = (el.attr('class') || '') + ' ' + (el.attr('src') || '');
+                const key = /wood/.test(cls) ? 'w' : /stone|clay/.test(cls) ? 'g' : /iron/.test(cls) ? 'i' : null;
+                if (!key || c[key]) return;
+                let txt = '';
+                const nx = this.nextSibling;
+                if (nx && nx.nodeType === 3) txt = nx.textContent;
+                if (!cleanNum(txt)) {
+                    // liczba może siedzieć w rodzicu - tylko gdy rodzic ma jedną ikonę surowca
+                    const par = el.parent();
+                    if (par.find('.icon, img').filter(function() { return /wood|stone|iron/.test(($(this).attr('class') || '') + ($(this).attr('src') || '')); }).length === 1) txt = par.text();
+                }
+                const v = cleanNum(txt);
+                if (v > 0) c[key] = v;
+            });
+            return c;
+        }
+
+        if (game_data.screen === 'smith') {
+            $('#tech_list table.vis table.vis').each(function() {
+                const t = $(this);
+                if (t.find('.calc-check').length) return;
+                const name = t.find('a.unit_link').map(function() { return $(this).text().trim(); }).get().filter(Boolean)[0] || '';
+                if (!name) return;
+                const scope = t.closest('td').length ? t.closest('td') : t;
+                const c = parseTechCosts(scope);
+                if (!(c.w || c.g || c.i)) return;   // zbadane / bez kosztu - bez checkboxa
+                t.find('td').first().prepend($(`<input type="checkbox" class="calc-check" data-name="${name}" data-w="${c.w}" data-g="${c.g}" data-i="${c.i}" data-level="0" style="margin-right:8px; width:20px; height:20px; vertical-align:middle;">`));
+            });
+        }
+
         const savedBChecks = JSON.parse(localStorage.getItem(STORAGE_KEY_BUILDING_CHECKS)) || [];
         $('.calc-check').each(function(index) {
             if (savedBChecks.includes(index)) {
@@ -1002,7 +1045,7 @@
                 ti += parseInt($(this).data('i')) || 0;
                 
                 let rawName = $(this).parent().text().replace(/\s+/g, ' ');
-                let bName = rawName.replace(/\s*\(.*?\)/g, '').replace(/poziom\s*\d+/gi, '').trim();
+                let bName = $(this).attr('data-name') || rawName.replace(/\s*\(.*?\)/g, '').replace(/poziom\s*\d+/gi, '').trim();
                 
                 const lv = parseInt($(this).attr('data-level')) || 0;
                 if(bName) names.push(lv > 0 ? `${bName} (poz. ${lv})` : bName);
