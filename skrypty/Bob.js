@@ -19,12 +19,12 @@
     //  Pusty file/url = moduł wyłączony (opcje w UI zostają, ale nic nie robią).
     // =====================================================================
         const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/modul/'; // folder z modułami
-    const MODULES = [
-        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: 'rekru.js', url: '', adapter: 'rek-legacy' },
-        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech.js',  url: '' },
-        { id: 'bonus',   name: 'Auto-bonusy',     file: '', url: '' },   // <- wpisz plik, gdy będzie gotowy
-        { id: 'nagrody', name: 'Dzienne nagrody', file: '', url: '' }    // <- wpisz plik, gdy będzie gotowy
-    ];
+    const MODULES =   [
+        { id: 'rek',     name: 'Rekrutacja',         icon: 'buildings/barracks.png', panel: true, file: 'rekru.js', url: '', adapter: 'rek-legacy' },
+        { id: 'tech',    name: 'Technologie',        icon: 'buildings/smith.png',    panel: true, file: 'tech.js',  url: '' },
+        { id: 'bonus',   name: 'Auto-bonusy',        file: '', url: '' },   // <- wpisz plik, gdy będzie gotowy
+        { id: 'nagrody', name: 'Nagrody za budynki', file: 'nagrody.js', url: '' }
+                      ];
     const moduleUrl = m => (m.url || (m.file ? MODULES_BASE + m.file : '')).trim();
 
     // Akcje na liście obsługiwane przez moduły: rodzaj -> {ikona, id modułu}
