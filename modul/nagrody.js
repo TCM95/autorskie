@@ -5,6 +5,10 @@
  * (z losowym rozrzutem) pobiera okno Nagrody (to samo, które otwierasz w Zadaniach) i odbiera po kolei
  * wszystkie dostępne nagrody - tak jak przycisk "Odbierz". Surowce trafiają do wioski, w której działa skrypt.
  *
+ * Lista nagród NIE jest w gotowym HTML-u okna - gra wstawia ją skryptem na stronie:
+ *   RewardSystem.setRewards( [lista nagród do odebrania], ... );  (wiersze tabeli powstają dopiero w przeglądarce)
+ * Moduł czyta pierwszy argument tego wywołania (a dla pewności także przyciski data-reward-id, jeśli są).
+ *
  * Zapytania (z podglądu zapytań gry):
  *   GET  game.php?village=ID&screen=new_quests&ajax=quest_popup&tab=main-tab&quest=0   - lista nagród
  *   POST game.php?village=ID&screen=new_quests&ajax=claim_reward   (reward_id=...&h=csrf) - odbiór jednej nagrody
@@ -37,7 +41,7 @@
             const rnd = (minMin, maxMin) => Math.round((minMin + Math.random() * (maxMin - minMin)) * 60000);
             const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-            let enabled = false, timer = null, busy = false;
+            let enabled = false, timer = null, busy = false, warnedFormat = false;
 
             const toast = (msg, isErr) => {
                 try { isErr ? UI.ErrorMessage(msg, 4000) : UI.SuccessMessage(msg, 4000); }
@@ -57,16 +61,68 @@
                 } catch (e) { return raw; }
             }
 
+            // Argumenty wywołania fn( a, b, c ) z tekstu (z uwzględnieniem cudzysłowów i zagnieżdżeń)
+            function extractArgs(text, fn) {
+                const i = text.indexOf(fn + '(');
+                if (i < 0) return null;
+                let pos = i + fn.length + 1, depth = 1, inStr = null, esc = false, cur = '';
+                const args = [];
+                for (; pos < text.length; pos++) {
+                    const c = text[pos];
+                    if (inStr) { cur += c; if (esc) esc = false; else if (c === '\\') esc = true; else if (c === inStr) inStr = null; continue; }
+                    if (c === '"' || c === "'") { inStr = c; cur += c; continue; }
+                    if (c === '(' || c === '[' || c === '{') { depth++; cur += c; continue; }
+                    if (c === ')' || c === ']' || c === '}') {
+                        depth--;
+                        if (depth === 0) { if (cur.trim()) args.push(cur.trim()); break; }
+                        cur += c; continue;
+                    }
+                    if (c === ',' && depth === 1) { args.push(cur.trim()); cur = ''; continue; }
+                    cur += c;
+                }
+                return args;
+            }
+
+            const ID_KEYS = ['id', 'reward_id', 'rewardId', 'claim_id'];
+            function rewardId(o) {
+                if (typeof o === 'number' || (typeof o === 'string' && /^\d+$/.test(o))) return String(o);
+                if (o && typeof o === 'object') {
+                    for (const k of ID_KEYS) if (o[k] !== undefined && /^\d+$/.test(String(o[k]))) return String(o[k]);
+                }
+                return null;
+            }
+
             function parsePopup(raw) {
                 const text = collectText(raw);
                 const ids = [];
-                for (const m of text.matchAll(/data-reward-id=["']?(\d+)/g)) if (!ids.includes(m[1])) ids.push(m[1]);
+                const add = id => { if (id && !ids.includes(id)) ids.push(id); };
+
+                // 1) dane z RewardSystem.setRewards( [ ...nagrody do odebrania... ], ... )
+                const args = extractArgs(text, 'RewardSystem.setRewards');
+                let list = [];
+                if (args && args[0]) {
+                    try {
+                        const v = JSON.parse(args[0]);
+                        list = Array.isArray(v) ? v : (v && typeof v === 'object' ? Object.values(v) : []);
+                    } catch (e) { console.warn('[Nagrody] Nie udało się odczytać listy nagród:', e, args[0].slice(0, 200)); }
+                }
+                list.forEach(o => add(rewardId(o)));
+                const unknownFormat = list.length > 0 && ids.length === 0;
+
+                // 2) ewentualne gotowe przyciski w HTML (starsza forma okna)
+                for (const m of text.matchAll(/data-reward-id=["']?(\d+)/g)) add(m[1]);
+
+                // sumy: z danych nagród, a gdy ich nie ma - z nagłówka okna
                 const totals = {};
                 ['wood', 'stone', 'iron'].forEach(res => {
-                    const m = text.match(new RegExp('data-resource-name=["\']' + res + '["\'][^>]*>\\s*([\\d.,\\s]+)<'));
-                    if (m) totals[res] = parseInt(m[1].replace(/\D/g, ''), 10) || 0;
+                    const sum = list.reduce((acc, o) => acc + (o && Number(o[res]) > 0 ? Number(o[res]) : 0), 0);
+                    if (sum > 0) totals[res] = sum;
+                    else {
+                        const m = text.match(new RegExp('data-resource-name=["\']' + res + '["\'][^>]*>\\s*([\\d.,\\s]+)<'));
+                        if (m) totals[res] = parseInt(m[1].replace(/\D/g, ''), 10) || 0;
+                    }
                 });
-                return { ids, totals };
+                return { ids, totals, args, unknownFormat };
             }
 
             async function fetchPopup() {
@@ -104,7 +160,11 @@
                     if (!force && Date.now() - last < 60000) return;   // inna karta właśnie sprawdzała
                     localStorage.setItem(LOCK_KEY, String(Date.now()));
 
-                    const { ids, totals } = parsePopup(await fetchPopup());
+                    const { ids, totals, args, unknownFormat } = parsePopup(await fetchPopup());
+                    if (unknownFormat) {
+                        console.warn('[Nagrody] Są nagrody, ale nie rozpoznano pola z numerem:', args && args[0] && args[0].slice(0, 400));
+                        if (!warnedFormat) { warnedFormat = true; toast('Nagrody: nie rozpoznano formatu - uruchom TCM_BOB.modules.nagrody.api.debug()', true); }
+                    }
                     if (!ids.length) { console.log('[Nagrody] Brak nagród do odebrania.'); return; }
 
                     let done = 0;
@@ -145,8 +205,9 @@
                 debug: async function() {
                     const raw = await fetchPopup();
                     const p = parsePopup(raw);
-                    console.log('[Nagrody] znalezione id:', p.ids, 'sumy:', p.totals, '\nPoczątek odpowiedzi:\n', raw.slice(0, 1500));
-                    alert('Znalezione id: ' + (p.ids.join(', ') || 'brak') + '\n\n' + raw.slice(0, 600));
+                    const a0 = p.args && p.args[0] ? p.args[0].slice(0, 700) : '(brak wywołania setRewards)';
+                    console.log('[Nagrody] znalezione id:', p.ids, 'sumy:', p.totals, '\nsetRewards, argument 1:\n', a0, '\nliczba argumentów:', p.args ? p.args.length : 0);
+                    alert('Znalezione id: ' + (p.ids.join(', ') || 'brak') + '\n\nsetRewards (arg 1):\n' + a0);
                     return p;
                 }
             };
