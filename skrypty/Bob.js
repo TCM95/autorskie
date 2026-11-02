@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Kalkulator budowy
 // @namespace    https://viayoo.com/
-// @version      7.2
+// @version      7.3
 // @description  Rdzeń: kolejka budowy, szablony BB, wytyczne, wstawianie, akcje (UI). Moduły wykonawcze (rekrutacja, technologie, bonusy, nagrody) ładowane z linków GitHub.
 // @author       TCM
 // @match        https://*.plemiona.pl/game.php?*screen=main*
@@ -18,13 +18,13 @@
     //  Pełny adres = MODULES_BASE + file (albo wpisz własny 'url' w pozycji, wtedy ma pierwszeństwo).
     //  Pusty file/url = moduł wyłączony (opcje w UI zostają, ale nic nie robią).
     // =====================================================================
-        const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/modul/'; // folder z modułami
-    const MODULES =   [
-        { id: 'rek',     name: 'Rekrutacja',         icon: 'buildings/barracks.png', panel: true, file: 'rekru.js', url: '', adapter: 'rek-legacy' },
-        { id: 'tech',    name: 'Technologie',        icon: 'buildings/smith.png',    panel: true, file: 'tech.js',  url: '' },
-        { id: 'bonus',   name: 'Auto-bonusy',        file: '', url: '' },   // <- wpisz plik, gdy będzie gotowy
+    const MODULES_BASE = 'https://raw.githubusercontent.com/TCM95/autorskie/refs/heads/main/modul/'; // folder z modułami
+    const MODULES = [
+        { id: 'rek',     name: 'Rekrutacja',      icon: 'buildings/barracks.png', panel: true, file: 'rekru.js', url: '', adapter: 'rek-legacy' },
+        { id: 'tech',    name: 'Technologie',     icon: 'buildings/smith.png',    panel: true, file: 'tech.js',  url: '' },
+        { id: 'bonus',   name: 'Auto-bonusy',     file: 'bonus.js', url: '' },   // <- moduł aktywacji bonusów (plik w folderze modułów)
         { id: 'nagrody', name: 'Nagrody za budynki', file: 'nagrody.js', url: '' }
-                      ];
+    ];
     const moduleUrl = m => (m.url || (m.file ? MODULES_BASE + m.file : '')).trim();
 
     // Akcje na liście obsługiwane przez moduły: rodzaj -> {ikona, id modułu}
@@ -86,14 +86,14 @@
         .q-bico { width: 16px; height: 16px; vertical-align: middle; margin-right: 4px; }
         .q-infocell { width: 1%; padding: 0 2px !important; text-align: center; }
         .q-info { position: static !important; width: 34px; height: 32px; padding: 0 !important; margin: 0 !important; font-size: 16px !important; line-height: 1 !important; }
+        .q-info-open { background: var(--btn-green-bg) !important; }
+        .q-pin { padding: 3px 8px; font-size: 11px; }
         .q-info-cur { border-color: var(--neon-green) !important; box-shadow: 0 0 8px rgba(116,255,0,.7) !important; }
         .q-more td { text-align: center; padding: 6px; color: #aaa; font-size: 11px; font-style: italic; }
         #insInfo { padding: 2px 0 6px; font-size: 11px; color: #aaa; }
         #insInfo b { color: var(--neon-green); }
 
         /* --- tooltip wytycznych --- */
-        #tcm-tip { position: fixed; z-index: 100000; display: none; background: #202225; color: #fff; border: 1px solid var(--neon-green); border-radius: 6px; padding: 8px; max-width: min(280px, 80vw); font-size: 12px; line-height: 1.35; box-shadow: 0 4px 14px rgba(0,0,0,.9); overflow-wrap: anywhere; }
-        #tcm-tip .tip-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
 
         /* --- okno modalne (dla modułów) --- */
         #tcm-modal { position: fixed; inset: 0; z-index: 100001; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.8); }
@@ -140,7 +140,7 @@
     let isGuideOpen = JSON.parse(localStorage.getItem('guideOpen') || "false");
     let activeTab = localStorage.getItem('tcmTab') || '';
     let insertAfterId = null;   // wstawianie "po tej pozycji" (null = na końcu)
-    let tipId = null;
+    const openGuides = new Set();   // pozycje z rozwiniętymi wytycznymi
     let DISP = {};              // poziomy do wyświetlania (liczone z kolejności na liście)
     let rewardsOn = localStorage.getItem('TCM_BOB_rewards') === '1';
 
@@ -158,7 +158,7 @@
 
     const MAX_LEVELS = {
         "main": 30, "barracks": 25, "stable": 20, "garage": 15, "watchtower": 20, "smith": 20,
-        "market": 25, "wood": 30, "stone": 30, "iron": 30, "farm": 30, "storage": 30, "hide": 10, "wall": 20, "snob": 3
+        "market": 25, "wood": 30, "stone": 30, "iron": 30, "farm": 30, "storage": 30, "hide": 10, "wall": 20, "snob": 1
     };
 
     const REK_ALL = ['spear', 'sword', 'axe', 'archer', 'spy', 'light', 'marcher', 'heavy', 'ram', 'catapult'];
@@ -334,7 +334,7 @@
     //  API DLA MODUŁÓW (window.TCM_BOB)
     // =====================================================================
     const BOB = window.TCM_BOB = window.TCM_BOB || {};
-    BOB.version = '7.2';
+    BOB.version = '7.3';
     BOB.modules = BOB.modules || {};
     BOB.add = item => insertItem(item);
     BOB.helpers = { gfx, unitIcon, esc, rich, uid, norm, REK_ALL, screenUrl: screen => `${location.origin}/game.php?village=${game_data.village.id}&screen=${screen}` };
@@ -548,27 +548,6 @@
     }
     const hasInfo = it => it.t === 'note' || !!(it.c || it.u);
 
-    function hideTip() { tipId = null; $('#tcm-tip').hide(); }
-
-    function showTip(id, anchor) {
-        const it = findById(id);
-        if (!it) return hideTip();
-        if (tipId === id) return hideTip();
-        tipId = id;
-        let $t = $('#tcm-tip');
-        if (!$t.length) $t = $('<div id="tcm-tip"></div>').appendTo('body');
-        $t.html(`<div>${infoHtml(it)}</div>
-            <div class="tip-actions">
-                <button class="tcm-btn tip-pin" data-id="${id}">${it.pinned ? '📌 Odepnij' : '📌 Przypnij'}</button>
-                <button class="tcm-btn tip-close">Zamknij</button>
-            </div>`).css({ visibility: 'hidden', display: 'block' });
-        const r = anchor.getBoundingClientRect();
-        const tw = $t.outerWidth(), th = $t.outerHeight();
-        const left = Math.max(8, Math.min(r.left - tw - 8, window.innerWidth - tw - 8));
-        const top = Math.max(8, Math.min(r.top + r.height / 2 - th / 2, window.innerHeight - th - 8));
-        $t.css({ left: left, top: top, visibility: 'visible' });
-    }
-
     // ----- lista -----
     function reloadQueueDisplay() {
         const table = $('#tcm-queue');
@@ -607,7 +586,7 @@
             if (it.t === 'note') {
                 labelHtml = rich(it.text);
                 labelStyle = '';
-                clamp = !isGuideOpen; // wytyczna: do 2 linii (pełna treść w tooltipie lub po rozwinięciu 💬)
+                clamp = !(isGuideOpen || openGuides.has(it.id)); // wytyczna: do 2 linii, pełna po rozwinięciu 💬
             } else if (it.t === 'bonus') {
                 labelHtml = esc(it.text);
                 labelStyle = 'color: #ff9800; font-weight: bold;';
@@ -631,7 +610,7 @@
             const stripe = i % 2 === 0 ? 'q-row-a' : 'q-row-b';
             // ikona wytycznych w osobnej kolumnie po lewej; 📌 gdy przypięta
             const infoCell = `<td class="q-infocell">${hasInfo(it)
-                ? `<button class="tcm-btn q-info ${i === firstIdx ? 'q-info-cur' : ''}" data-id="${it.id}" title="Wytyczne">${it.pinned ? '📌' : '💬'}</button>` : ''}</td>`;
+                ? `<button class="tcm-btn q-info ${i === firstIdx ? 'q-info-cur' : ''} ${(isGuideOpen || openGuides.has(it.id)) ? 'q-info-open' : ''}" data-id="${it.id}" title="Rozwiń wytyczne">${it.pinned ? '📌' : '💬'}</button>` : ''}</td>`;
             const cls = ['q-row', stripe, i === firstIdx ? 'q-current' : '', it.id === insertAfterId ? 'q-sel' : '', it.pinned ? 'q-pinned' : ''].join(' ');
             const labelDiv = clamp
                 ? `<div class="q-clamp">${labelHtml}</div>`
@@ -646,9 +625,12 @@
                 </td>
             </tr>`);
 
-            // wytyczne pod pozycją: przy bieżącej (skrót) albo przy wszystkich po włączeniu 💬 w nagłówku (pełna treść)
-            if (it.t !== 'note' && hasInfo(it) && (isGuideOpen || i === firstIdx)) {
-                table.append(`<tr class="q-sub ${stripe}"><td colspan="4"><div class="q-extra ${isGuideOpen ? '' : 'q-clamp'}">${infoHtml(it)}</div></td></tr>`);
+            // wytyczne pod pozycją: rozwinięte (💬 przy pozycji lub w nagłówku) = pełna treść; bieżąca pozycja = skrót
+            const expanded = isGuideOpen || openGuides.has(it.id);
+            if (hasInfo(it) && (expanded || (it.t !== 'note' && i === firstIdx))) {
+                const textHtml = it.t === 'note' ? '' : `<div class="q-extra ${expanded ? '' : 'q-clamp'}">${infoHtml(it)}</div>`;
+                const pinHtml = expanded ? `<div style="text-align:right; margin-top:3px;"><button class="tcm-btn q-pin" data-id="${it.id}">${it.pinned ? '📌 Odepnij' : '📌 Przypnij'}</button></div>` : '';
+                table.append(`<tr class="q-sub ${stripe}"><td colspan="4">${textHtml}${pinHtml}</td></tr>`);
             }
         });
 
@@ -1031,8 +1013,6 @@
 
     // ---------- Status modułów ----------
     function updateRewardsState() {
-        const on = !!BOB.modules.nagrody;
-        $('#rewardsState').html(on ? '<span style="color:#6bbf6b;">moduł OK</span>' : '<span style="color:#888;">brak modułu</span>');
         $('.tcm-tab[data-tab="rek"]').toggleClass('tcm-tab-run', !!(BOB.modules.rek && BOB.modules.rek.api && BOB.modules.rek.api.isActive && BOB.modules.rek.api.isActive()));
     }
 
@@ -1100,7 +1080,7 @@
                         <td colspan="3" style="padding: 2px 0 6px; font-size: 11px;">
                             <label style="display:flex; align-items:center; gap:6px;">
                                 <input type="checkbox" id="rewardsChk" ${rewardsOn ? 'checked' : ''} style="width:18px; height:18px;">
-                                🎁 Odbieraj dzienne nagrody <span id="rewardsState" style="font-size:10px;"></span>
+                                🎁 Odbieraj Nagrody
                             </label>
                         </td>
                     </tr>
@@ -1222,26 +1202,22 @@
         });
         $('#kalkulatorBudowyMain').on('click', '#insReset', function() { insertAfterId = null; reloadQueueDisplay(); });
 
-        // tooltip wytycznych
+        // wytyczne rozwijane na liście (pod pozycją); 📌 przypina pozycję
         $('#tcm-queue').on('click', '.q-info', function(e) {
             e.stopPropagation();
-            showTip($(this).attr('data-id'), this);
+            const id = $(this).attr('data-id');
+            if (openGuides.has(id)) openGuides.delete(id); else openGuides.add(id);
+            reloadQueueDisplay();
         });
-        $(document).on('click', '.tip-close', hideTip);
-        $(document).on('click', '.tip-pin', function() {
+        $('#tcm-queue').on('click', '.q-pin', function() {
             const it = findById($(this).attr('data-id'));
             if (it) {
                 it.pinned = !it.pinned;
                 updateLocalStorage();
                 UI.InfoMessage(it.pinned ? 'Przypięto - pozycja nie zniknie sama.' : 'Odpięto.', 1500);
             }
-            hideTip();
             reloadQueueDisplay();
         });
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('#tcm-tip, .q-info').length) hideTip();
-        });
-        $(window).on('scroll', hideTip);
 
         $('#tcm-queue').on('click', '.q-action-wait', function() {
             buildingObject.status = false;
